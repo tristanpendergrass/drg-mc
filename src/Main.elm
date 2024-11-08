@@ -347,7 +347,7 @@ renderDuration d hasTickedAVeryShortTime =
 
 creditsImg : Html Msg
 creditsImg =
-    img [ src "/credits1.png", class "w-6 inline-block" ] []
+    img [ src "credits1.png", class "w-6 inline-block" ] []
 
 
 renderMissionRow : Model -> Mission -> Html Msg
@@ -374,36 +374,36 @@ renderMissionRow model mission =
             case mission of
                 Haz1 ->
                     div [ class "flex items-center" ]
-                        [ icon "/haz1.png" ]
+                        [ icon "haz1.png" ]
 
                 Haz2 ->
                     div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "/haz1.png"
-                        , icon "/haz2.png"
+                        [ icon "haz1.png"
+                        , icon "haz2.png"
                         ]
 
                 Haz3 ->
                     div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "/haz1.png"
-                        , icon "/haz2.png"
-                        , icon "/haz3.png"
+                        [ icon "haz1.png"
+                        , icon "haz2.png"
+                        , icon "haz3.png"
                         ]
 
                 Haz4 ->
                     div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "/haz1.png"
-                        , icon "/haz2.png"
-                        , icon "/haz3.png"
-                        , icon "/haz4.png"
+                        [ icon "haz1.png"
+                        , icon "haz2.png"
+                        , icon "haz3.png"
+                        , icon "haz4.png"
                         ]
 
                 Haz5 ->
                     div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "/haz1.png"
-                        , icon "/haz2.png"
-                        , icon "/haz3.png"
-                        , icon "/haz4.png"
-                        , icon "/haz5.png"
+                        [ icon "haz1.png"
+                        , icon "haz2.png"
+                        , icon "haz3.png"
+                        , icon "haz4.png"
+                        , icon "haz5.png"
                         ]
     in
     tr [ class "h-20 relative" ]
