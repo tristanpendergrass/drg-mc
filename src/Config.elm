@@ -13,8 +13,8 @@ type Env
 
 env : Env
 env =
-    -- Prod
-    Dev
+    -- Dev
+    Prod
 
 
 isProd : Bool
