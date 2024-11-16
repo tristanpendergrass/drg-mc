@@ -34,6 +34,7 @@
     "start-mac": "npm-run-all -s clean-dev-mac -p parcel:serve"
   },
   "dependencies": {
-    "elm-format": "^0.8.7"
+    "elm-format": "^0.8.7",
+    "elm-pep": "^1.0.6"
   }
 }

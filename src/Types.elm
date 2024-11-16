@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import Duration exposing (Duration)
+import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
 import Time
 import Utils.Timer exposing (Timer)
@@ -42,6 +43,7 @@ type alias Model =
     , missionStatuses : MissionRecord MissionStatus
     , gameSpeed : Float
     , debugAddedTime : Duration
+    , animations : List (Maybe Animation)
     }
 
 
@@ -49,7 +51,7 @@ type Msg
     = NoOp
     | HandleAnimationFrame Time.Posix
     | HandleStartMissionClick Mission
-    | HandleClaimCargoClick Mission
+    | HandleClaimCargoClick Mission Pointer.Event
     | HandleSetThemeClick Theme
     | DebugSetGameSpeed Float
     | DebugAdvanceTime Duration
@@ -143,3 +145,15 @@ type alias LevelUnlockStats =
     , title : String
     , category : UnlockCategory
     }
+
+
+type alias AnimationLocation =
+    ( Float, Float )
+
+
+type AnimationSubject
+    = AnimateCreditsGain Float
+
+
+type Animation
+    = Animation Utils.Timer.Timer Duration AnimationLocation AnimationSubject

@@ -107,6 +107,7 @@ v1Decoder =
                     , saveTimer = Utils.Timer.create
                     , gameSpeed = 1
                     , debugAddedTime = Quantity.zero
+                    , animations = []
                     }
             in
             model

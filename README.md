@@ -28,9 +28,16 @@ There's some steps to follow for the first deploy to modify from the elm-empty-p
 
 # Todos
 
-# V2
+# V?
 - [ ] Show unlock modal list
-- [ ] Add toast notifying about new unlock
+
+# V2
+- [ ] Add animation of resource gained after click
+- [ ] Add modal triggers on load and after leveling up
+- [ ] Add right sidebar showing dwarf levels
+- [ ] Add tab system on left
+- [ ] Add tab where dwarfs can be leveled
+- [ ] Finalize unlocks of new features
 
 # V1
 - [x] Finalize leveling schedule

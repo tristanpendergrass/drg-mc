@@ -17,10 +17,21 @@ module.exports = {
           '0%': { transform: 'translateY(0)' },
           '100%': { transform: 'translateY(100%)' },
         },
+        smokeRise: {
+          '0%': {
+            transform: 'translateY(0%) scale(1)',
+            opacity: '1',
+          },
+          '100%': {
+            transform: 'translateY(-300%) scale(1.5)',
+            opacity: '0.25',
+          },
+        },
       },
       animation: {
         'rocket-enter': 'rocketUp 2s ease-out',
         'rocket-exit': 'rocketDown 0.5s ease-in',
+        smokeRise: 'smokeRise 2s ease-out forwards',
       },
     },
   },

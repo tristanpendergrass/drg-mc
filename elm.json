@@ -16,10 +16,12 @@
             "elm-explorations/test": "2.2.0",
             "elmcraft/core-extra": "2.0.0",
             "feathericons/elm-feather": "1.5.0",
-            "ianmackenzie/elm-units": "2.10.0"
+            "ianmackenzie/elm-units": "2.10.0",
+            "mpizenberg/elm-pointer-events": "5.0.0"
         },
         "indirect": {
             "elm/bytes": "1.0.8",
+            "elm/file": "1.0.5",
             "elm/parser": "1.1.0",
             "elm/regex": "1.0.0",
             "elm/svg": "1.0.1",

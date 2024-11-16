@@ -1,3 +1,4 @@
+import 'elm-pep';
 import { Elm } from "./Main.elm";
 
 const saveGameKey = 'drg-mc:saveGame'

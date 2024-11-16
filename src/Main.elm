@@ -10,6 +10,7 @@ import Float.Extra
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra
@@ -54,6 +55,7 @@ defaultModel now =
         }
     , gameSpeed = 1.0
     , debugAddedTime = Quantity.zero
+    , animations = []
     }
 
 
@@ -76,6 +78,11 @@ allMissions =
 
 
 -- UPDATE
+
+
+animationDuration : Duration
+animationDuration =
+    Duration.seconds 2
 
 
 updateStatus : Duration -> Mission -> MissionStatus -> MissionStatus
@@ -177,11 +184,47 @@ update msg model =
 
                     else
                         Nothing
+
+                updateAnimation : Maybe Animation -> List (Maybe Animation) -> List (Maybe Animation)
+                updateAnimation maybeAnimation animations =
+                    case maybeAnimation of
+                        Nothing ->
+                            Nothing :: animations
+
+                        Just (Animation timer duration location subject) ->
+                            let
+                                ( newTimer, completions ) =
+                                    Utils.Timer.increment duration delta timer
+
+                                newAnimation : Animation
+                                newAnimation =
+                                    Animation newTimer duration location subject
+                            in
+                            if completions > 0 then
+                                Nothing :: animations
+
+                            else
+                                Just newAnimation :: animations
+
+                newAnimations : List (Maybe Animation)
+                newAnimations =
+                    List.foldr updateAnimation [] model.animations
+                        |> (\animations ->
+                                -- We remove all the animations if at some point they're all finished (i.e. all are Nothing) because Nothing animations render as empty divs if not removed
+                                -- We don't remove them if all animations aren't finished because I saw odd visual bugs when the List of animations would change what position an animation was at.
+                                -- N.B. we also don't let there be more than 100 animations at once. This is purely speculative that this would matter but it seems prudent.
+                                if List.length animations > 100 || List.Extra.unique animations == [ Nothing ] then
+                                    []
+
+                                else
+                                    animations
+                           )
             in
             ( { model
                 | currentTime = newCurrentTime
                 , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses allMissions
                 , saveTimer = newSaveTimer
+                , animations = newAnimations
               }
             , Cmd.batch
                 (List.filterMap identity
@@ -198,7 +241,7 @@ update msg model =
             in
             ( { model | missionStatuses = newMissionStatuses }, Cmd.none )
 
-        HandleClaimCargoClick mission ->
+        HandleClaimCargoClick mission event ->
             let
                 stats : MissionStats
                 stats =
@@ -220,12 +263,21 @@ update msg model =
                 addCreditsResult : Model
                 addCreditsResult =
                     addCredits stats.yield.credits model
+
+                adjustClientPos : ( Float, Float ) -> ( Float, Float )
+                adjustClientPos ( x, y ) =
+                    ( x + 50, y - 25 )
+
+                newAnimation : Animation
+                newAnimation =
+                    Animation Utils.Timer.create animationDuration (adjustClientPos event.pointer.clientPos) (AnimateCreditsGain stats.yield.credits)
             in
             ( { model
                 | missionStatuses = newMissionStatuses
                 , resources = newResources
                 , credits = addCreditsResult.credits
                 , level = addCreditsResult.level
+                , animations = List.append model.animations [ Just newAnimation ]
               }
             , Cmd.none
             )
@@ -345,8 +397,13 @@ renderDuration d hasTickedAVeryShortTime =
             ]
 
 
-creditsImg : Html Msg
-creditsImg =
+credits3Img : Html Msg
+credits3Img =
+    img [ src "credits3.png", class "w-6 inline-block" ] []
+
+
+credits1Img : Html Msg
+credits1Img =
     img [ src "credits1.png", class "w-6 inline-block" ] []
 
 
@@ -412,22 +469,21 @@ renderMissionRow model mission =
                 [ icons
                 ]
             ]
-        , td [ class "flex h-20 items-center gap-1" ] [ creditsImg, span [] [ text (floatToString yield.credits), text "m" ] ]
+
+        -- , td [ class "flex h-20 items-center gap-1" ] [ creditsImg, span [] [ text (floatToString yield.credits), text "m" ] ]
         , td [ class "overflow-hidden relative" ]
             [ case missionStatus of
                 MissionComplete ->
                     div [ class "flex items-center gap-8" ]
-                        [ span [ class "text-xs" ] [ text "Complete" ]
-                        , div [ class "relative" ]
+                        [ div [ class "relative" ]
                             [ button
-                                [ class "px-4 py-4 bg-primary text-primary-content rounded-xl shadow animate-fade-in flex items-center gap-2 w-[140px]"
+                                [ class "px-4 py-4 bg-primary text-primary-content rounded-xl shadow animate-fade-in flex items-center gap-2 w-[200px] justify-center"
                                 , class "absolute top-1/2 transform -translate-y-1/2"
-                                , onClick (HandleClaimCargoClick mission)
+                                , Pointer.onDown (HandleClaimCargoClick mission)
                                 ]
-                                [ span [] [ text "Gain Cargo" ]
-                                , FeatherIcons.box
-                                    |> FeatherIcons.withSize 20
-                                    |> FeatherIcons.toHtml []
+                                [ text "Gain "
+                                , span [] [ text " ", text (floatToString yield.credits), text "m credits" ]
+                                , credits3Img
                                 ]
                             ]
                         ]
@@ -442,7 +498,7 @@ renderMissionRow model mission =
                         hasTickedAVeryShortTime =
                             Utils.Timer.hasTickedAVeryShortTime stats.duration timer
                     in
-                    div [ class "flex items-center gap-8" ] [ span [ class "text-xs" ] [ text "In progress" ], renderDuration durationLeft hasTickedAVeryShortTime ]
+                    div [ class "flex items-center gap-8" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
             ]
         ]
 
@@ -501,7 +557,7 @@ renderProgressBar model =
                 [ span [ class "z-10 relative text-3xl flex items-center gap-2 leading-none text-xl" ]
                     [ span [ class "font-semibold text-3xl leading-none font-mono mr-2" ] [ text (floatToString model.credits ++ " / " ++ floatToString creditsToNextLevel) ]
                     , text "credits"
-                    , span [ class "flex items-center" ] [ creditsImg ]
+                    , span [ class "flex items-center" ] [ credits1Img ]
                     , text "to next level"
                     ]
                 , filledPortion percentComplete
@@ -563,6 +619,28 @@ renderHeader model =
         ]
 
 
+renderAnimation : Maybe Animation -> Html Msg
+renderAnimation maybeAnimation =
+    case maybeAnimation of
+        Nothing ->
+            div [] []
+
+        Just (Animation _ _ ( x, y ) subject) ->
+            let
+                content : Html Msg
+                content =
+                    case subject of
+                        AnimateCreditsGain amount ->
+                            div [ class "flex items-center gap-1" ] [ text "+ ", text " ", text (floatToString amount), text " credits", credits1Img ]
+            in
+            div
+                [ class "fixed bg-opacity-0 text-primary drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] font-extrabold text-xl animate-smokeRise pointer-events-none"
+                , style "left" (String.fromFloat x ++ "px")
+                , style "top" (String.fromFloat y ++ "px")
+                ]
+                [ content ]
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -583,7 +661,6 @@ view model =
                 [ thead []
                     [ tr []
                         [ th [] [ text "Hazard Level" ]
-                        , th [] [ text "Yield" ]
                         , th [] [ text "Status" ]
                         ]
                     ]
@@ -610,4 +687,6 @@ view model =
                 -- , renderGameSpeedButton model 3600.0
                 ]
             ]
+        , div []
+            (List.map renderAnimation model.animations)
         ]
