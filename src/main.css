@@ -2,8 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-#xp-bar {
+#xp-bar, .xp-bar {
   transition: width 1.0s ease-out;
+}
+
+
+progress.progress.xp-bar::-webkit-progress-value {
+  transition: width 0.5s ease-out;
 }
 
 .disabled-btn {

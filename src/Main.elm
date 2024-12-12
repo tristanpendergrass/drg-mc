@@ -1,10 +1,11 @@
-port module Main exposing (main)
+port module Main exposing (defaultModel, main)
 
 import Browser
 import Browser.Events
 import Config
 import Dict exposing (Dict)
 import Duration exposing (Duration, hours)
+import DwarfXp
 import FeatherIcons
 import Float.Extra
 import Html exposing (..)
@@ -15,6 +16,7 @@ import Json.Decode as D
 import Json.Encode as E
 import List.Extra
 import Quantity
+import Random
 import Save
 import Test.Html.Query exposing (has)
 import Theme
@@ -38,42 +40,46 @@ main =
 {--| Returns the amount of credits required to level up-}
 
 
-defaultModel : Time.Posix -> Model
-defaultModel now =
-    { currentTime = now
+defaultModel : Random.Seed -> Time.Posix -> Model
+defaultModel initialSeed now =
+    { seed = initialSeed
+    , currentTime = now
+    , currentTab = MissionsTab
     , saveTimer = Utils.Timer.create
-    , theme = Default
+    , theme = Nothing
     , level = 1
     , credits = 0
     , resources = { gold = 0 }
     , missionStatuses =
-        { haz1 = MissionComplete
-        , haz2 = MissionComplete
-        , haz3 = MissionComplete
-        , haz4 = MissionComplete
-        , haz5 = MissionComplete
+        { haz1 = ButtonReady
+        , haz2 = ButtonReady
+        , haz3 = ButtonReady
+        , haz4 = ButtonReady
+        , haz5 = ButtonReady
         }
     , gameSpeed = 1.0
     , debugAddedTime = Quantity.zero
     , animations = []
+    , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
+    , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
     }
 
 
 init : Flags -> ( Model, Cmd Msg )
-init { now, initialGame } =
-    case D.decodeValue Save.decodeAnyVersion initialGame of
-        Err err ->
-            ( defaultModel (Time.millisToPosix now)
+init { initialSeed, now, initialGame } =
+    let
+        randomSeed : Random.Seed
+        randomSeed =
+            Random.initialSeed initialSeed
+    in
+    case D.decodeValue (Save.decodeAnyVersion randomSeed) initialGame of
+        Err _ ->
+            ( defaultModel randomSeed (Time.millisToPosix now)
             , Cmd.none
             )
 
         Ok model ->
             ( model, Cmd.none )
-
-
-allMissions : List Mission
-allMissions =
-    [ Haz1, Haz2, Haz3, Haz4, Haz5 ]
 
 
 
@@ -85,28 +91,24 @@ animationDuration =
     Duration.seconds 2
 
 
-updateStatus : Duration -> Mission -> MissionStatus -> MissionStatus
-updateStatus delta mission status =
+updateButton : Duration -> Duration -> ButtonStatus -> ButtonStatus
+updateButton delta buttonDuration status =
     case status of
-        MissionComplete ->
+        ButtonReady ->
             status
 
-        MissionInProgress oldTimer ->
+        ButtonOnCooldown oldTimer ->
             let
-                missionStats : MissionStats
-                missionStats =
-                    Utils.Record.getByMission mission Config.missionStats
-
                 ( newTimer, completions ) =
-                    Utils.Timer.increment missionStats.duration delta oldTimer
+                    Utils.Timer.increment buttonDuration delta oldTimer
 
-                newStatus : MissionStatus
+                newStatus : ButtonStatus
                 newStatus =
                     if completions > 0 then
-                        MissionComplete
+                        ButtonReady
 
                     else
-                        MissionInProgress newTimer
+                        ButtonOnCooldown newTimer
             in
             newStatus
 
@@ -136,6 +138,12 @@ addCredits amount model =
             model
 
 
+adjustClientPos : ( Float, Float ) -> ( Float, Float )
+adjustClientPos ( x, y ) =
+    -- This is about how much we need to adjust the client position to put the animation where we want relative to the pointer
+    ( x + 50, y - 25 )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -148,7 +156,7 @@ update msg model =
             noOp
 
         ResetGame ->
-            ( defaultModel model.currentTime, Cmd.none )
+            ( defaultModel model.seed model.currentTime, Cmd.none )
 
         HandleAnimationFrame n ->
             let
@@ -166,9 +174,23 @@ update msg model =
                         |> (\x -> x * model.gameSpeed)
                         |> Duration.milliseconds
 
-                updateMissionStatuses : Mission -> MissionRecord MissionStatus -> MissionRecord MissionStatus
+                updateMissionStatuses : Mission -> MissionRecord ButtonStatus -> MissionRecord ButtonStatus
                 updateMissionStatuses mission statuses =
-                    Utils.Record.updateByMission mission (updateStatus delta mission) statuses
+                    let
+                        buttonDuration : Duration
+                        buttonDuration =
+                            (Utils.Record.getByMission mission Config.missionStats).duration
+                    in
+                    Utils.Record.updateByMission mission (updateButton delta buttonDuration) statuses
+
+                updateDwarfXpButtonStatuses : DwarfXpButton -> DwarfXpButtonRecord ButtonStatus -> DwarfXpButtonRecord ButtonStatus
+                updateDwarfXpButtonStatuses dwarfXpButton statuses =
+                    let
+                        buttonDuration : Duration
+                        buttonDuration =
+                            (Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats).duration
+                    in
+                    Utils.Record.updateByDwarfXpButton dwarfXpButton (updateButton delta buttonDuration) statuses
 
                 timeBetweenSaves : Duration
                 timeBetweenSaves =
@@ -180,7 +202,7 @@ update msg model =
                 saveGameMsg : Maybe (Cmd Msg)
                 saveGameMsg =
                     if saveTimerCompletions >= 1 then
-                        Just (saveGame (Save.v1Encoder model))
+                        Just (saveGame (Save.encoder model))
 
                     else
                         Nothing
@@ -191,14 +213,14 @@ update msg model =
                         Nothing ->
                             Nothing :: animations
 
-                        Just (Animation timer duration location subject) ->
+                        Just (Animation timer duration subject) ->
                             let
                                 ( newTimer, completions ) =
                                     Utils.Timer.increment duration delta timer
 
                                 newAnimation : Animation
                                 newAnimation =
-                                    Animation newTimer duration location subject
+                                    Animation newTimer duration subject
                             in
                             if completions > 0 then
                                 Nothing :: animations
@@ -222,7 +244,8 @@ update msg model =
             in
             ( { model
                 | currentTime = newCurrentTime
-                , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses allMissions
+                , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses Utils.Record.allMissions
+                , dwarfXpButtonStatuses = List.foldl updateDwarfXpButtonStatuses model.dwarfXpButtonStatuses Utils.Record.allDwarfXpButtons
                 , saveTimer = newSaveTimer
                 , animations = newAnimations
               }
@@ -233,44 +256,31 @@ update msg model =
                 )
             )
 
-        HandleStartMissionClick mission ->
-            let
-                newMissionStatuses : MissionRecord MissionStatus
-                newMissionStatuses =
-                    Utils.Record.setByMission mission (MissionInProgress Utils.Timer.create) model.missionStatuses
-            in
-            ( { model | missionStatuses = newMissionStatuses }, Cmd.none )
-
-        HandleClaimCargoClick mission event ->
+        HandleMissionClick mission event ->
             let
                 stats : MissionStats
                 stats =
                     Utils.Record.getByMission mission Config.missionStats
 
-                newMissionStatuses : MissionRecord MissionStatus
+                modifiedYield : MissionYield
+                modifiedYield =
+                    modifyYield model stats.yield
+
+                newMissionStatuses : MissionRecord ButtonStatus
                 newMissionStatuses =
-                    Utils.Record.setByMission mission (MissionInProgress Utils.Timer.create) model.missionStatuses
+                    Utils.Record.setByMission mission (ButtonOnCooldown Utils.Timer.create) model.missionStatuses
 
                 newResources : ResourceRecord Int
                 newResources =
-                    let
-                        yield : MissionYield
-                        yield =
-                            (Utils.Record.getByMission mission Config.missionStats).yield
-                    in
-                    Utils.Record.addResourceRecords yield.resources model.resources
+                    Utils.Record.addResourceRecords modifiedYield.resources model.resources
 
                 addCreditsResult : Model
                 addCreditsResult =
-                    addCredits stats.yield.credits model
-
-                adjustClientPos : ( Float, Float ) -> ( Float, Float )
-                adjustClientPos ( x, y ) =
-                    ( x + 50, y - 25 )
+                    addCredits modifiedYield.credits model
 
                 newAnimation : Animation
                 newAnimation =
-                    Animation Utils.Timer.create animationDuration (adjustClientPos event.pointer.clientPos) (AnimateCreditsGain stats.yield.credits)
+                    Animation Utils.Timer.create animationDuration (AnimateCreditsGain modifiedYield.credits (adjustClientPos event.pointer.clientPos))
             in
             ( { model
                 | missionStatuses = newMissionStatuses
@@ -282,8 +292,59 @@ update msg model =
             , Cmd.none
             )
 
+        HandleDwarfXpButtonClick dwarfXpButton event ->
+            let
+                stats : DwarfXpButtonStats
+                stats =
+                    Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+
+                newStatuses : DwarfXpButtonRecord ButtonStatus
+                newStatuses =
+                    Utils.Record.setByDwarfXpButton dwarfXpButton (ButtonOnCooldown Utils.Timer.create) model.dwarfXpButtonStatuses
+
+                ( ( dwarf, newDwarfXp ), newSeed ) =
+                    Random.step (dwarfXpGenerator stats.xp model.dwarfXp) model.seed
+
+                currentLevel : Int
+                currentLevel =
+                    DwarfXp.level (Utils.Record.getByDwarf dwarf model.dwarfXp)
+
+                newLevel : Int
+                newLevel =
+                    DwarfXp.level (Utils.Record.getByDwarf dwarf newDwarfXp)
+
+                xpGainAnimation : Animation
+                xpGainAnimation =
+                    Animation Utils.Timer.create animationDuration (AnimateDwarfXp dwarf stats.xp (adjustClientPos event.pointer.clientPos))
+
+                levelUpAnimation : Animation
+                levelUpAnimation =
+                    let
+                        message : String
+                        message =
+                            (Utils.Record.getByDwarf dwarf Config.dwarfStats).name ++ " leveled up (" ++ String.fromInt currentLevel ++ " -> " ++ String.fromInt newLevel ++ ")"
+                    in
+                    Animation Utils.Timer.create (Duration.seconds 5) (AnimateAlert message AlertInfo)
+
+                newAnimations : List (Maybe Animation)
+                newAnimations =
+                    if newLevel > currentLevel then
+                        [ Just xpGainAnimation, Just levelUpAnimation ]
+
+                    else
+                        [ Just xpGainAnimation ]
+            in
+            ( { model
+                | dwarfXpButtonStatuses = newStatuses
+                , dwarfXp = newDwarfXp
+                , seed = newSeed
+                , animations = List.append model.animations newAnimations
+              }
+            , Cmd.none
+            )
+
         HandleSetThemeClick theme ->
-            ( { model | theme = theme }, Cmd.none )
+            ( { model | theme = Just theme }, Cmd.none )
 
         DebugSetGameSpeed speed ->
             ( { model | gameSpeed = speed }, Cmd.none )
@@ -305,6 +366,27 @@ update msg model =
                         |> Maybe.withDefault 1
             in
             ( { model | level = maxLevel }, Cmd.none )
+
+        HandleTabClick tab ->
+            ( { model | currentTab = tab }, Cmd.none )
+
+
+dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
+dwarfXpGenerator xp dwarfXp =
+    Random.uniform Scout Utils.Record.allDwarfs
+        |> Random.map
+            (\dwarf ->
+                let
+                    oldXp : DwarfXp
+                    oldXp =
+                        Utils.Record.getByDwarf dwarf dwarfXp
+
+                    newXp : DwarfXp
+                    newXp =
+                        Quantity.plus oldXp xp
+                in
+                ( dwarf, Utils.Record.setByDwarf dwarf newXp dwarfXp )
+            )
 
 
 
@@ -369,7 +451,7 @@ renderDuration d hasTickedAVeryShortTime =
 
         wrapper : List (Html Msg) -> Html Msg
         wrapper =
-            div [ class "grid auto-cols-max grid-flow-col gap-3 text-center" ]
+            div [ class "flex w-full gap-3 text-center foobar justify-center" ]
 
         hide : List (Html Msg) -> Html Msg
         hide =
@@ -397,14 +479,19 @@ renderDuration d hasTickedAVeryShortTime =
             ]
 
 
-credits3Img : Html Msg
-credits3Img =
-    img [ src "credits3.png", class "w-6 inline-block" ] []
-
-
 credits1Img : Html Msg
 credits1Img =
     img [ src "credits1.png", class "w-6 inline-block" ] []
+
+
+modifyYield : Model -> MissionYield -> MissionYield
+modifyYield model yield =
+    let
+        creditsMultiplier : Float
+        creditsMultiplier =
+            squadMultiplier model
+    in
+    { yield | credits = yield.credits * creditsMultiplier }
 
 
 renderMissionRow : Model -> Mission -> Html Msg
@@ -414,13 +501,17 @@ renderMissionRow model mission =
         stats =
             Utils.Record.getByMission mission Config.missionStats
 
-        missionStatus : MissionStatus
+        missionStatus : ButtonStatus
         missionStatus =
             Utils.Record.getByMission mission model.missionStatuses
 
         yield : MissionYield
         yield =
             stats.yield
+
+        modifiedYield : MissionYield
+        modifiedYield =
+            modifyYield model yield
 
         icon : String -> Html Msg
         icon iconSrc =
@@ -462,45 +553,71 @@ renderMissionRow model mission =
                         , icon "haz4.png"
                         , icon "haz5.png"
                         ]
+
+        buttonText : String
+        buttonText =
+            case missionStatus of
+                ButtonReady ->
+                    "Gain " ++ floatToFixedDecimalString modifiedYield.credits 2 ++ "m credits"
+
+                ButtonOnCooldown _ ->
+                    "On cooldown"
     in
     tr [ class "h-20 relative" ]
         [ td []
-            [ div [ class "flex items-center gap-1" ]
-                [ icons
-                ]
+            [ div [ class "flex items-center gap-2" ]
+                (List.concat
+                    [ [ span [] [ text stats.title ] ]
+                    , [ icons ]
+                    ]
+                )
             ]
-
-        -- , td [ class "flex h-20 items-center gap-1" ] [ creditsImg, span [] [ text (floatToString yield.credits), text "m" ] ]
         , td [ class "overflow-hidden relative" ]
-            [ case missionStatus of
-                MissionComplete ->
-                    div [ class "flex items-center gap-8" ]
-                        [ div [ class "relative" ]
-                            [ button
-                                [ class "px-4 py-4 bg-primary text-primary-content rounded-xl shadow animate-fade-in flex items-center gap-2 w-[200px] justify-center"
-                                , class "absolute top-1/2 transform -translate-y-1/2"
-                                , Pointer.onDown (HandleClaimCargoClick mission)
-                                ]
-                                [ text "Gain "
-                                , span [] [ text " ", text (floatToString yield.credits), text "m credits" ]
-                                , credits3Img
-                                ]
-                            ]
-                        ]
-
-                MissionInProgress timer ->
-                    let
-                        durationLeft : Duration
-                        durationLeft =
-                            Utils.Timer.durationLeft stats.duration timer
-
-                        hasTickedAVeryShortTime : Bool
-                        hasTickedAVeryShortTime =
-                            Utils.Timer.hasTickedAVeryShortTime stats.duration timer
-                    in
-                    div [ class "flex items-center gap-8" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
-            ]
+            [ renderButton model missionStatus stats.duration (HandleMissionClick mission) ButtonPrimary [ text buttonText ] ]
         ]
+
+
+type ButtonVariant
+    = ButtonPrimary
+    | ButtonSecondary
+
+
+renderButton : Model -> ButtonStatus -> Duration -> (Pointer.Event -> Msg) -> ButtonVariant -> List (Html Msg) -> Html Msg
+renderButton model buttonStatus buttonDuration msg variant children =
+    case buttonStatus of
+        ButtonReady ->
+            let
+                buttonVariantClass : Attribute Msg
+                buttonVariantClass =
+                    case variant of
+                        ButtonPrimary ->
+                            class "btn-primary"
+
+                        ButtonSecondary ->
+                            class "btn-secondary"
+            in
+            div [ class "flex items-center gap-8 w-full" ]
+                [ div [ class "relative" ]
+                    [ button
+                        [ class "btn text-xl"
+                        , buttonVariantClass
+                        , Pointer.onDown msg
+                        ]
+                        children
+                    ]
+                ]
+
+        ButtonOnCooldown timer ->
+            let
+                durationLeft : Duration
+                durationLeft =
+                    Utils.Timer.durationLeft buttonDuration timer
+
+                hasTickedAVeryShortTime : Bool
+                hasTickedAVeryShortTime =
+                    Utils.Timer.hasTickedAVeryShortTime buttonDuration timer
+            in
+            div [ class "flex items-center gap-8 w-full" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
 
 
 renderGameSpeedButton : Model -> Float -> Html Msg
@@ -523,13 +640,21 @@ floatToString input =
         |> String.fromList
 
 
+floatToFixedDecimalString : Float -> Int -> String
+floatToFixedDecimalString input decimalPlaces =
+    input
+        |> Float.Extra.toFixedDecimalPlaces decimalPlaces
+        |> String.toList
+        |> String.fromList
+
+
 renderProgressBar : Model -> Html Msg
 renderProgressBar model =
     let
         filledPortion : Percent -> Html Msg
         filledPortion percentComplete =
             div
-                [ class "absolute left-0 top-0 h-full bg-primary/25 themed-rounded-borders"
+                [ class "absolute left-0 top-0 h-full bg-primary themed-rounded-borders"
                 , classList [ ( "border-r", Utils.Percent.toFloat percentComplete /= 1.0 && Utils.Percent.toFloat percentComplete /= 0.0 ) ]
                 , style "width" (String.fromFloat (Basics.min 100 (Utils.Percent.toPercentage percentComplete)) ++ "%")
                 , id "xp-bar" -- We attach the animation using this id
@@ -538,12 +663,16 @@ renderProgressBar model =
 
         outerBarClasses : Attribute Msg
         outerBarClasses =
-            class "w-full h-12 border border-neutral relative flex items-center justify-center gap-1 overflow-hidden themed-rounded-borders"
+            class "w-full h-16 border border-neutral relative flex items-center justify-center gap-1 overflow-hidden themed-rounded-borders"
+
+        progressBarTextClass : Attribute Msg
+        progressBarTextClass =
+            class "px-3 py-1 rounded bg-base-100 text-base-content text-3xl leading-none text-xl"
     in
     case Config.levelingSchedule model.level of
         AtMaxLevel ->
             div [ outerBarClasses ]
-                [ span [ class "z-10 uppercase" ] [ text "max level reached" ]
+                [ span [ class "z-10 uppercase", progressBarTextClass ] [ text "max level reached" ]
                 , filledPortion (Utils.Percent.float 1.0)
                 ]
 
@@ -554,7 +683,7 @@ renderProgressBar model =
                     Utils.Percent.float (model.credits / creditsToNextLevel)
             in
             div [ outerBarClasses ]
-                [ span [ class "z-10 relative text-3xl flex items-center gap-2 leading-none text-xl" ]
+                [ span [ class "z-10 relative flex items-center gap-2", progressBarTextClass ]
                     [ span [ class "font-semibold text-3xl leading-none font-mono mr-2" ] [ text (floatToString model.credits ++ " / " ++ floatToString creditsToNextLevel) ]
                     , text "credits"
                     , span [ class "flex items-center" ] [ credits1Img ]
@@ -597,12 +726,12 @@ renderHeader model =
                 [ h1 [ class "text-4xl font-extrabold relative inline-block" ]
                     [ text ("Level " ++ String.fromInt model.level)
                     , button [ class "absolute top-0 right-0 -mr-8 opacity-25 mt-1/2 btn btn-xs btn-square btn-ghost", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugLevelToMax ]
-                        [ FeatherIcons.arrowUpCircle
+                        [ FeatherIcons.chevronsUp
                             |> FeatherIcons.withSize 20
                             |> FeatherIcons.toHtml []
                         ]
                     , button [ class "absolute top-0 right-0 -mr-8 mt-6 opacity-25 mt-1/2 btn btn-xs btn-square btn-ghost", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugGainLevel ]
-                        [ FeatherIcons.plus
+                        [ FeatherIcons.chevronUp
                             |> FeatherIcons.withSize 20
                             |> FeatherIcons.toHtml []
                         ]
@@ -619,74 +748,364 @@ renderHeader model =
         ]
 
 
+renderAtLocation : AnimationLocation -> List (Html Msg) -> Html Msg
+renderAtLocation ( x, y ) children =
+    div
+        [ class "fixed animate-smokeRise pointer-events-none"
+        , style "left" (String.fromFloat x ++ "px")
+        , style "top" (String.fromFloat y ++ "px")
+        ]
+        children
+
+
 renderAnimation : Maybe Animation -> Html Msg
 renderAnimation maybeAnimation =
     case maybeAnimation of
         Nothing ->
             div [] []
 
-        Just (Animation _ _ ( x, y ) subject) ->
+        Just (Animation _ _ subject) ->
             let
-                content : Html Msg
-                content =
-                    case subject of
-                        AnimateCreditsGain amount ->
-                            div [ class "flex items-center gap-1" ] [ text "+ ", text " ", text (floatToString amount), text " credits", credits1Img ]
+                gainTextClass : Attribute Msg
+                gainTextClass =
+                    class "text-xl pointer-events-none bg-opacity-0 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] font-extrabold"
+            in
+            case subject of
+                AnimateCreditsGain amount location ->
+                    renderAtLocation location
+                        [ span [ class "text-primary", gainTextClass ]
+                            [ text "+ "
+                            , text (floatToString amount)
+                            , text " credits "
+                            , credits1Img
+                            ]
+                        ]
+
+                AnimateDwarfXp dwarf xp location ->
+                    let
+                        dwarfStats : DwarfStats
+                        dwarfStats =
+                            Utils.Record.getByDwarf dwarf Config.dwarfStats
+                    in
+                    renderAtLocation location
+                        [ span [ gainTextClass, class "text-secondary" ]
+                            [ text dwarfStats.name
+                            , text " gained "
+                            , text (DwarfXp.toString xp)
+                            , text " xp"
+                            ]
+                        ]
+
+                _ ->
+                    div [] []
+
+
+renderDwarf : Model -> Dwarf -> Html Msg
+renderDwarf model dwarf =
+    let
+        stats : DwarfStats
+        stats =
+            Utils.Record.getByDwarf dwarf Config.dwarfStats
+
+        xp : DwarfXp
+        xp =
+            Utils.Record.getByDwarf dwarf model.dwarfXp
+
+        level : Int
+        level =
+            DwarfXp.level xp
+
+        percentInLevel : Percent
+        percentInLevel =
+            DwarfXp.percentInLevel xp
+
+        xpInLevelNumerator : DwarfXp
+        xpInLevelNumerator =
+            DwarfXp.flatXpInCurrentLevel xp
+
+        progressInLevelSpan : Html Msg
+        progressInLevelSpan =
+            case Config.dwarfLevelingSchedule (DwarfXp.level xp) of
+                Ok (EarnDwarfXp xpToNextLevel) ->
+                    span [ class "text-sm" ]
+                        [ text (floatToString (DwarfXp.toFloat xpInLevelNumerator) ++ " / " ++ floatToString xpToNextLevel ++ " xp to next level") ]
+
+                _ ->
+                    span [ class "text-sm" ]
+                        [ text "Max level reached" ]
+
+        dwarfImgSrc : String
+        dwarfImgSrc =
+            stats.imgSrc
+    in
+    div [ class "bg-base-300 text-base-content flex flex-col items-center relative overflow-hidden themed-rounded-borders shadow" ]
+        [ span [ class "w-full flex items-center justify-center gap-2" ]
+            [ span [ class "text-lg" ] [ text stats.name ]
+            ]
+        , img [ src dwarfImgSrc, class "h-24 rounded " ] []
+        , span []
+            [ progressInLevelSpan
+            ]
+        , div [ class "tooltip tooltip-left absolute top-0 right-0", attribute "data-tip" ("Level " ++ String.fromInt level) ]
+            [ span
+                [ class "inline-block bg-secondary text-secondary-content px-3 py-1 text-2xl border border-secondary-content themed-rounded-borders"
+                ]
+                [ text (String.fromInt level) ]
+            ]
+        , progress [ class "progress progress-secondary xp-bar", value (String.fromFloat (Utils.Percent.toPercentage percentInLevel)), attribute "max" "100" ] []
+        ]
+
+
+renderMissionsTab : Model -> Html Msg
+renderMissionsTab model =
+    let
+        unlockedMissions : List Mission
+        unlockedMissions =
+            List.filter (Utils.Unlocks.missionIsUnlocked model.level) Utils.Record.allMissions
+    in
+    div [ class "flex flex-col items-center gap-8 p-8 flex-grow overflow-scroll" ]
+        [ div [ proseClass ]
+            [ h2 [] [ text "Missions" ]
+            ]
+        , table [ class "table table-fixed w-[750px] max-w-full" ]
+            [ tbody []
+                (List.map (renderMissionRow model) unlockedMissions)
+            ]
+        ]
+
+
+renderCommendationsTab : Model -> Html Msg
+renderCommendationsTab model =
+    let
+        unlockedXpButtons : List DwarfXpButton
+        unlockedXpButtons =
+            List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) Utils.Record.allDwarfXpButtons
+    in
+    div [ class "flex flex-col items-center gap-8 p-8 flex-grow overflow-y-scroll" ]
+        [ div [ proseClass ]
+            [ h2 [] [ text "Dwarf Leveling" ]
+            ]
+        , div [ class "flex flex-col item-center gap-4 w-[300px]" ]
+            (unlockedXpButtons
+                |> List.map
+                    (\dwarfXpButton ->
+                        let
+                            stats : DwarfXpButtonStats
+                            stats =
+                                Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+                        in
+                        renderButton
+                            model
+                            (Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses)
+                            stats.duration
+                            (HandleDwarfXpButtonClick dwarfXpButton)
+                            ButtonSecondary
+                            [ text "+", text (DwarfXp.toString stats.xp), text " xp to random dwarf" ]
+                    )
+            )
+        ]
+
+
+renderDrawerTabRow : Model -> Tab -> Html Msg
+renderDrawerTabRow model tab =
+    let
+        stats : TabStats
+        stats =
+            Utils.Record.getByTab tab Config.tabStats
+    in
+    li [ onClick (HandleTabClick tab), class "relative" ]
+        [ span
+            [ class "flex gap-4 items-center"
+            , classList [ ( "active", model.currentTab == tab ) ]
+            ]
+            [ span [ class "flex-none" ]
+                [ stats.icon
+                    |> FeatherIcons.toHtml []
+                ]
+            , span [ class "flex-1" ] [ text stats.title ]
+            ]
+        , span
+            [ class "flex h-3 w-3 absolute top-0 right-0 -mt-1 -mr-1 p-0"
+            , classList [ ( "hidden", numActiveItemsInTab model tab == 0 ) ]
+            ]
+            [ span [ class "animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" ] []
+            , span [ class "relative inline-flex rounded-full h-3 w-3 bg-primary" ] []
+            ]
+        ]
+
+
+numActiveItemsInTab : Model -> Tab -> Int
+numActiveItemsInTab model tab =
+    case tab of
+        MissionsTab ->
+            Utils.Record.allMissions
+                |> List.filter (Utils.Unlocks.missionIsUnlocked model.level)
+                |> List.filter (\mission -> Utils.Record.getByMission mission model.missionStatuses == ButtonReady)
+                |> List.length
+
+        CommendationsTab ->
+            Utils.Record.allDwarfXpButtons
+                |> List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level)
+                |> List.filter (\dwarfXpButton -> Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses == ButtonReady)
+                |> List.length
+
+
+squadMultiplier : Model -> Float
+squadMultiplier model =
+    Utils.Record.allDwarfs
+        |> List.map (\dwarf -> DwarfXp.level (Utils.Record.getByDwarf dwarf model.dwarfXp))
+        |> List.sum
+        |> (\s -> s - 4)
+        -- Divide by 100 since it's a percentage i.e. sum of 10 levels = 0.1 multiplier
+        |> toFloat
+        |> (\x -> x / 100)
+        |> (+) 1
+
+
+renderSquadMultiplier : Model -> Html Msg
+renderSquadMultiplier model =
+    div [ class "flex flex-col items-center" ]
+        [ span [ class "w-full flex items-center justify-center gap-1" ]
+            [ span [ class "text-sm" ] [ text "Squad Multiplier" ]
+
+            -- , div [ class "tooltip tooltip-left", attribute "data-tip" "Squad Multiplier increases yield from missions.\nIncrease it by leveling up dwarfs." ]
+            , div [ class "tooltip tooltip-left", attribute "data-tip" "Increases mission yield" ]
+                [ FeatherIcons.info
+                    |> FeatherIcons.withSize 16
+                    |> FeatherIcons.toHtml []
+                ]
+            ]
+        , div [ class "text-xl font-bold" ]
+            [ text ("x" ++ floatToString (squadMultiplier model)) ]
+        ]
+
+
+renderAnimationAsAlert : AnimationSubject -> Html Msg
+renderAnimationAsAlert animation =
+    case animation of
+        AnimateAlert message alertType ->
+            let
+                alertClass : Attribute Msg
+                alertClass =
+                    case alertType of
+                        AlertSuccess ->
+                            class "alert-success"
+
+                        AlertError ->
+                            class "alert-error"
+
+                        AlertWarning ->
+                            class "alert-warning"
+
+                        AlertInfo ->
+                            class "alert-info"
             in
             div
-                [ class "fixed bg-opacity-0 text-primary drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] font-extrabold text-xl animate-smokeRise pointer-events-none"
-                , style "left" (String.fromFloat x ++ "px")
-                , style "top" (String.fromFloat y ++ "px")
+                [ class "alert shadow mb-2"
+                , alertClass
                 ]
-                [ content ]
+                [ text message ]
+
+        _ ->
+            div [] []
 
 
 view : Model -> Html Msg
 view model =
     let
-        unlockedMissions : List Mission
-        unlockedMissions =
-            List.filter (Utils.Unlocks.missionIsUnlocked model.level) allMissions
+        heightMinusHeader : Attribute Msg
+        heightMinusHeader =
+            -- Don't fully understand why this is necessary to make elements have the right height and scroll properly
+            style "height" "calc(100vh - 192px)"
     in
     div [ class "w-screen h-screen overflow-hidden flex flex-col items-center bg-base-100" ]
         [ -- Header
           renderHeader model
 
         -- Body
-        , div [ class "flex flex-col items-center gap-8 p-8" ]
-            [ div [ proseClass ]
-                [ h2 [] [ text "Missions" ]
-                ]
-            , table [ class "table table-fixed w-[750px]" ]
-                [ thead []
-                    [ tr []
-                        [ th [] [ text "Hazard Level" ]
-                        , th [] [ text "Status" ]
+        , div [ class "flex w-full drawer lg:drawer-open", heightMinusHeader ]
+            [ input [ id "my-drawer", type_ "checkbox", class "drawer-toggle" ] []
+            , div [ class "drawer-side w-64 min-w-64", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
+                [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
+                , aside
+                    [ class "bg-base-200 overflow-y-scroll h-full"
+                    , heightMinusHeader
+                    ]
+                    [ div [ class "bg-base-200 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur flex" ]
+                        [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
+                            [ div [ class "flex-0 px-2 flex flex-col items-center" ]
+                                [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
+                                    [ span [ class "uppercase text-base-content text-primary-content bg-primary leading-none px-1" ] [ text "DRG" ]
+                                    , div [ class "text-primary text-sm font-bold t-column gap-0 leading-xs text-primary" ] [ span [] [ text "Mission Control" ] ]
+                                    ]
+                                , div [ class "w-full border border-primary flex justify-center" ] [ div [ class "text-xs" ] [ text "An ", strong [ class "text-primary" ] [ text "Ulta Idle" ], text " experience" ] ]
+                                ]
+                            ]
+
+                        -- Close drawer button
+                        , label [ for "drawer", class "btn btn-square btn-ghost drawer-button lg:hidden" ]
+                            [ FeatherIcons.x
+                                |> FeatherIcons.toHtml []
+                            ]
+                        ]
+                    , div [ class "h-4" ] []
+                    , ul
+                        [ class "menu flex flex-col p-0 px-4 w-64"
+                        , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
+                        ]
+                        [ renderDrawerTabRow model MissionsTab
+                        , renderDrawerTabRow model CommendationsTab
                         ]
                     ]
-                , tbody []
-                    (List.map (renderMissionRow model) unlockedMissions)
                 ]
-            , div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ]
+            , div [ class "drawer-content w-full h-full" ]
+                [ div [ class "flex h-full" ]
+                    [ case model.currentTab of
+                        MissionsTab ->
+                            renderMissionsTab model
 
-            -- Game speed controls
-            , div
-                [ class "fixed bottom-0 mb-4 left-[50%] transform -translate-x-1/2 flex items-center gap-6"
-                , classList [ ( "hidden", not Config.isDev ) ]
+                        CommendationsTab ->
+                            renderCommendationsTab model
+                    , div [ class "h-full w-[250px] bg-base-200 items-center p-4 overflow-y-scroll" ]
+                        [ div
+                            [ class "flex flex-col gap-2"
+                            , classList
+                                [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) )
+                                ]
+                            ]
+                            (List.concat
+                                [ [ renderSquadMultiplier model ]
+                                , List.map
+                                    (renderDwarf model)
+                                    Utils.Record.allDwarfs
+                                ]
+                            )
+                        ]
+                    ]
                 ]
-                [ button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 1)) ] [ text "+1 hour" ]
-                , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 6)) ] [ text "+6 hours" ]
-                , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 12)) ] [ text "+12 hours" ]
-                , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 24)) ] [ text "+24 hours" ]
-                , button [ class "btn btn-error", onClick ResetGame ] [ text "Reset" ]
+            ]
+        , div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ]
 
-                -- [ renderGameSpeedButton model 1.0
-                -- , renderGameSpeedButton model 2.0
-                -- , renderGameSpeedButton model 8.0
-                -- , renderGameSpeedButton model 60.0
-                -- , renderGameSpeedButton model 3600.0
-                ]
+        -- Game speed controls
+        , div
+            [ class "fixed bottom-0 mb-4 left-[50%] transform -translate-x-1/2 flex items-center gap-6"
+            , classList [ ( "hidden", not Config.isDev ) ]
+            ]
+            [ button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 1)) ] [ text "+1 hour" ]
+            , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 6)) ] [ text "+6 hours" ]
+            , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 12)) ] [ text "+12 hours" ]
+            , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 24)) ] [ text "+24 hours" ]
+            , button [ class "btn btn-error", onClick ResetGame ] [ text "Reset" ]
             ]
         , div []
             (List.map renderAnimation model.animations)
+        , div
+            [ class "toast toast-center toast-bottom"
+            , class "gap-0" -- Note we do the zero gap plus margin bottom on toast strategy because we render toasts as empty divs after they expire for a period of time. It looks weird if the empty divs add space through non-zero gap.
+            ]
+            (model.animations
+                |> List.filterMap identity
+                |> List.map (\(Animation _ _ subject) -> subject)
+                |> List.map renderAnimationAsAlert
+            )
         ]

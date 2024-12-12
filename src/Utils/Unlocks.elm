@@ -44,3 +44,18 @@ kindIsUnlocked currentLevel kind =
             (\( unlockLevel, unlockStatsList ) ->
                 List.any (.kind >> (==) kind) unlockStatsList && unlockLevel <= currentLevel
             )
+
+
+dwarfXpButtonIsUnlocked : Int -> DwarfXpButton -> Bool
+dwarfXpButtonIsUnlocked currentLevel dwarfXpButton =
+    case (Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats).unlock of
+        Nothing ->
+            True
+
+        Just unlockCondition ->
+            kindIsUnlocked currentLevel unlockCondition
+
+
+dwarfXpButtonsFeatureUnlocked : Int -> Bool
+dwarfXpButtonsFeatureUnlocked level =
+    kindIsUnlocked level UnlockDwarfXpButtons

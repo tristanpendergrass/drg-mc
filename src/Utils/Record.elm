@@ -7,6 +7,11 @@ import Types exposing (..)
 -- Missions
 
 
+allMissions : List Mission
+allMissions =
+    [ Haz1, Haz2, Haz3, Haz4, Haz5 ]
+
+
 getByMission : Mission -> MissionRecord a -> a
 getByMission mission record =
     case mission of
@@ -74,3 +79,163 @@ mapResources f record =
 addResourceRecords : ResourceRecord Int -> ResourceRecord Int -> ResourceRecord Int
 addResourceRecords a b =
     mapResources (\r x -> x + getByResource r b) a
+
+
+
+-- Dwarfs
+
+
+allDwarfs : List Dwarf
+allDwarfs =
+    [ Scout, Gunner, Engineer, Driller ]
+
+
+dwarfRecord : a -> DwarfRecord a
+dwarfRecord a =
+    { scout = a
+    , gunner = a
+    , engineer = a
+    , driller = a
+    }
+
+
+getByDwarf : Dwarf -> DwarfRecord a -> a
+getByDwarf dwarf =
+    case dwarf of
+        Scout ->
+            .scout
+
+        Gunner ->
+            .gunner
+
+        Engineer ->
+            .engineer
+
+        Driller ->
+            .driller
+
+
+setByDwarf : Dwarf -> a -> DwarfRecord a -> DwarfRecord a
+setByDwarf dwarf value record =
+    case dwarf of
+        Scout ->
+            { record | scout = value }
+
+        Gunner ->
+            { record | gunner = value }
+
+        Engineer ->
+            { record | engineer = value }
+
+        Driller ->
+            { record | driller = value }
+
+
+updateByDwarf : Dwarf -> (a -> a) -> DwarfRecord a -> DwarfRecord a
+updateByDwarf dwarf f record =
+    setByDwarf dwarf (f (getByDwarf dwarf record)) record
+
+
+
+-- Dwarf Xp Buttons
+
+
+allDwarfXpButtons : List DwarfXpButton
+allDwarfXpButtons =
+    [ DwarfXpButton1
+    , DwarfXpButton2
+    , DwarfXpButton3
+    , DwarfXpButton4
+    , DwarfXpButton5
+    ]
+
+
+dwarfXpButtonRecord : a -> DwarfXpButtonRecord a
+dwarfXpButtonRecord a =
+    { dwarfXpButton1 = a
+    , dwarfXpButton2 = a
+    , dwarfXpButton3 = a
+    , dwarfXpButton4 = a
+    , dwarfXpButton5 = a
+    }
+
+
+getByDwarfXpButton : DwarfXpButton -> DwarfXpButtonRecord a -> a
+getByDwarfXpButton dwarfXpButton record =
+    case dwarfXpButton of
+        DwarfXpButton1 ->
+            record.dwarfXpButton1
+
+        DwarfXpButton2 ->
+            record.dwarfXpButton2
+
+        DwarfXpButton3 ->
+            record.dwarfXpButton3
+
+        DwarfXpButton4 ->
+            record.dwarfXpButton4
+
+        DwarfXpButton5 ->
+            record.dwarfXpButton5
+
+
+setByDwarfXpButton : DwarfXpButton -> a -> DwarfXpButtonRecord a -> DwarfXpButtonRecord a
+setByDwarfXpButton dwarfXpButton value record =
+    case dwarfXpButton of
+        DwarfXpButton1 ->
+            { record | dwarfXpButton1 = value }
+
+        DwarfXpButton2 ->
+            { record | dwarfXpButton2 = value }
+
+        DwarfXpButton3 ->
+            { record | dwarfXpButton3 = value }
+
+        DwarfXpButton4 ->
+            { record | dwarfXpButton4 = value }
+
+        DwarfXpButton5 ->
+            { record | dwarfXpButton5 = value }
+
+
+updateByDwarfXpButton : DwarfXpButton -> (a -> a) -> DwarfXpButtonRecord a -> DwarfXpButtonRecord a
+updateByDwarfXpButton dwarfXpButton f record =
+    setByDwarfXpButton dwarfXpButton (f (getByDwarfXpButton dwarfXpButton record)) record
+
+
+
+-- Tabs
+
+
+allTabs : List Tab
+allTabs =
+    [ MissionsTab
+    , CommendationsTab
+    ]
+
+
+tabRecord : a -> TabRecord a
+tabRecord a =
+    { missionsTab = a
+    , commendationsTab = a
+    }
+
+
+getByTab : Tab -> TabRecord a -> a
+getByTab tab record =
+    case tab of
+        MissionsTab ->
+            record.missionsTab
+
+        CommendationsTab ->
+            record.commendationsTab
+
+
+setByTab : Tab -> a -> TabRecord a -> TabRecord a
+setByTab tab value record =
+    case tab of
+        MissionsTab ->
+            { record | missionsTab = value }
+
+        CommendationsTab ->
+            { record | commendationsTab = value }

@@ -21,6 +21,14 @@ There's some steps to follow for the first deploy to modify from the elm-empty-p
 * Log into Github on an account that can edit settings of your project
 * Your repo -> Settings -> Pages -> Build and Deployment -> Branch -> master branch, /docs folder
 
+# Testing
+
+```
+$ npm test
+$ npm test path/to/file
+$ npm test path/to/file -- --watch
+```
+
 # Defaults
 * [Tailwind 3.*](https://tailwindcss.com/) loaded automatically (which includes a css reset)
 * [DaisyUI](https://daisyui.com/docs/install/) loaded automatically
@@ -28,18 +36,20 @@ There's some steps to follow for the first deploy to modify from the elm-empty-p
 
 # Todos
 
-# V?
+# v?
 - [ ] Show unlock modal list
 
-# V2
-- [ ] Add animation of resource gained after click
-- [ ] Add modal triggers on load and after leveling up
-- [ ] Add right sidebar showing dwarf levels
-- [ ] Add tab system on left
-- [ ] Add tab where dwarfs can be leveled
-- [ ] Finalize unlocks of new features
+# v0.2
+- [x] Add animation of resource gained after click
+- [x] Add right sidebar showing dwarf levels
+- [x] Add tab system on left
+- [x] Add tab where dwarfs can be leveled
+- [x] Finalize unlocks of new features
+- [x] Add tab selection and color scheme to local storage
+- [x] Hide dwarf display sidebar if not unlocked dwarf xp buttons
+- [x] Automated tests for saving
 
-# V1
+# v0.1
 - [x] Finalize leveling schedule
 - [x] Add message advertising "next unlock at.."
 - [x] Fav icon

@@ -1,6 +1,8 @@
 module Utils.Timer exposing (..)
 
 import Duration exposing (Duration)
+import Json.Decode as D
+import Json.Encode as E
 import Quantity exposing (Quantity)
 import Utils.Percent exposing (Percent)
 
@@ -19,7 +21,7 @@ create =
 
 createAtPercent : Percent -> Timer
 createAtPercent value =
-    Timer { current = value, hasEverTicked = False }
+    Timer { current = value, hasEverTicked = True }
 
 
 hasTickedAVeryShortTime : Duration -> Timer -> Bool
@@ -106,3 +108,42 @@ incrementUntilComplete totalDuration delta timer =
 
     else
         ( timer_, Quantity.zero )
+
+
+
+-- Decoders and Encoders
+
+
+timerEncoder : Timer -> E.Value
+timerEncoder (Timer { current, hasEverTicked }) =
+    E.object
+        [ ( "current", Utils.Percent.percentEncoder current )
+        , ( "hasEverTicked", E.bool hasEverTicked )
+        ]
+
+
+timerV0_1Decoder : D.Decoder Timer
+timerV0_1Decoder =
+    let
+        createTimer : Percent -> Timer
+        createTimer current =
+            Timer { current = current, hasEverTicked = True }
+    in
+    D.map createTimer (D.field "current" Utils.Percent.percentDecoder)
+
+
+timerV0_2Decoder : D.Decoder Timer
+timerV0_2Decoder =
+    let
+        createTimer : Percent -> Bool -> Timer
+        createTimer current hasEverTicked =
+            Timer { current = current, hasEverTicked = hasEverTicked }
+    in
+    D.map2 createTimer
+        (D.field "current" Utils.Percent.percentDecoder)
+        (D.field "hasEverTicked" D.bool)
+
+
+timerDecoder : D.Decoder Timer
+timerDecoder =
+    D.oneOf [ timerV0_1Decoder, timerV0_2Decoder ]

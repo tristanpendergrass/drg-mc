@@ -67,8 +67,13 @@ stringToTheme str =
             Nothing
 
 
-renderThemeDropdown : Model -> Theme -> Html Msg
-renderThemeDropdown model activeTheme =
+defaultTheme : Theme
+defaultTheme =
+    Default
+
+
+renderThemeDropdown : Model -> Maybe Theme -> Html Msg
+renderThemeDropdown model maybeActiveTheme =
     let
         filteredThemes : List Theme
         filteredThemes =
@@ -109,6 +114,16 @@ renderThemeDropdown model activeTheme =
             ]
             (List.map
                 (\theme ->
+                    let
+                        isActive : Bool
+                        isActive =
+                            case maybeActiveTheme of
+                                Just activeTheme ->
+                                    theme == activeTheme
+
+                                Nothing ->
+                                    theme == defaultTheme
+                    in
                     li []
                         [ input
                             [ type_ "radio"
@@ -116,7 +131,7 @@ renderThemeDropdown model activeTheme =
                             , class "theme-controller btn btn-sm btn-block btn-ghost justify-start"
                             , attribute "aria-label" (themeToString theme)
                             , value (themeToString theme)
-                            , checked (theme == activeTheme)
+                            , checked isActive
                             , onClick (HandleSetThemeClick theme)
                             ]
                             []

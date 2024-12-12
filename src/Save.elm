@@ -1,14 +1,20 @@
 module Save exposing (..)
 
+import Config
+import DwarfXp
 import Json.Decode as D exposing (Decoder)
 import Json.Decode.Extra
+import Json.Decode.Pipeline exposing (hardcoded, optional, required)
 import Json.Encode as E
 import Json.Encode.Extra
+import List.Extra
 import Quantity
+import Random
 import Theme
 import Time
 import Types exposing (..)
 import Utils.Percent
+import Utils.Record
 import Utils.Timer
 
 
@@ -16,10 +22,11 @@ import Utils.Timer
 -- Versions
 
 
-decodeAnyVersion : Decoder Model
-decodeAnyVersion =
+decodeAnyVersion : Random.Seed -> Decoder Model
+decodeAnyVersion seed =
     D.oneOf
-        [ v1Decoder
+        [ v0_2Decoder seed
+        , v0_1Decoder
         ]
 
 
@@ -38,11 +45,11 @@ posixEncoder posix =
 
 
 
--- V1
+-- v0.1
 
 
-v1ResourcesDecoder : Decoder (ResourceRecord Int)
-v1ResourcesDecoder =
+v0_1ResourcesDecoder : Decoder (ResourceRecord Int)
+v0_1ResourcesDecoder =
     D.map ResourceRecord <|
         D.field "gold" D.int
 
@@ -53,28 +60,22 @@ percentDecoder =
         D.map Utils.Percent.float D.float
 
 
-timerDecoder : Decoder Utils.Timer.Timer
-timerDecoder =
-    D.field "current" <|
-        D.map Utils.Timer.createAtPercent percentDecoder
+buttonStatusDecoder : Decoder ButtonStatus
+buttonStatusDecoder =
+    D.oneOf
+        [ D.null ButtonReady
+        , D.map ButtonOnCooldown Utils.Timer.timerDecoder
+        ]
 
 
-v1MissionStatusesDecoder : Decoder (MissionRecord MissionStatus)
-v1MissionStatusesDecoder =
-    let
-        missionStatusDecoder : Decoder MissionStatus
-        missionStatusDecoder =
-            D.oneOf
-                [ D.null MissionComplete
-                , D.map MissionInProgress timerDecoder
-                ]
-    in
+v0_1MissionStatusesDecoder : Decoder (MissionRecord ButtonStatus)
+v0_1MissionStatusesDecoder =
     D.map5 MissionRecord
-        (D.field "haz1" missionStatusDecoder)
-        (D.field "haz2" missionStatusDecoder)
-        (D.field "haz3" missionStatusDecoder)
-        (D.field "haz4" missionStatusDecoder)
-        (D.field "haz5" missionStatusDecoder)
+        (D.field "haz1" buttonStatusDecoder)
+        (D.field "haz2" buttonStatusDecoder)
+        (D.field "haz3" buttonStatusDecoder)
+        (D.field "haz4" buttonStatusDecoder)
+        (D.field "haz5" buttonStatusDecoder)
 
 
 themeDecoder : Decoder Theme
@@ -91,15 +92,17 @@ themeDecoder =
             )
 
 
-v1Decoder : Decoder Model
-v1Decoder =
-    D.map6
-        (\currentTime theme level credits resources missionStatuses ->
+v0_1Decoder : Decoder Model
+v0_1Decoder =
+    D.map7
+        (\_ currentTime currentTab level credits resources missionStatuses ->
             let
                 model : Model
                 model =
-                    { currentTime = currentTime
-                    , theme = theme
+                    { seed = Random.initialSeed 0
+                    , currentTime = currentTime
+                    , currentTab = currentTab
+                    , theme = Just Default
                     , level = level
                     , credits = credits
                     , resources = resources
@@ -108,61 +111,213 @@ v1Decoder =
                     , gameSpeed = 1
                     , debugAddedTime = Quantity.zero
                     , animations = []
+                    , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
+                    , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
                     }
             in
             model
         )
+        -- Note we later revised the convention to "v0.1" but in users' localstorage it will be v1.
+        -- After all old users of "v1" are on v0.2 or later we can remove this in preparation for the real "v1" someday.
+        (D.field "version" (versionDecoder "v1"))
         (D.field "currentTime" posixDecoder)
-        (D.oneOf
-            [ D.field "theme" themeDecoder
-            , D.succeed Default
-            ]
-        )
+        (D.succeed MissionsTab)
         (D.field "level" D.int)
         (D.field "credits" D.float)
-        (D.field "resources" v1ResourcesDecoder)
-        (D.field "missionStatuses" v1MissionStatusesDecoder)
+        (D.field "resources" v0_1ResourcesDecoder)
+        (D.field "missionStatuses" v0_1MissionStatusesDecoder)
 
 
-percentEncoder : Utils.Percent.Percent -> E.Value
-percentEncoder percent =
-    E.float (Utils.Percent.toFloat percent)
+versionDecoder : String -> Decoder ()
+versionDecoder expectedVersion =
+    D.string
+        |> D.andThen
+            (\decodedVersion ->
+                if decodedVersion == expectedVersion then
+                    D.succeed ()
+
+                else
+                    D.fail ("This is the parser for " ++ expectedVersion ++ " but this content is " ++ decodedVersion)
+            )
 
 
-timerEncoder : Utils.Timer.Timer -> E.Value
-timerEncoder timer =
-    E.object
-        [ ( "current", percentEncoder (Utils.Timer.percentComplete timer) )
-        ]
+v0_2Decoder : Random.Seed -> Decoder Model
+v0_2Decoder initialSeed =
+    D.field "v0.2" <|
+        (D.succeed
+            (\currentTime currentTab theme level credits resources missionStatuses dwarfXp dwarfXpButtonStatuses ->
+                let
+                    model : Model
+                    model =
+                        { seed = initialSeed
+                        , currentTime = currentTime
+                        , currentTab = currentTab
+                        , theme = theme
+                        , level = level
+                        , credits = credits
+                        , resources = resources
+                        , missionStatuses = missionStatuses
+                        , saveTimer = Utils.Timer.create
+                        , gameSpeed = 1
+                        , debugAddedTime = Quantity.zero
+                        , animations = []
+                        , dwarfXp = dwarfXp
+                        , dwarfXpButtonStatuses = dwarfXpButtonStatuses
+                        }
+                in
+                model
+            )
+            |> required "currentTime" posixDecoder
+            |> required "currentTab" v0_2TabDecoder
+            |> optional "theme" (D.map Just themeDecoder) Nothing
+            |> required "level" D.int
+            |> required "credits" D.float
+            |> required "resources" v0_1ResourcesDecoder
+            |> required "missionStatuses" v0_1MissionStatusesDecoder
+            |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
+            |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
+        )
 
 
-v1MissionStatusEncoder : MissionStatus -> E.Value
-v1MissionStatusEncoder status =
+v0_2DwarfXpButtonRecordDecoder : Decoder a -> Decoder (DwarfXpButtonRecord a)
+v0_2DwarfXpButtonRecordDecoder decoder =
+    D.map5
+        (\dwarfXpButton1 dwarfXpButton2 dwarfXpButton3 dwarfXpButton4 dwarfXpButton5 ->
+            { dwarfXpButton1 = dwarfXpButton1
+            , dwarfXpButton2 = dwarfXpButton2
+            , dwarfXpButton3 = dwarfXpButton3
+            , dwarfXpButton4 = dwarfXpButton4
+            , dwarfXpButton5 = dwarfXpButton5
+            }
+        )
+        (D.field "dwarfXpButton1" decoder)
+        (D.field "dwarfXpButton2" decoder)
+        (D.field "dwarfXpButton3" decoder)
+        (D.field "dwarfXpButton4" decoder)
+        (D.field "dwarfXpButton5" decoder)
+
+
+v0_2TabDecoder : Decoder Tab
+v0_2TabDecoder =
+    D.string
+        |> D.andThen
+            (\tabString ->
+                case List.Extra.find (\t -> (Utils.Record.getByTab t Config.tabStats).title == tabString) Utils.Record.allTabs of
+                    Just tab ->
+                        D.succeed tab
+
+                    Nothing ->
+                        D.fail ("Unknown tab: " ++ tabString)
+            )
+
+
+v0_2DwarfRecordDecoder : Decoder a -> Decoder (DwarfRecord a)
+v0_2DwarfRecordDecoder valueDecoder =
+    D.map4
+        (\scoutVal gunnerVal engineerVal drillerVal ->
+            { scout = scoutVal
+            , gunner = gunnerVal
+            , engineer = engineerVal
+            , driller = drillerVal
+            }
+        )
+        (D.field "scout" valueDecoder)
+        (D.field "gunner" valueDecoder)
+        (D.field "engineer" valueDecoder)
+        (D.field "driller" valueDecoder)
+
+
+buttonStatusEncoder : ButtonStatus -> E.Value
+buttonStatusEncoder status =
     case status of
-        MissionComplete ->
+        ButtonReady ->
             E.null
 
-        MissionInProgress timer ->
-            E.object
-                [ ( "current", timerEncoder timer )
-                ]
+        ButtonOnCooldown timer ->
+            Utils.Timer.timerEncoder timer
 
 
-v1Encoder : Model -> E.Value
-v1Encoder model =
+v0_2TabEncoder : Tab -> E.Value
+v0_2TabEncoder tab =
+    let
+        stats : TabStats
+        stats =
+            Utils.Record.getByTab tab Config.tabStats
+    in
+    E.string stats.title
+
+
+v0_2EncodeButtonStatus : ButtonStatus -> E.Value
+v0_2EncodeButtonStatus status =
+    case status of
+        ButtonReady ->
+            E.null
+
+        ButtonOnCooldown timer ->
+            Utils.Timer.timerEncoder timer
+
+
+v0_2DwarfXpButtonsEncoder : DwarfXpButtonRecord ButtonStatus -> E.Value
+v0_2DwarfXpButtonsEncoder buttons =
     E.object
-        [ ( "version", E.string "v1" )
-        , ( "currentTime", posixEncoder model.currentTime )
-        , ( "level", E.int model.level )
-        , ( "credits", E.float model.credits )
-        , ( "resources", E.object [ ( "gold", E.int model.resources.gold ) ] )
-        , ( "missionStatuses"
+        (Utils.Record.allDwarfXpButtons
+            |> List.map
+                (\dwarfXpButton ->
+                    let
+                        stats : DwarfXpButtonStats
+                        stats =
+                            Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+
+                        buttonStatus : ButtonStatus
+                        buttonStatus =
+                            Utils.Record.getByDwarfXpButton dwarfXpButton buttons
+                    in
+                    ( stats.id_, v0_2EncodeButtonStatus buttonStatus )
+                )
+        )
+
+
+v0_2ThemeEncoder : Maybe Theme -> E.Value
+v0_2ThemeEncoder maybeTheme =
+    case maybeTheme of
+        Nothing ->
+            E.null
+
+        Just theme ->
+            E.string (Theme.themeToString theme)
+
+
+encoder : Model -> E.Value
+encoder model =
+    E.object
+        [ ( "v0.2"
           , E.object
-                [ ( "haz1", v1MissionStatusEncoder model.missionStatuses.haz1 )
-                , ( "haz2", v1MissionStatusEncoder model.missionStatuses.haz2 )
-                , ( "haz3", v1MissionStatusEncoder model.missionStatuses.haz3 )
-                , ( "haz4", v1MissionStatusEncoder model.missionStatuses.haz4 )
-                , ( "haz5", v1MissionStatusEncoder model.missionStatuses.haz5 )
+                [ ( "currentTime", posixEncoder model.currentTime )
+                , ( "currentTab", v0_2TabEncoder model.currentTab )
+                , ( "theme", v0_2ThemeEncoder model.theme )
+                , ( "level", E.int model.level )
+                , ( "credits", E.float model.credits )
+                , ( "resources", E.object [ ( "gold", E.int model.resources.gold ) ] )
+                , ( "missionStatuses"
+                  , E.object
+                        [ ( "haz1", buttonStatusEncoder model.missionStatuses.haz1 )
+                        , ( "haz2", buttonStatusEncoder model.missionStatuses.haz2 )
+                        , ( "haz3", buttonStatusEncoder model.missionStatuses.haz3 )
+                        , ( "haz4", buttonStatusEncoder model.missionStatuses.haz4 )
+                        , ( "haz5", buttonStatusEncoder model.missionStatuses.haz5 )
+                        ]
+                  )
+                , ( "dwarfXpButtonStatuses"
+                  , v0_2DwarfXpButtonsEncoder model.dwarfXpButtonStatuses
+                  )
+                , ( "dwarfXp"
+                  , E.object
+                        [ ( "scout", E.float (DwarfXp.toFloat model.dwarfXp.scout) )
+                        , ( "gunner", E.float (DwarfXp.toFloat model.dwarfXp.gunner) )
+                        , ( "engineer", E.float (DwarfXp.toFloat model.dwarfXp.engineer) )
+                        , ( "driller", E.float (DwarfXp.toFloat model.dwarfXp.driller) )
+                        ]
+                  )
                 ]
           )
         ]

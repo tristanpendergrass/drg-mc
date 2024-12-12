@@ -1,5 +1,7 @@
 module Utils.Percent exposing (..)
 
+import Json.Decode as D
+import Json.Encode as E
 import Quantity exposing (Quantity(..))
 
 
@@ -49,3 +51,17 @@ increaseByPercent (Quantity p) value =
 reduceIntByPercent : Percent -> Int -> Int
 reduceIntByPercent (Quantity p) value =
     floor ((1 - p) * Basics.toFloat value)
+
+
+
+-- Encoders and Decoders
+
+
+percentEncoder : Percent -> E.Value
+percentEncoder percent =
+    E.float (toFloat percent)
+
+
+percentDecoder : D.Decoder Percent
+percentDecoder =
+    D.map float D.float

@@ -1,8 +1,12 @@
 module Types exposing (..)
 
 import Duration exposing (Duration)
+import FeatherIcons
+import Html exposing (a)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
+import Quantity exposing (Quantity(..))
+import Random
 import Time
 import Utils.Timer exposing (Timer)
 
@@ -14,6 +18,7 @@ import Utils.Timer exposing (Timer)
 type alias Flags =
     { now : Int
     , initialGame : D.Value
+    , initialSeed : Int
     }
 
 
@@ -34,30 +39,35 @@ type Theme
 
 
 type alias Model =
-    { currentTime : Time.Posix
+    { seed : Random.Seed
+    , currentTime : Time.Posix
+    , currentTab : Tab
     , saveTimer : Timer
-    , theme : Theme
+    , theme : Maybe Theme -- Nothing means the user has never adjusted this setting
     , level : Int
     , credits : Float -- All the credits ever earned by the player, equivalent to experience points
     , resources : ResourceRecord Int -- Current resource stocks
-    , missionStatuses : MissionRecord MissionStatus
+    , missionStatuses : MissionRecord ButtonStatus
+    , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
     , gameSpeed : Float
     , debugAddedTime : Duration
     , animations : List (Maybe Animation)
+    , dwarfXp : DwarfRecord DwarfXp
     }
 
 
 type Msg
     = NoOp
     | HandleAnimationFrame Time.Posix
-    | HandleStartMissionClick Mission
-    | HandleClaimCargoClick Mission Pointer.Event
+    | HandleMissionClick Mission Pointer.Event
     | HandleSetThemeClick Theme
     | DebugSetGameSpeed Float
     | DebugAdvanceTime Duration
     | DebugGainLevel
     | DebugLevelToMax
     | ResetGame
+    | HandleTabClick Tab
+    | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event
 
 
 
@@ -95,9 +105,9 @@ type alias MissionStats =
     }
 
 
-type MissionStatus
-    = MissionComplete -- Missions start this way too...
-    | MissionInProgress Timer
+type ButtonStatus
+    = ButtonReady -- Missions start this way too...
+    | ButtonOnCooldown Timer
 
 
 
@@ -122,6 +132,11 @@ type LevelRequirements
     | AtMaxLevel
 
 
+type DwarfLevelRequirements
+    = EarnDwarfXp Float
+    | AtMaxDwarfLevel
+
+
 
 -- Level Unlocks
 
@@ -132,6 +147,11 @@ type UnlockKind
     | UnlockHaz4
     | UnlockHaz5
     | UnlockTheme Theme
+    | UnlockDwarfXpButtons -- Once this is unlocked the whole feature becomes available along with Dwarf Xp Button 1
+    | UnlockDwarfXpButton2
+    | UnlockDwarfXpButton3
+    | UnlockDwarfXpButton4
+    | UnlockDwarfXpButton5
 
 
 type UnlockCategory
@@ -151,9 +171,101 @@ type alias AnimationLocation =
     ( Float, Float )
 
 
+type AlertType
+    = AlertSuccess
+    | AlertWarning
+    | AlertError
+    | AlertInfo
+
+
 type AnimationSubject
-    = AnimateCreditsGain Float
+    = AnimateCreditsGain Float AnimationLocation
+    | AnimateDwarfXp Dwarf DwarfXp AnimationLocation
+    | AnimateAlert String AlertType
 
 
 type Animation
-    = Animation Utils.Timer.Timer Duration AnimationLocation AnimationSubject
+    = Animation Utils.Timer.Timer Duration AnimationSubject
+
+
+
+-- Dwarfs
+
+
+type Dwarf
+    = Scout
+    | Gunner
+    | Engineer
+    | Driller
+
+
+type alias DwarfStats =
+    { name : String
+    , imgSrc : String
+    }
+
+
+type alias DwarfRecord a =
+    { scout : a
+    , gunner : a
+    , engineer : a
+    , driller : a
+    }
+
+
+
+-- Dwarf XP Buttons
+
+
+type DwarfXpPoint
+    = DwarfXpPoint
+
+
+type alias DwarfXp =
+    Quantity Float DwarfXpPoint
+
+
+type DwarfXpButton
+    = DwarfXpButton1
+    | DwarfXpButton2
+    | DwarfXpButton3
+    | DwarfXpButton4
+    | DwarfXpButton5
+
+
+type alias DwarfXpButtonStats =
+    { id_ : String
+    , xp : DwarfXp
+    , unlock : Maybe UnlockKind
+    , duration : Duration
+    }
+
+
+type alias DwarfXpButtonRecord a =
+    { dwarfXpButton1 : a
+    , dwarfXpButton2 : a
+    , dwarfXpButton3 : a
+    , dwarfXpButton4 : a
+    , dwarfXpButton5 : a
+    }
+
+
+
+-- Tabs
+
+
+type Tab
+    = MissionsTab
+    | CommendationsTab
+
+
+type alias TabStats =
+    { title : String
+    , icon : FeatherIcons.Icon
+    }
+
+
+type alias TabRecord a =
+    { missionsTab : a
+    , commendationsTab : a
+    }
