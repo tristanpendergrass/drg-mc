@@ -38,6 +38,7 @@ $ npm test path/to/file -- --watch
 
 # v?
 - [ ] Show unlock modal list
+- [ ] Add elm-review
 
 # v0.2
 - [x] Add animation of resource gained after click
