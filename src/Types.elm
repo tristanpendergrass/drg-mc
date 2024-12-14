@@ -38,8 +38,16 @@ type Theme
     | Luxury
 
 
+type alias DebugSettings =
+    { gameSpeed : Float
+    , addedTime : Duration -- When we let the player "fast forward" a set duration we increment this number, which is added to the current time before all calculations
+    , buttonCooldownInstant : Bool
+    }
+
+
 type alias Model =
     { seed : Random.Seed
+    , debugSettings : DebugSettings
     , currentTime : Time.Posix
     , currentTab : Tab
     , saveTimer : Timer
@@ -49,8 +57,6 @@ type alias Model =
     , resources : ResourceRecord Int -- Current resource stocks
     , missionStatuses : MissionRecord ButtonStatus
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
-    , gameSpeed : Float
-    , debugAddedTime : Duration
     , animations : List (Maybe Animation)
     , dwarfXp : DwarfRecord DwarfXp
     }
@@ -63,6 +69,7 @@ type Msg
     | HandleSetThemeClick Theme
     | DebugSetGameSpeed Float
     | DebugAdvanceTime Duration
+    | DebugSetButtonCooldownInstant Bool
     | DebugGainLevel
     | DebugLevelToMax
     | ResetGame

@@ -43,6 +43,7 @@ main =
 defaultModel : Random.Seed -> Time.Posix -> Model
 defaultModel initialSeed now =
     { seed = initialSeed
+    , debugSettings = Config.defaultDebugSettings
     , currentTime = now
     , currentTab = MissionsTab
     , saveTimer = Utils.Timer.create
@@ -57,8 +58,6 @@ defaultModel initialSeed now =
         , haz4 = ButtonReady
         , haz5 = ButtonReady
         }
-    , gameSpeed = 1.0
-    , debugAddedTime = Quantity.zero
     , animations = []
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
     , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
@@ -144,6 +143,15 @@ adjustClientPos ( x, y ) =
     ( x + 50, y - 25 )
 
 
+setButtonCooldown : Model -> ButtonStatus
+setButtonCooldown model =
+    if model.debugSettings.buttonCooldownInstant then
+        ButtonReady
+
+    else
+        ButtonOnCooldown Utils.Timer.create
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -163,7 +171,7 @@ update msg model =
                 newCurrentTime : Time.Posix
                 newCurrentTime =
                     Time.posixToMillis n
-                        + floor (Duration.inMilliseconds model.debugAddedTime)
+                        + floor (Duration.inMilliseconds model.debugSettings.addedTime)
                         |> Time.millisToPosix
 
                 delta : Duration
@@ -171,7 +179,7 @@ update msg model =
                     Time.posixToMillis newCurrentTime
                         - Time.posixToMillis model.currentTime
                         |> toFloat
-                        |> (\x -> x * model.gameSpeed)
+                        |> (\x -> x * model.debugSettings.gameSpeed)
                         |> Duration.milliseconds
 
                 updateMissionStatuses : Mission -> MissionRecord ButtonStatus -> MissionRecord ButtonStatus
@@ -268,7 +276,7 @@ update msg model =
 
                 newMissionStatuses : MissionRecord ButtonStatus
                 newMissionStatuses =
-                    Utils.Record.setByMission mission (ButtonOnCooldown Utils.Timer.create) model.missionStatuses
+                    Utils.Record.setByMission mission (setButtonCooldown model) model.missionStatuses
 
                 newResources : ResourceRecord Int
                 newResources =
@@ -300,7 +308,7 @@ update msg model =
 
                 newStatuses : DwarfXpButtonRecord ButtonStatus
                 newStatuses =
-                    Utils.Record.setByDwarfXpButton dwarfXpButton (ButtonOnCooldown Utils.Timer.create) model.dwarfXpButtonStatuses
+                    Utils.Record.setByDwarfXpButton dwarfXpButton (setButtonCooldown model) model.dwarfXpButtonStatuses
 
                 ( ( dwarf, newDwarfXp ), newSeed ) =
                     Random.step (dwarfXpGenerator stats.xp model.dwarfXp) model.seed
@@ -347,10 +355,28 @@ update msg model =
             ( { model | theme = Just theme }, Cmd.none )
 
         DebugSetGameSpeed speed ->
-            ( { model | gameSpeed = speed }, Cmd.none )
+            let
+                debugSettings : DebugSettings
+                debugSettings =
+                    model.debugSettings
+            in
+            ( { model | debugSettings = { debugSettings | gameSpeed = speed } }, Cmd.none )
 
         DebugAdvanceTime duration ->
-            ( { model | debugAddedTime = Quantity.plus model.debugAddedTime duration }, Cmd.none )
+            let
+                debugSettings : DebugSettings
+                debugSettings =
+                    model.debugSettings
+            in
+            ( { model | debugSettings = { debugSettings | addedTime = Quantity.plus debugSettings.addedTime duration } }, Cmd.none )
+
+        DebugSetButtonCooldownInstant newVal ->
+            let
+                debugSettings : DebugSettings
+                debugSettings =
+                    model.debugSettings
+            in
+            ( { model | debugSettings = { debugSettings | buttonCooldownInstant = newVal } }, Cmd.none )
 
         DebugGainLevel ->
             ( { model | level = model.level + 1 }, Cmd.none )
@@ -625,7 +651,7 @@ renderGameSpeedButton model speed =
     button
         [ class "btn btn-square"
         , onClick (DebugSetGameSpeed speed)
-        , classList [ ( "btn-primary", model.gameSpeed == speed ) ]
+        , classList [ ( "btn-primary", model.debugSettings.gameSpeed == speed ) ]
         ]
         [ text (String.fromFloat speed ++ "x") ]
 

@@ -39,6 +39,7 @@ $ npm test path/to/file -- --watch
 # v?
 - [ ] Show unlock modal list
 - [ ] Add elm-review
+- [ ] Debug: allow buttons to have no cd
 
 # v0.2
 - [x] Add animation of resource gained after click

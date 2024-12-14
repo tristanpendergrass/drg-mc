@@ -174,3 +174,11 @@ tabStats =
         , icon = FeatherIcons.award
         }
     }
+
+
+defaultDebugSettings : DebugSettings
+defaultDebugSettings =
+    { gameSpeed = 1
+    , addedTime = Quantity.zero
+    , buttonCooldownInstant = True
+    }
