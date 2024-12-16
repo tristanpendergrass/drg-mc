@@ -15,8 +15,8 @@ type Env
 
 env : Env
 env =
-    -- Dev
-    Prod
+    -- Prod
+    Dev
 
 
 isProd : Bool
@@ -173,6 +173,10 @@ tabStats =
         { title = "Dwarf Leveling"
         , icon = FeatherIcons.award
         }
+    , settingsTab =
+        { title = "Settings"
+        , icon = FeatherIcons.settings
+        }
     }
 
 
@@ -180,5 +184,5 @@ defaultDebugSettings : DebugSettings
 defaultDebugSettings =
     { gameSpeed = 1
     , addedTime = Quantity.zero
-    , buttonCooldownInstant = True
+    , buttonCooldownInstant = False
     }

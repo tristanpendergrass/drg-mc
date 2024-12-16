@@ -36,10 +36,44 @@ $ npm test path/to/file -- --watch
 
 # Todos
 
-# v?
+# v1 feature summary
+* Modals for each feature unlock
+* Dwarf commendation
+* Dwarf perks
+* Forge: Dwarf equipment
+* Abyss bar daily special
+* Biomes & mineral market
+* R&D projects
+* Bonus visuals overhaul. Display like relics in Sts
+
+# Beyond v1
+* Deep dives
+* Advanced cosmetic settings
+
+
+# Bugs
+- [ ] Can't close theme dropdown on ipad
+- [ ] Scrollable areas as missized on ipad
+
+# v0.3
 - [ ] Show unlock modal list
 - [ ] Add elm-review
-- [ ] Debug: allow buttons to have no cd
+- [x] Debug: allow buttons to have no cd
+- [ ] Way to reset the game for real players
+  - [x] Add button
+  - [ ] Add "Are you sure" modal
+- [ ] Abyss Bar daily special
+  - [ ] Design
+  - [ ] Implement
+  - [ ] Set up level it unlocks at
+  - [ ] Define final values
+- [ ] Biomes
+  - [ ] Design
+  - [ ] Add section showing how much of each resource in sidebar
+  - [ ] Add mineral trade terminal where resources converted to credits
+  - [ ] Add ability to choose biome for mission and corresponding change in yield
+  - [ ] Set up level where feature unlocks and unlock of additional biomes
+  - [ ] Define final values
 
 # v0.2
 - [x] Add animation of resource gained after click

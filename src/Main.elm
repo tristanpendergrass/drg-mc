@@ -932,6 +932,31 @@ renderCommendationsTab model =
         ]
 
 
+renderSettingsTab : Model -> Html Msg
+renderSettingsTab model =
+    div [ class "flex flex-col items-center gap-8 p-8 flex-grow overflow-y-scroll" ]
+        [ div [ proseClass ]
+            [ h2 [] [ text "Settings" ]
+            ]
+        , button [ class "btn btn-error", onClick ResetGame ] [ text "Reset game" ]
+        , div [ class "divider" ] []
+        , div [ proseClass ]
+            [ h2 [] [ text "Admin crimes" ]
+            , div [ class "flex items-center gap-1" ]
+                [ label [ for "button-no-cd" ] [ text "No CD button" ]
+                , input
+                    [ type_ "checkbox"
+                    , class "checkbox"
+                    , id "button-no-cd"
+                    , checked model.debugSettings.buttonCooldownInstant
+                    , onCheck DebugSetButtonCooldownInstant
+                    ]
+                    []
+                ]
+            ]
+        ]
+
+
 renderDrawerTabRow : Model -> Tab -> Html Msg
 renderDrawerTabRow model tab =
     let
@@ -974,6 +999,9 @@ numActiveItemsInTab model tab =
                 |> List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level)
                 |> List.filter (\dwarfXpButton -> Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses == ButtonReady)
                 |> List.length
+
+        SettingsTab ->
+            0
 
 
 squadMultiplier : Model -> Float
@@ -1081,6 +1109,7 @@ view model =
                         ]
                         [ renderDrawerTabRow model MissionsTab
                         , renderDrawerTabRow model CommendationsTab
+                        , renderDrawerTabRow model SettingsTab
                         ]
                     ]
                 ]
@@ -1092,6 +1121,9 @@ view model =
 
                         CommendationsTab ->
                             renderCommendationsTab model
+
+                        SettingsTab ->
+                            renderSettingsTab model
                     , div [ class "h-full w-[250px] bg-base-200 items-center p-4 overflow-y-scroll" ]
                         [ div
                             [ class "flex flex-col gap-2"
@@ -1111,18 +1143,6 @@ view model =
                 ]
             ]
         , div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ]
-
-        -- Game speed controls
-        , div
-            [ class "fixed bottom-0 mb-4 left-[50%] transform -translate-x-1/2 flex items-center gap-6"
-            , classList [ ( "hidden", not Config.isDev ) ]
-            ]
-            [ button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 1)) ] [ text "+1 hour" ]
-            , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 6)) ] [ text "+6 hours" ]
-            , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 12)) ] [ text "+12 hours" ]
-            , button [ class "btn", onClick (DebugAdvanceTime (Duration.hours 24)) ] [ text "+24 hours" ]
-            , button [ class "btn btn-error", onClick ResetGame ] [ text "Reset" ]
-            ]
         , div []
             (List.map renderAnimation model.animations)
         , div

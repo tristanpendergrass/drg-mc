@@ -261,9 +261,12 @@ type alias DwarfXpButtonRecord a =
 -- Tabs
 
 
-type Tab
+type
+    Tab
+    -- Don't forget to update allTabs too!
     = MissionsTab
     | CommendationsTab
+    | SettingsTab
 
 
 type alias TabStats =
@@ -275,4 +278,5 @@ type alias TabStats =
 type alias TabRecord a =
     { missionsTab : a
     , commendationsTab : a
+    , settingsTab : a
     }
