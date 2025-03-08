@@ -4,8 +4,6 @@ import FeatherIcons
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Events.Extra.Pointer as Pointer
-import Json.Decode as D
 import Types exposing (..)
 import Utils.Unlocks
 
@@ -90,8 +88,6 @@ renderThemeDropdown model maybeActiveTheme =
             [ tabindex 0
             , attribute "role" "button"
             , class "btn m-1"
-            , attribute "data-action" "dropdown-toggle"
-            , Pointer.onDown (\_ -> NoOp)
             ]
             [ text "Theme"
             , FeatherIcons.chevronUp
@@ -136,7 +132,7 @@ renderThemeDropdown model maybeActiveTheme =
                             , attribute "aria-label" (themeToString theme)
                             , value (themeToString theme)
                             , checked isActive
-                            , Pointer.onDown (\_ -> HandleSetThemeClick theme)
+                            , onClick (HandleSetThemeClick theme)
                             ]
                             []
                         ]
