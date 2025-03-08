@@ -7,6 +7,7 @@
     "cssnano": "^4.1.10",
     "daisyui": "^4.5.0",
     "elm": "^0.19.1-5",
+    "elm-format": "^0.8.7",
     "elm-hot": "^1.1.4",
     "elm-test": "^0.19.1-revision12",
     "node-elm-compiler": "^5.0.4",
@@ -33,10 +34,8 @@
     "build-mac": "npm-run-all -s clean-prod-mac parcel:build",
     "start-mac": "npm-run-all -s clean-dev-mac -p parcel:serve",
     "test": "npx elm-test"
-
   },
   "dependencies": {
-    "elm-format": "^0.8.7",
     "elm-pep": "^1.0.6"
   }
 }
