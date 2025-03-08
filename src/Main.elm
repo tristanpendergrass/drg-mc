@@ -889,13 +889,17 @@ renderMissionsTab model =
         unlockedMissions =
             List.filter (Utils.Unlocks.missionIsUnlocked model.level) Utils.Record.allMissions
     in
-    div [ class "flex flex-col items-center gap-8 p-8 flex-grow overflow-scroll" ]
-        [ div [ proseClass ]
-            [ h2 [] [ text "Missions" ]
+    div [ class "flex flex-col items-center gap-8 flex-grow overflow-scroll" ]
+        [ div [ class "h-24 bg-base-200 w-full flex items-center justify-center" ]
+            [ div [ proseClass ]
+                [ h2 [] [ text "Missions" ]
+                ]
             ]
-        , table [ class "table table-fixed w-[750px] max-w-full" ]
-            [ tbody []
-                (List.map (renderMissionRow model) unlockedMissions)
+        , div [ class "p-8 w-full h-full" ]
+            [ table [ class "table table-fixed w-[750px] max-w-full" ]
+                [ tbody []
+                    (List.map (renderMissionRow model) unlockedMissions)
+                ]
             ]
         ]
 
@@ -1082,10 +1086,10 @@ view model =
             , div [ class "drawer-side w-64 min-w-64", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
                 [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
                 , aside
-                    [ class "bg-base-200 overflow-y-scroll h-full"
+                    [ class "bg-base-300 overflow-y-scroll h-full"
                     , heightMinusHeader
                     ]
-                    [ div [ class "bg-base-200 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur flex" ]
+                    [ div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur flex" ]
                         [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
                             [ div [ class "flex-0 px-2 flex flex-col items-center" ]
                                 [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
