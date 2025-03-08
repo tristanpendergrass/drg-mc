@@ -627,7 +627,7 @@ renderButton model buttonStatus buttonDuration msg variant children =
                     [ button
                         [ class "btn text-xl"
                         , buttonVariantClass
-                        , Pointer.onDown msg
+                        , Pointer.onUp msg
                         ]
                         children
                     ]
