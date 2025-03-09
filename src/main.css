@@ -13,7 +13,7 @@ progress.progress.xp-bar::-webkit-progress-value {
 }
 
 .disabled-btn {
-  @apply text-base-content! text-opacity-50!;
+  @apply text-base-content!;
 }
 
 /* In your CSS */
