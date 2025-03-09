@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin "daisyui";
+
+@config '../tailwind.config.js';
 
 #xp-bar, .xp-bar {
   transition: width 1.0s ease-out;
@@ -12,7 +13,7 @@ progress.progress.xp-bar::-webkit-progress-value {
 }
 
 .disabled-btn {
-  @apply text-base-content text-opacity-50 !important;
+  @apply text-base-content! text-opacity-50!;
 }
 
 /* In your CSS */

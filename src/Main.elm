@@ -693,7 +693,7 @@ renderProgressBar model =
 
         progressBarTextClass : Attribute Msg
         progressBarTextClass =
-            class "px-3 py-1 rounded bg-base-100 text-base-content text-3xl leading-none text-xl"
+            class "px-3 py-1 rounded-sm bg-base-100 text-base-content text-3xl leading-none text-xl"
     in
     case Config.levelingSchedule model.level of
         AtMaxLevel ->
@@ -864,11 +864,11 @@ renderDwarf model dwarf =
         dwarfImgSrc =
             stats.imgSrc
     in
-    div [ class "bg-base-300 text-base-content flex flex-col items-center relative overflow-hidden themed-rounded-borders shadow" ]
+    div [ class "bg-base-300 text-base-content flex flex-col items-center relative overflow-hidden themed-rounded-borders shadow-sm" ]
         [ span [ class "w-full flex items-center justify-center gap-2" ]
             [ span [ class "text-lg" ] [ text stats.name ]
             ]
-        , img [ src dwarfImgSrc, class "h-24 rounded " ] []
+        , img [ src dwarfImgSrc, class "h-24 rounded-sm " ] []
         , span []
             [ progressInLevelSpan
             ]
@@ -889,7 +889,7 @@ renderMissionsTab model =
         unlockedMissions =
             List.filter (Utils.Unlocks.missionIsUnlocked model.level) Utils.Record.allMissions
     in
-    div [ class "flex flex-col items-center gap-8 flex-grow overflow-scroll" ]
+    div [ class "flex flex-col items-center gap-8 grow overflow-scroll" ]
         [ div [ class "h-24 bg-base-200 w-full flex items-center justify-center" ]
             [ div [ proseClass ]
                 [ h2 [] [ text "Missions" ]
@@ -911,7 +911,7 @@ renderCommendationsTab model =
         unlockedXpButtons =
             List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) Utils.Record.allDwarfXpButtons
     in
-    div [ class "flex flex-col items-center gap-8 p-8 flex-grow overflow-y-scroll" ]
+    div [ class "flex flex-col items-center gap-8 p-8 grow overflow-y-scroll" ]
         [ div [ proseClass ]
             [ h2 [] [ text "Dwarf Leveling" ]
             ]
@@ -938,7 +938,7 @@ renderCommendationsTab model =
 
 renderSettingsTab : Model -> Html Msg
 renderSettingsTab model =
-    div [ class "flex flex-col items-center gap-8 p-8 flex-grow overflow-y-scroll" ]
+    div [ class "flex flex-col items-center gap-8 p-8 grow overflow-y-scroll" ]
         [ div [ proseClass ]
             [ h2 [] [ text "Settings" ]
             ]
@@ -1059,7 +1059,7 @@ renderAnimationAsAlert animation =
                             class "alert-info"
             in
             div
-                [ class "alert shadow mb-2"
+                [ class "alert shadow-sm mb-2"
                 , alertClass
                 ]
                 [ text message ]
@@ -1089,7 +1089,7 @@ view model =
                     [ class "bg-base-300 overflow-y-scroll h-full"
                     , heightMinusHeader
                     ]
-                    [ div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur flex" ]
+                    [ div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur-sm flex" ]
                         [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
                             [ div [ class "flex-0 px-2 flex flex-col items-center" ]
                                 [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
