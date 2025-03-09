@@ -58,7 +58,6 @@ defaultModel initialSeed now =
         , haz4 = ButtonReady
         , haz5 = ButtonReady
         }
-    , animations = []
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
     , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
     }
@@ -83,11 +82,6 @@ init { initialSeed, now, initialGame } =
 
 
 -- UPDATE
-
-
-animationDuration : Duration
-animationDuration =
-    Duration.seconds 2
 
 
 updateButton : Duration -> Duration -> ButtonStatus -> ButtonStatus
@@ -214,48 +208,12 @@ update msg model =
 
                     else
                         Nothing
-
-                updateAnimation : Maybe Animation -> List (Maybe Animation) -> List (Maybe Animation)
-                updateAnimation maybeAnimation animations =
-                    case maybeAnimation of
-                        Nothing ->
-                            Nothing :: animations
-
-                        Just (Animation timer duration subject) ->
-                            let
-                                ( newTimer, completions ) =
-                                    Utils.Timer.increment duration delta timer
-
-                                newAnimation : Animation
-                                newAnimation =
-                                    Animation newTimer duration subject
-                            in
-                            if completions > 0 then
-                                Nothing :: animations
-
-                            else
-                                Just newAnimation :: animations
-
-                newAnimations : List (Maybe Animation)
-                newAnimations =
-                    List.foldr updateAnimation [] model.animations
-                        |> (\animations ->
-                                -- We remove all the animations if at some point they're all finished (i.e. all are Nothing) because Nothing animations render as empty divs if not removed
-                                -- We don't remove them if all animations aren't finished because I saw odd visual bugs when the List of animations would change what position an animation was at.
-                                -- N.B. we also don't let there be more than 100 animations at once. This is purely speculative that this would matter but it seems prudent.
-                                if List.length animations > 100 || List.Extra.unique animations == [ Nothing ] then
-                                    []
-
-                                else
-                                    animations
-                           )
             in
             ( { model
                 | currentTime = newCurrentTime
                 , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses Utils.Record.allMissions
                 , dwarfXpButtonStatuses = List.foldl updateDwarfXpButtonStatuses model.dwarfXpButtonStatuses Utils.Record.allDwarfXpButtons
                 , saveTimer = newSaveTimer
-                , animations = newAnimations
               }
             , Cmd.batch
                 (List.filterMap identity
@@ -285,17 +243,12 @@ update msg model =
                 addCreditsResult : Model
                 addCreditsResult =
                     addCredits modifiedYield.credits model
-
-                newAnimation : Animation
-                newAnimation =
-                    Animation Utils.Timer.create animationDuration (AnimateCreditsGain modifiedYield.credits (adjustClientPos event.pointer.clientPos))
             in
             ( { model
                 | missionStatuses = newMissionStatuses
                 , resources = newResources
                 , credits = addCreditsResult.credits
                 , level = addCreditsResult.level
-                , animations = List.append model.animations [ Just newAnimation ]
               }
             , Cmd.none
             )
@@ -320,33 +273,11 @@ update msg model =
                 newLevel : Int
                 newLevel =
                     DwarfXp.level (Utils.Record.getByDwarf dwarf newDwarfXp)
-
-                xpGainAnimation : Animation
-                xpGainAnimation =
-                    Animation Utils.Timer.create animationDuration (AnimateDwarfXp dwarf stats.xp (adjustClientPos event.pointer.clientPos))
-
-                levelUpAnimation : Animation
-                levelUpAnimation =
-                    let
-                        message : String
-                        message =
-                            (Utils.Record.getByDwarf dwarf Config.dwarfStats).name ++ " leveled up (" ++ String.fromInt currentLevel ++ " -> " ++ String.fromInt newLevel ++ ")"
-                    in
-                    Animation Utils.Timer.create (Duration.seconds 5) (AnimateAlert message AlertInfo)
-
-                newAnimations : List (Maybe Animation)
-                newAnimations =
-                    if newLevel > currentLevel then
-                        [ Just xpGainAnimation, Just levelUpAnimation ]
-
-                    else
-                        [ Just xpGainAnimation ]
             in
             ( { model
                 | dwarfXpButtonStatuses = newStatuses
                 , dwarfXp = newDwarfXp
                 , seed = newSeed
-                , animations = List.append model.animations newAnimations
               }
             , Cmd.none
             )
@@ -774,58 +705,6 @@ renderHeader model =
         ]
 
 
-renderAtLocation : AnimationLocation -> List (Html Msg) -> Html Msg
-renderAtLocation ( x, y ) children =
-    div
-        [ class "fixed animate-smokeRise pointer-events-none"
-        , style "left" (String.fromFloat x ++ "px")
-        , style "top" (String.fromFloat y ++ "px")
-        ]
-        children
-
-
-renderAnimation : Maybe Animation -> Html Msg
-renderAnimation maybeAnimation =
-    case maybeAnimation of
-        Nothing ->
-            div [] []
-
-        Just (Animation _ _ subject) ->
-            let
-                gainTextClass : Attribute Msg
-                gainTextClass =
-                    class "text-xl pointer-events-none bg-opacity-0 drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)] font-extrabold"
-            in
-            case subject of
-                AnimateCreditsGain amount location ->
-                    renderAtLocation location
-                        [ span [ class "text-primary", gainTextClass ]
-                            [ text "+ "
-                            , text (floatToString amount)
-                            , text " credits "
-                            , credits1Img
-                            ]
-                        ]
-
-                AnimateDwarfXp dwarf xp location ->
-                    let
-                        dwarfStats : DwarfStats
-                        dwarfStats =
-                            Utils.Record.getByDwarf dwarf Config.dwarfStats
-                    in
-                    renderAtLocation location
-                        [ span [ gainTextClass, class "text-secondary" ]
-                            [ text dwarfStats.name
-                            , text " gained "
-                            , text (DwarfXp.toString xp)
-                            , text " xp"
-                            ]
-                        ]
-
-                _ ->
-                    div [] []
-
-
 renderDwarf : Model -> Dwarf -> Html Msg
 renderDwarf model dwarf =
     let
@@ -1038,36 +917,6 @@ renderSquadMultiplier model =
         ]
 
 
-renderAnimationAsAlert : AnimationSubject -> Html Msg
-renderAnimationAsAlert animation =
-    case animation of
-        AnimateAlert message alertType ->
-            let
-                alertClass : Attribute Msg
-                alertClass =
-                    case alertType of
-                        AlertSuccess ->
-                            class "alert-success"
-
-                        AlertError ->
-                            class "alert-error"
-
-                        AlertWarning ->
-                            class "alert-warning"
-
-                        AlertInfo ->
-                            class "alert-info"
-            in
-            div
-                [ class "alert shadow-sm mb-2"
-                , alertClass
-                ]
-                [ text message ]
-
-        _ ->
-            div [] []
-
-
 view : Model -> Html Msg
 view model =
     let
@@ -1147,15 +996,4 @@ view model =
                 ]
             ]
         , div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ]
-        , div []
-            (List.map renderAnimation model.animations)
-        , div
-            [ class "toast toast-center toast-bottom"
-            , class "gap-0" -- Note we do the zero gap plus margin bottom on toast strategy because we render toasts as empty divs after they expire for a period of time. It looks weird if the empty divs add space through non-zero gap.
-            ]
-            (model.animations
-                |> List.filterMap identity
-                |> List.map (\(Animation _ _ subject) -> subject)
-                |> List.map renderAnimationAsAlert
-            )
         ]

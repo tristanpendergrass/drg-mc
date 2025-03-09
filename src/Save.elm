@@ -109,7 +109,6 @@ v0_1Decoder =
                     , resources = resources
                     , missionStatuses = missionStatuses
                     , saveTimer = Utils.Timer.create
-                    , animations = []
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
                     , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
                     }
@@ -158,7 +157,6 @@ v0_2Decoder initialSeed =
                         , resources = resources
                         , missionStatuses = missionStatuses
                         , saveTimer = Utils.Timer.create
-                        , animations = []
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
                         }

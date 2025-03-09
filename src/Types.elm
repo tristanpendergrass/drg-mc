@@ -57,7 +57,6 @@ type alias Model =
     , resources : ResourceRecord Int -- Current resource stocks
     , missionStatuses : MissionRecord ButtonStatus
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
-    , animations : List (Maybe Animation)
     , dwarfXp : DwarfRecord DwarfXp
     }
 
@@ -174,25 +173,11 @@ type alias LevelUnlockStats =
     }
 
 
-type alias AnimationLocation =
-    ( Float, Float )
-
-
 type AlertType
     = AlertSuccess
     | AlertWarning
     | AlertError
     | AlertInfo
-
-
-type AnimationSubject
-    = AnimateCreditsGain Float AnimationLocation
-    | AnimateDwarfXp Dwarf DwarfXp AnimationLocation
-    | AnimateAlert String AlertType
-
-
-type Animation
-    = Animation Utils.Timer.Timer Duration AnimationSubject
 
 
 
