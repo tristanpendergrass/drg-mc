@@ -363,7 +363,7 @@ subscriptions _ =
 
 proseClass : Attribute Msg
 proseClass =
-    class "prose prose-sm md:prose-base"
+    class "prose"
 
 
 renderDuration : Duration -> Bool -> Html Msg
@@ -520,7 +520,7 @@ renderMissionRow model mission =
                 ButtonOnCooldown _ ->
                     "On cooldown"
     in
-    tr [ class "h-20 relative" ]
+    tr []
         [ td []
             [ div [ class "flex items-center gap-2" ]
                 (List.concat
@@ -556,7 +556,7 @@ renderButton model buttonStatus buttonDuration msg variant children =
             div [ class "flex items-center gap-8 w-full" ]
                 [ div [ class "relative" ]
                     [ button
-                        [ class "btn text-xl"
+                        [ class "btn btn-xs xl:btn-md"
                         , buttonVariantClass
                         , Pointer.onUp msg
                         ]
@@ -747,7 +747,7 @@ renderDwarf model dwarf =
         [ span [ class "w-full flex items-center justify-center gap-2" ]
             [ span [ class "text-lg" ] [ text stats.name ]
             ]
-        , img [ src dwarfImgSrc, class "h-24 rounded-sm " ] []
+        , img [ src dwarfImgSrc, class "h-12 rounded-sm " ] []
         , span []
             [ progressInLevelSpan
             ]
@@ -769,13 +769,13 @@ renderMissionsTab model =
             List.filter (Utils.Unlocks.missionIsUnlocked model.level) Utils.Record.allMissions
     in
     div [ class "flex flex-col items-center gap-8 grow overflow-scroll" ]
-        [ div [ class "h-24 bg-base-200 w-full flex items-center justify-center" ]
+        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
             [ div [ proseClass ]
-                [ h2 [] [ text "Missions" ]
+                [ h1 [] [ text "Missions" ]
                 ]
             ]
-        , div [ class "p-8 w-full h-full" ]
-            [ table [ class "table table-fixed w-[750px] max-w-full" ]
+        , div [ class "p-8 w-full flex justify-center" ]
+            [ table [ class "table w-[750px] max-w-full" ]
                 [ tbody []
                     (List.map (renderMissionRow model) unlockedMissions)
                 ]
@@ -846,24 +846,29 @@ renderDrawerTabRow model tab =
         stats : TabStats
         stats =
             Utils.Record.getByTab tab Config.tabStats
+
+        isActive : Bool
+        isActive =
+            model.currentTab == tab
+
+        hasActionsInTab : Bool
+        hasActionsInTab =
+            numActiveItemsInTab model tab > 0
     in
-    li [ onClick (HandleTabClick tab), class "relative" ]
-        [ span
-            [ class "flex gap-4 items-center"
-            , classList [ ( "active", model.currentTab == tab ) ]
+    li
+        []
+        [ a
+            [ onClick (HandleTabClick tab)
+            , classList
+                [ ( "menu-active", isActive )
+                ]
             ]
-            [ span [ class "flex-none" ]
+            [ span []
                 [ stats.icon
+                    |> FeatherIcons.withSize 20
                     |> FeatherIcons.toHtml []
                 ]
-            , span [ class "flex-1" ] [ text stats.title ]
-            ]
-        , span
-            [ class "flex h-3 w-3 absolute top-0 right-0 -mt-1 -mr-1 p-0"
-            , classList [ ( "hidden", numActiveItemsInTab model tab == 0 ) ]
-            ]
-            [ span [ class "animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" ] []
-            , span [ class "relative inline-flex rounded-full h-3 w-3 bg-primary" ] []
+            , span [] [ text stats.title ]
             ]
         ]
 
@@ -899,21 +904,34 @@ squadMultiplier model =
         |> (+) 1
 
 
-renderSquadMultiplier : Model -> Html Msg
-renderSquadMultiplier model =
-    div [ class "flex flex-col items-center" ]
-        [ span [ class "w-full flex items-center justify-center gap-1" ]
-            [ span [ class "text-sm" ] [ text "Squad Multiplier" ]
-
-            -- , div [ class "tooltip tooltip-left", attribute "data-tip" "Squad Multiplier increases yield from missions.\nIncrease it by leveling up dwarfs." ]
-            , div [ class "tooltip tooltip-left", attribute "data-tip" "Increases mission yield" ]
-                [ FeatherIcons.info
-                    |> FeatherIcons.withSize 16
-                    |> FeatherIcons.toHtml []
+renderFullLogo : Html Msg
+renderFullLogo =
+    div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur-sm flex" ]
+        [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
+            [ div [ class "flex-0 px-2 flex flex-col items-center" ]
+                [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
+                    [ span [ class "uppercase text-base-content text-primary-content bg-primary leading-none px-1" ] [ text "DRG" ]
+                    , div [ class "text-primary text-sm font-bold t-column gap-0 leading-xs text-primary" ] [ span [] [ text "Mission Control" ] ]
+                    ]
+                , div [ class "w-full border border-primary flex justify-center" ] [ div [ class "text-xs" ] [ text "An ", strong [ class "text-primary" ] [ text "Ulta Idle" ], text " experience" ] ]
                 ]
             ]
-        , div [ class "text-xl font-bold" ]
-            [ text ("x" ++ floatToString (squadMultiplier model)) ]
+        ]
+
+
+renderLogo : Html Msg
+renderLogo =
+    div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur-sm flex" ]
+        [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
+            [ div [ class "flex-0 px-2 flex flex-col items-center" ]
+                [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
+                    [ span [ class "uppercase text-primary font-extrabold leading-none px-1" ] [ text "DRG" ]
+                    , div [ class "text-primary text-xs font-bold t-column gap-0 leading-2xs text-primary font-mono" ]
+                        [ text "Mission Control"
+                        ]
+                    ]
+                ]
+            ]
         ]
 
 
@@ -930,38 +948,23 @@ view model =
           renderHeader model
 
         -- Body
-        , div [ class "flex w-full drawer lg:drawer-open", heightMinusHeader ]
+        , div [ class "flex w-full drawer drawer-open", heightMinusHeader ]
             [ input [ id "my-drawer", type_ "checkbox", class "drawer-toggle" ] []
             , div [ class "drawer-side w-64 min-w-64", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
                 [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
                 , aside
-                    [ class "bg-base-300 overflow-y-scroll h-full"
+                    [ class "bg-base-300 overflow-y-scroll h-full w-48"
                     , heightMinusHeader
                     ]
-                    [ div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur-sm flex" ]
-                        [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
-                            [ div [ class "flex-0 px-2 flex flex-col items-center" ]
-                                [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
-                                    [ span [ class "uppercase text-base-content text-primary-content bg-primary leading-none px-1" ] [ text "DRG" ]
-                                    , div [ class "text-primary text-sm font-bold t-column gap-0 leading-xs text-primary" ] [ span [] [ text "Mission Control" ] ]
-                                    ]
-                                , div [ class "w-full border border-primary flex justify-center" ] [ div [ class "text-xs" ] [ text "An ", strong [ class "text-primary" ] [ text "Ulta Idle" ], text " experience" ] ]
-                                ]
-                            ]
-
-                        -- Close drawer button
-                        , label [ for "drawer", class "btn btn-square btn-ghost drawer-button lg:hidden" ]
-                            [ FeatherIcons.x
-                                |> FeatherIcons.toHtml []
-                            ]
-                        ]
+                    [ renderLogo
                     , div [ class "h-4" ] []
                     , ul
-                        [ class "menu flex flex-col p-0 px-4 w-64"
+                        [ class "menu w-full px-4 py-0"
                         , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
                         ]
                         [ renderDrawerTabRow model MissionsTab
                         , renderDrawerTabRow model CommendationsTab
+                        , li [] []
                         , renderDrawerTabRow model SettingsTab
                         ]
                     ]
@@ -985,8 +988,7 @@ view model =
                                 ]
                             ]
                             (List.concat
-                                [ [ renderSquadMultiplier model ]
-                                , List.map
+                                [ List.map
                                     (renderDwarf model)
                                     Utils.Record.allDwarfs
                                 ]
