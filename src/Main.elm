@@ -911,7 +911,9 @@ renderFullLogo =
             [ div [ class "flex-0 px-2 flex flex-col items-center" ]
                 [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
                     [ span [ class "uppercase text-base-content text-primary-content bg-primary leading-none px-1" ] [ text "DRG" ]
-                    , div [ class "text-primary text-sm font-bold t-column gap-0 leading-xs text-primary" ] [ span [] [ text "Mission Control" ] ]
+                    , div [ class "text-primary text-sm font-bold t-column gap-0 leading-xs text-primary" ]
+                        [ span [] [ text "Mission Control" ]
+                        ]
                     ]
                 , div [ class "w-full border border-primary flex justify-center" ] [ div [ class "text-xs" ] [ text "An ", strong [ class "text-primary" ] [ text "Ulta Idle" ], text " experience" ] ]
                 ]
@@ -921,14 +923,12 @@ renderFullLogo =
 
 renderLogo : Html Msg
 renderLogo =
-    div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur-sm flex" ]
-        [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
-            [ div [ class "flex-0 px-2 flex flex-col items-center" ]
-                [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
-                    [ span [ class "uppercase text-primary font-extrabold leading-none px-1" ] [ text "DRG" ]
-                    , div [ class "text-primary text-xs font-bold t-column gap-0 leading-2xs text-primary font-mono" ]
-                        [ text "Mission Control"
-                        ]
+    div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
+        [ div [ class "flex-0 px-2 flex flex-col items-center" ]
+            [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
+                [ span [ class "uppercase text-primary font-extrabold leading-none px-1" ] [ text "DRG" ]
+                , div [ class "text-primary text-xs font-bold t-column gap-0 leading-2xs text-primary font-mono" ]
+                    [ text "Mission Control"
                     ]
                 ]
             ]
@@ -956,8 +956,8 @@ view model =
                     [ class "bg-base-300 overflow-y-scroll h-full w-48"
                     , heightMinusHeader
                     ]
-                    [ renderLogo
-                    , div [ class "h-4" ] []
+                    [ div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 backdrop-blur-sm flex" ]
+                        [ renderLogo ]
                     , ul
                         [ class "menu w-full px-4 py-0"
                         , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
