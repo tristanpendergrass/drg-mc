@@ -802,7 +802,7 @@ renderMissionsTab model =
                 [ h1 [] [ text "Missions" ]
                 ]
             ]
-        , div [ class "w-full flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
             bonuses
         , div [ class "p-8 pt-0 w-full flex justify-center" ]
             [ table [ class "table w-[750px] max-w-full" ]
