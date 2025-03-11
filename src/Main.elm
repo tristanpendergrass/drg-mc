@@ -772,6 +772,14 @@ renderBonus label =
     aside [ class "border border-primary py-1/2 px-1 text-xs" ] [ text label ]
 
 
+tabLayout =
+    { container = class "flex flex-col items-center grow overflow-scroll"
+    , headerWrapper = class "px-8 py-4 w-full flex items-center justify-between"
+    , bonusesArea = class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto"
+    , contentWrapper = class "p-8 pt-0 w-full flex justify-center"
+    }
+
+
 renderMissionsTab : Model -> Html Msg
 renderMissionsTab model =
     let
@@ -796,15 +804,15 @@ renderMissionsTab model =
             else
                 []
     in
-    div [ class "flex flex-col items-center grow overflow-scroll" ]
-        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+    div [ tabLayout.container ]
+        [ div [ tabLayout.headerWrapper ]
             [ div [ proseClass ]
                 [ h1 [] [ text "Missions" ]
                 ]
             ]
-        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+        , div [ tabLayout.bonusesArea ]
             bonuses
-        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+        , div [ tabLayout.contentWrapper ]
             [ table [ class "table w-[750px] max-w-full" ]
                 [ tbody []
                     (List.map (renderMissionRow model) unlockedMissions)
@@ -820,15 +828,15 @@ renderCommendationsTab model =
         unlockedXpButtons =
             List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) Utils.Record.allDwarfXpButtons
     in
-    div [ class "flex flex-col items-center grow overflow-scroll" ]
-        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+    div [ tabLayout.container ]
+        [ div [ tabLayout.headerWrapper ]
             [ div [ proseClass ]
                 [ h1 [] [ text "Dwarf Leveling" ]
                 ]
             ]
-        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+        , div [ tabLayout.bonusesArea ]
             []
-        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+        , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col item-center gap-4 w-[300px]" ]
                 (unlockedXpButtons
                     |> List.map
@@ -853,15 +861,15 @@ renderCommendationsTab model =
 
 renderSettingsTab : Model -> Html Msg
 renderSettingsTab model =
-    div [ class "flex flex-col items-center grow overflow-scroll" ]
-        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+    div [ tabLayout.container ]
+        [ div [ tabLayout.headerWrapper ]
             [ div [ proseClass ]
                 [ h1 [] [ text "Settings" ]
                 ]
             ]
-        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+        , div [ tabLayout.bonusesArea ]
             []
-        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+        , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
                 [ button [ class "btn btn-error", onClick ResetGame ] [ text "Reset game" ]
                 , div [ class "divider" ] []
@@ -983,15 +991,15 @@ isTabUnlocked model tab =
 
 renderAbyssBarTab : Model -> Html Msg
 renderAbyssBarTab model =
-    div [ class "flex flex-col items-center grow overflow-scroll" ]
-        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+    div [ tabLayout.container ]
+        [ div [ tabLayout.headerWrapper ]
             [ div [ proseClass ]
                 [ h1 [] [ text "Abyss Bar" ]
                 ]
             ]
-        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+        , div [ tabLayout.bonusesArea ]
             []
-        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+        , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
                 []
             ]
