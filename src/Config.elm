@@ -50,6 +50,7 @@ levelUnlockStats =
         , ( 10, [ { kind = UnlockDwarfXpButton3, title = "Dwarf Xp Button 3", category = UnlockActivity } ] )
         , ( 11, [ { kind = UnlockDwarfXpButton4, title = "Dwarf Xp Button 4", category = UnlockActivity } ] )
         , ( 12, [ { kind = UnlockDwarfXpButton5, title = "Dwarf Xp Button 5", category = UnlockActivity } ] )
+        , ( 15, [ { kind = UnlockAbyssBar, title = "Abyss Bar", category = UnlockFeature } ] )
         , ( 20, [ { kind = UnlockTheme Cyberpunk, title = "Theme: Cyberpunk", category = UnlockCosmetic } ] )
         ]
 
@@ -172,6 +173,10 @@ tabStats =
     , commendationsTab =
         { title = "Dwarf Leveling"
         , icon = FeatherIcons.award
+        }
+    , abyssBarTab =
+        { title = "Abyss Bar"
+        , icon = FeatherIcons.smile
         }
     , settingsTab =
         { title = "Settings"

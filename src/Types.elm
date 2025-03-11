@@ -158,6 +158,7 @@ type UnlockKind
     | UnlockDwarfXpButton3
     | UnlockDwarfXpButton4
     | UnlockDwarfXpButton5
+    | UnlockAbyssBar
 
 
 type UnlockCategory
@@ -251,6 +252,7 @@ type
     -- Don't forget to update allTabs too!
     = MissionsTab
     | CommendationsTab
+    | AbyssBarTab
     | SettingsTab
 
 
@@ -263,5 +265,6 @@ type alias TabStats =
 type alias TabRecord a =
     { missionsTab : a
     , commendationsTab : a
+    , abyssBarTab : a
     , settingsTab : a
     }

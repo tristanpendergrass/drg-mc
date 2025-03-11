@@ -918,6 +918,9 @@ numActiveItemsInTab model tab =
                 |> List.filter (\dwarfXpButton -> Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses == ButtonReady)
                 |> List.length
 
+        AbyssBarTab ->
+            0
+
         SettingsTab ->
             0
 
@@ -957,8 +960,20 @@ isTabUnlocked model tab =
         CommendationsTab ->
             Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level
 
+        AbyssBarTab ->
+            Utils.Unlocks.abyssBarFeatureUnlocked model.level
+
         SettingsTab ->
             True
+
+
+renderAbyssBarTab : Model -> Html Msg
+renderAbyssBarTab model =
+    div [ class "flex flex-col items-center gap-8 p-8 grow overflow-y-scroll" ]
+        [ div [ proseClass ]
+            [ h2 [] [ text "Abyss Bar" ]
+            ]
+        ]
 
 
 view : Model -> Html Msg
@@ -984,7 +999,8 @@ view model =
                         ]
                         [ renderDrawerTabRow model MissionsTab
                         , renderDrawerTabRow model CommendationsTab
-                        , li [] []
+                        , renderDrawerTabRow model AbyssBarTab
+                        , li [] [] -- This renders as a divider in the drawer
                         , renderDrawerTabRow model SettingsTab
                         ]
                     ]
@@ -997,6 +1013,9 @@ view model =
 
                         CommendationsTab ->
                             renderCommendationsTab model
+
+                        AbyssBarTab ->
+                            renderAbyssBarTab model
 
                         SettingsTab ->
                             renderSettingsTab model

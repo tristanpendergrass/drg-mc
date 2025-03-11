@@ -16,6 +16,11 @@ missionIsUnlocked currentLevel mission =
             kindIsUnlocked currentLevel missionUnlock
 
 
+abyssBarFeatureUnlocked : Int -> Bool
+abyssBarFeatureUnlocked level =
+    kindIsUnlocked level UnlockAbyssBar
+
+
 nextUnlock : Int -> Dict Int (List LevelUnlockStats) -> Maybe ( Int, LevelUnlockStats )
 nextUnlock currentLevel stats =
     stats
