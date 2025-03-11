@@ -408,7 +408,7 @@ renderDuration d hasTickedAVeryShortTime =
 
         wrapper : List (Html Msg) -> Html Msg
         wrapper =
-            div [ class "flex w-full gap-3 text-center foobar justify-center" ]
+            div [ class "flex w-full gap-3 text-center justify-end" ]
 
         hide : List (Html Msg) -> Html Msg
         hide =
@@ -521,7 +521,7 @@ renderMissionRow model mission =
                     "On cooldown"
     in
     tr []
-        [ td []
+        [ td [ class "h-[70px]" ]
             [ div [ class "flex items-center gap-2" ]
                 (List.concat
                     [ [ span [] [ text stats.title ] ]
@@ -529,7 +529,7 @@ renderMissionRow model mission =
                     ]
                 )
             ]
-        , td [ class "overflow-hidden relative" ]
+        , td [ class "overflow-hidden relative flex justify-end items-center h-[70px]" ]
             [ renderButton model missionStatus stats.duration (HandleMissionClick mission) ButtonPrimary [ text buttonText ] ]
         ]
 
@@ -553,8 +553,8 @@ renderButton model buttonStatus buttonDuration msg variant children =
                         ButtonSecondary ->
                             class "btn-secondary"
             in
-            div [ class "flex items-center gap-8 w-full" ]
-                [ div [ class "relative" ]
+            div [ class "flex items-center justify-end gap-8 w-full" ]
+                [ div [ class "relative inline-block" ]
                     [ button
                         [ class "btn btn-xs xl:btn-md"
                         , buttonVariantClass
@@ -574,7 +574,7 @@ renderButton model buttonStatus buttonDuration msg variant children =
                 hasTickedAVeryShortTime =
                     Utils.Timer.hasTickedAVeryShortTime buttonDuration timer
             in
-            div [ class "flex items-center gap-8 w-full" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
+            div [ class "flex items-end gap-8 w-full h-full" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
 
 
 renderGameSpeedButton : Model -> Float -> Html Msg
@@ -774,7 +774,7 @@ renderMissionsTab model =
                 [ h1 [] [ text "Missions" ]
                 ]
             ]
-        , div [ class "p-8 w-full flex justify-center" ]
+        , div [ class "p-8 pt-0 w-full flex justify-center" ]
             [ table [ class "table w-[750px] max-w-full" ]
                 [ tbody []
                     (List.map (renderMissionRow model) unlockedMissions)
