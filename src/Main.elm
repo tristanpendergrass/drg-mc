@@ -446,7 +446,9 @@ modifyYield model yield =
     let
         creditsMultiplier : Float
         creditsMultiplier =
-            squadMultiplier model
+            squadBonus model
+                |> Utils.Percent.toFloat
+                |> (+) 1
     in
     { yield | credits = yield.credits * creditsMultiplier }
 
@@ -472,7 +474,7 @@ renderMissionRow model mission =
 
         icon : String -> Html Msg
         icon iconSrc =
-            img [ src iconSrc, class "w-6 inline" ] []
+            img [ src iconSrc, class "w-4 inline" ] []
 
         icons : Html Msg
         icons =
@@ -522,7 +524,7 @@ renderMissionRow model mission =
     in
     tr []
         [ td [ class "h-[70px]" ]
-            [ div [ class "flex items-center gap-2" ]
+            [ div [ class "flex h-full items-center gap-2" ]
                 (List.concat
                     [ [ span [] [ text stats.title ] ]
                     , [ icons ]
@@ -761,19 +763,43 @@ renderDwarf model dwarf =
         ]
 
 
+renderBonus : String -> Html Msg
+renderBonus label =
+    aside [ class "border border-primary py-1/2 px-1 text-xs" ] [ text label ]
+
+
 renderMissionsTab : Model -> Html Msg
 renderMissionsTab model =
     let
         unlockedMissions : List Mission
         unlockedMissions =
             List.filter (Utils.Unlocks.missionIsUnlocked model.level) Utils.Record.allMissions
+
+        yieldBonus : Percent
+        yieldBonus =
+            squadBonus model
+
+        yieldBonusString : String
+        yieldBonusString =
+            String.fromFloat (Utils.Percent.toPercentage yieldBonus)
+
+        bonuses : List (Html Msg)
+        bonuses =
+            if Quantity.greaterThan Quantity.zero yieldBonus then
+                [ renderBonus ("+" ++ yieldBonusString ++ "% yield")
+                ]
+
+            else
+                []
     in
-    div [ class "flex flex-col items-center gap-8 grow overflow-scroll" ]
+    div [ class "flex flex-col items-center grow overflow-scroll" ]
         [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
             [ div [ proseClass ]
                 [ h1 [] [ text "Missions" ]
                 ]
             ]
+        , div [ class "w-full flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+            bonuses
         , div [ class "p-8 pt-0 w-full flex justify-center" ]
             [ table [ class "table w-[750px] max-w-full" ]
                 [ tbody []
@@ -892,8 +918,8 @@ numActiveItemsInTab model tab =
             0
 
 
-squadMultiplier : Model -> Float
-squadMultiplier model =
+squadBonus : Model -> Percent
+squadBonus model =
     Utils.Record.allDwarfs
         |> List.map (\dwarf -> DwarfXp.level (Utils.Record.getByDwarf dwarf model.dwarfXp))
         |> List.sum
@@ -901,7 +927,7 @@ squadMultiplier model =
         -- Divide by 100 since it's a percentage i.e. sum of 10 levels = 0.1 multiplier
         |> toFloat
         |> (\x -> x / 100)
-        |> (+) 1
+        |> Utils.Percent.float
 
 
 renderFullLogo : Html Msg
@@ -950,13 +976,13 @@ view model =
         -- Body
         , div [ class "flex w-full drawer drawer-open", heightMinusHeader ]
             [ input [ id "my-drawer", type_ "checkbox", class "drawer-toggle" ] []
-            , div [ class "drawer-side w-64 min-w-64", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
+            , div [ class "drawer-side w-48", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
                 [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
                 , aside
-                    [ class "bg-base-300 overflow-y-scroll h-full w-48"
+                    [ class "bg-base-100 overflow-y-scroll h-full w-full"
                     , heightMinusHeader
                     ]
-                    [ div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 backdrop-blur-sm flex" ]
+                    [ div [ class "sticky top-0 z-10 w-full bg-opacity-90 py-3 backdrop-blur-sm flex" ]
                         [ renderLogo ]
                     , ul
                         [ class "menu w-full px-4 py-0"
@@ -980,7 +1006,7 @@ view model =
 
                         SettingsTab ->
                             renderSettingsTab model
-                    , div [ class "h-full w-[250px] bg-base-200 items-center p-4 overflow-y-scroll" ]
+                    , div [ class "h-full w-48 min-w-48 bg-base-200 items-center p-4 overflow-y-scroll" ]
                         [ div
                             [ class "flex flex-col gap-2"
                             , classList

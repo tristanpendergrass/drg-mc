@@ -39,3 +39,7 @@ progress.progress.xp-bar::-webkit-progress-value {
   */
   border-radius: var(--rounded-box, 1rem);
 }
+
+.tab-body {
+  @apply bg-base-100 p-4
+}
