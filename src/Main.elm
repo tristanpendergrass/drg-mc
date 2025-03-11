@@ -820,51 +820,65 @@ renderCommendationsTab model =
         unlockedXpButtons =
             List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) Utils.Record.allDwarfXpButtons
     in
-    div [ class "flex flex-col items-center gap-8 p-8 grow overflow-y-scroll" ]
-        [ div [ proseClass ]
-            [ h2 [] [ text "Dwarf Leveling" ]
+    div [ class "flex flex-col items-center grow overflow-scroll" ]
+        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+            [ div [ proseClass ]
+                [ h1 [] [ text "Dwarf Leveling" ]
+                ]
             ]
-        , div [ class "flex flex-col item-center gap-4 w-[300px]" ]
-            (unlockedXpButtons
-                |> List.map
-                    (\dwarfXpButton ->
-                        let
-                            stats : DwarfXpButtonStats
-                            stats =
-                                Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
-                        in
-                        renderButton
-                            model
-                            (Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses)
-                            stats.duration
-                            (HandleDwarfXpButtonClick dwarfXpButton)
-                            ButtonSecondary
-                            [ text "+", text (DwarfXp.toString stats.xp), text " xp to random dwarf" ]
-                    )
-            )
+        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+            []
+        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+            [ div [ class "flex flex-col item-center gap-4 w-[300px]" ]
+                (unlockedXpButtons
+                    |> List.map
+                        (\dwarfXpButton ->
+                            let
+                                stats : DwarfXpButtonStats
+                                stats =
+                                    Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+                            in
+                            renderButton
+                                model
+                                (Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses)
+                                stats.duration
+                                (HandleDwarfXpButtonClick dwarfXpButton)
+                                ButtonSecondary
+                                [ text "+", text (DwarfXp.toString stats.xp), text " xp to random dwarf" ]
+                        )
+                )
+            ]
         ]
 
 
 renderSettingsTab : Model -> Html Msg
 renderSettingsTab model =
-    div [ class "flex flex-col items-center gap-8 p-8 grow overflow-y-scroll" ]
-        [ div [ proseClass ]
-            [ h2 [] [ text "Settings" ]
+    div [ class "flex flex-col items-center grow overflow-scroll" ]
+        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+            [ div [ proseClass ]
+                [ h1 [] [ text "Settings" ]
+                ]
             ]
-        , button [ class "btn btn-error", onClick ResetGame ] [ text "Reset game" ]
-        , div [ class "divider" ] []
-        , div [ proseClass ]
-            [ h2 [] [ text "Admin crimes" ]
-            , div [ class "flex items-center gap-1" ]
-                [ label [ for "button-no-cd" ] [ text "No CD button" ]
-                , input
-                    [ type_ "checkbox"
-                    , class "checkbox"
-                    , id "button-no-cd"
-                    , checked model.debugSettings.buttonCooldownInstant
-                    , onCheck DebugSetButtonCooldownInstant
+        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+            []
+        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+            [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
+                [ button [ class "btn btn-error", onClick ResetGame ] [ text "Reset game" ]
+                , div [ class "divider" ] []
+                , div [ proseClass ]
+                    [ h2 [] [ text "Admin crimes" ]
+                    , div [ class "flex items-center gap-1" ]
+                        [ label [ for "button-no-cd" ] [ text "No CD button" ]
+                        , input
+                            [ type_ "checkbox"
+                            , class "checkbox"
+                            , id "button-no-cd"
+                            , checked model.debugSettings.buttonCooldownInstant
+                            , onCheck DebugSetButtonCooldownInstant
+                            ]
+                            []
+                        ]
                     ]
-                    []
                 ]
             ]
         ]
@@ -969,9 +983,17 @@ isTabUnlocked model tab =
 
 renderAbyssBarTab : Model -> Html Msg
 renderAbyssBarTab model =
-    div [ class "flex flex-col items-center gap-8 p-8 grow overflow-y-scroll" ]
-        [ div [ proseClass ]
-            [ h2 [] [ text "Abyss Bar" ]
+    div [ class "flex flex-col items-center grow overflow-scroll" ]
+        [ div [ class "px-8 py-4 w-full flex items-center justify-between" ]
+            [ div [ proseClass ]
+                [ h1 [] [ text "Abyss Bar" ]
+                ]
+            ]
+        , div [ class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto" ]
+            []
+        , div [ class "p-8 pt-0 w-full flex justify-center" ]
+            [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
+                []
             ]
         ]
 
