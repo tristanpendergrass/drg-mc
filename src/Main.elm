@@ -558,7 +558,7 @@ renderButton model buttonStatus buttonDuration msg variant children =
             div [ class "flex items-center justify-end gap-8 w-full" ]
                 [ div [ class "relative inline-block" ]
                     [ button
-                        [ class "btn btn-xs xl:btn-md"
+                        [ class "btn"
                         , buttonVariantClass
                         , Pointer.onUp msg
                         ]
@@ -622,7 +622,7 @@ renderProgressBar model =
 
         outerBarClasses : Attribute Msg
         outerBarClasses =
-            class "w-full h-16 border border-neutral relative flex items-center justify-center gap-1 overflow-hidden themed-rounded-borders"
+            class "w-full h-12 border border-neutral relative flex items-center justify-center gap-1 overflow-hidden themed-rounded-borders"
 
         progressBarTextClass : Attribute Msg
         progressBarTextClass =
@@ -667,7 +667,7 @@ renderNextUnlock model unlockLevel unlockStats =
                 UnlockCosmetic ->
                     "Cosmetic"
     in
-    div [ class "absolute left-0 bottom-[-8px] flex-col items-start text-lg" ]
+    div [ class "flex-col items-start text-lg" ]
         [ span []
             [ text "Unlock new "
             , strong [ class "text-primary" ] [ text unlockCategoryString ]
@@ -679,30 +679,34 @@ renderNextUnlock model unlockLevel unlockStats =
 renderHeader : Model -> Html Msg
 renderHeader model =
     div [ class "w-full min-w-full bg-base-200 flex items-center justify-center p-4" ]
-        [ div [ class "flex flex-col items-center w-full min-w-full gap-4" ]
-            [ label [] [ text "Department level" ]
-            , div [ class "w-full flex justify-center items-center relative" ]
-                [ h1 [ class "text-4xl font-extrabold relative inline-block" ]
-                    [ text ("Level " ++ String.fromInt model.level)
-                    , button [ class "absolute top-0 right-0 -mr-8 opacity-25 mt-1/2 btn btn-xs btn-square btn-ghost", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugLevelToMax ]
-                        [ FeatherIcons.chevronsUp
-                            |> FeatherIcons.withSize 20
-                            |> FeatherIcons.toHtml []
-                        ]
-                    , button [ class "absolute top-0 right-0 -mr-8 mt-6 opacity-25 mt-1/2 btn btn-xs btn-square btn-ghost", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugGainLevel ]
-                        [ FeatherIcons.chevronUp
-                            |> FeatherIcons.withSize 20
-                            |> FeatherIcons.toHtml []
+        [ div [ class "flex items-end gap-4 w-full" ]
+            [ div [ class "flex flex-col items-center" ]
+                [ label [ class "text-sm" ] [ text "level" ]
+                , div [ class "w-full flex justify-center items-center relative min-w-12" ]
+                    [ div [ class "text-6xl leading-none font-extrabold relative inline-block z-10" ]
+                        [ text (String.padLeft 2 '0' (String.fromInt model.level))
+                        , button [ class "absolute top-0 right-0 -mr-8 opacity-25 mt-1/2 btn btn-xs btn-square btn-ghost", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugLevelToMax ]
+                            [ FeatherIcons.chevronsUp
+                                |> FeatherIcons.withSize 20
+                                |> FeatherIcons.toHtml []
+                            ]
+                        , button [ class "absolute top-0 right-0 -mr-8 mt-6 opacity-25 mt-1/2 btn btn-xs btn-square btn-ghost", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugGainLevel ]
+                            [ FeatherIcons.chevronUp
+                                |> FeatherIcons.withSize 20
+                                |> FeatherIcons.toHtml []
+                            ]
                         ]
                     ]
-                , case Utils.Unlocks.nextUnlock model.level Config.levelUnlockStats of
+                ]
+            , div [ class "pb-1 w-full h-full flex flex-col items-end relative" ]
+                [ case Utils.Unlocks.nextUnlock model.level Config.levelUnlockStats of
                     Nothing ->
                         div [] []
 
                     Just ( unlockLevel, unlockStats ) ->
                         renderNextUnlock model unlockLevel unlockStats
+                , renderProgressBar model
                 ]
-            , renderProgressBar model
             ]
         ]
 
@@ -877,12 +881,12 @@ renderDrawerTabRow model tab =
         isActive =
             model.currentTab == tab
 
-        hasActionsInTab : Bool
-        hasActionsInTab =
-            numActiveItemsInTab model tab > 0
+        -- hasActionsInTab : Bool
+        -- hasActionsInTab =
+        --     numActiveItemsInTab model tab > 0
     in
     li
-        []
+        [ classList [ ( "hidden", not (isTabUnlocked model tab) ) ] ]
         [ a
             [ onClick (HandleTabClick tab)
             , classList
@@ -930,23 +934,6 @@ squadBonus model =
         |> Utils.Percent.float
 
 
-renderFullLogo : Html Msg
-renderFullLogo =
-    div [ class "bg-base-300 sticky top-0 z-10 w-full bg-opacity-90 py-3 px-2 backdrop-blur-sm flex" ]
-        [ div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
-            [ div [ class "flex-0 px-2 flex flex-col items-center" ]
-                [ div [ class "font-title text-primary inline-flex text-lg transition-all duration-200 md:text-3xl flex gap-1 items-center rounded-t-xl overflow-hidden p-1 border border-primary border-b-4" ]
-                    [ span [ class "uppercase text-base-content text-primary-content bg-primary leading-none px-1" ] [ text "DRG" ]
-                    , div [ class "text-primary text-sm font-bold t-column gap-0 leading-xs text-primary" ]
-                        [ span [] [ text "Mission Control" ]
-                        ]
-                    ]
-                , div [ class "w-full border border-primary flex justify-center" ] [ div [ class "text-xs" ] [ text "An ", strong [ class "text-primary" ] [ text "Ulta Idle" ], text " experience" ] ]
-                ]
-            ]
-        ]
-
-
 renderLogo : Html Msg
 renderLogo =
     div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
@@ -961,32 +948,39 @@ renderLogo =
         ]
 
 
+isTabUnlocked : Model -> Tab -> Bool
+isTabUnlocked model tab =
+    case tab of
+        MissionsTab ->
+            True
+
+        CommendationsTab ->
+            Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level
+
+        SettingsTab ->
+            True
+
+
 view : Model -> Html Msg
 view model =
-    let
-        heightMinusHeader : Attribute Msg
-        heightMinusHeader =
-            -- Don't fully understand why this is necessary to make elements have the right height and scroll properly
-            style "height" "calc(100vh - 192px)"
-    in
     div [ class "w-screen h-screen overflow-hidden flex flex-col items-center bg-base-100" ]
         [ -- Header
           renderHeader model
 
         -- Body
-        , div [ class "flex w-full drawer drawer-open", heightMinusHeader ]
+        , div [ class "flex w-full drawer drawer-open" ]
             [ input [ id "my-drawer", type_ "checkbox", class "drawer-toggle" ] []
             , div [ class "drawer-side w-48", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
                 [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
                 , aside
                     [ class "bg-base-100 overflow-y-scroll h-full w-full"
-                    , heightMinusHeader
                     ]
                     [ div [ class "sticky top-0 z-10 w-full bg-opacity-90 py-3 backdrop-blur-sm flex" ]
                         [ renderLogo ]
                     , ul
                         [ class "menu w-full px-4 py-0"
-                        , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
+
+                        -- , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
                         ]
                         [ renderDrawerTabRow model MissionsTab
                         , renderDrawerTabRow model CommendationsTab
@@ -1006,15 +1000,16 @@ view model =
 
                         SettingsTab ->
                             renderSettingsTab model
-                    , div [ class "h-full w-48 min-w-48 bg-base-200 items-center p-4 overflow-y-scroll" ]
+                    , div [ class "h-full w-48 min-w-48 items-center p-4 overflow-y-scroll" ]
                         [ div
-                            [ class "flex flex-col gap-2"
+                            [ class "flex flex-col gap-4"
                             , classList
                                 [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) )
                                 ]
                             ]
                             (List.concat
-                                [ List.map
+                                [ [ div [ class "w-full flex items-center justify-center prose" ] [ h3 [] [ text "Your crew" ] ] ]
+                                , List.map
                                     (renderDwarf model)
                                     Utils.Record.allDwarfs
                                 ]
