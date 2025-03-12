@@ -327,24 +327,9 @@ update msg model =
                 stats =
                     Utils.Record.getByMission mission Config.missionStats
 
-                mods : List Mod
-                mods =
-                    getAllMods model
-
-                totalYieldMod : Percent
-                totalYieldMod =
-                    List.foldl
-                        (\mod acc ->
-                            case mod of
-                                ModMissionYield modPercent ->
-                                    Quantity.plus acc modPercent
-                        )
-                        Utils.Percent.zero
-                        mods
-
                 modifiedYield : MissionYield
                 modifiedYield =
-                    modifyYield totalYieldMod stats.yield
+                    modifyYield model stats.yield
 
                 newMissionStatuses : MissionRecord ButtonStatus
                 newMissionStatuses =
@@ -442,9 +427,21 @@ update msg model =
             ( { model | currentTab = tab }, Cmd.none )
 
 
-modifyYield : Percent -> MissionYield -> MissionYield
-modifyYield percent yield =
-    { yield | credits = yield.credits * (1 + Utils.Percent.toFloat percent) }
+modifyYield : Model -> MissionYield -> MissionYield
+modifyYield model yield =
+    let
+        totalYieldMod : Percent
+        totalYieldMod =
+            List.foldl
+                (\mod acc ->
+                    case mod of
+                        ModMissionYield modPercent ->
+                            Quantity.plus acc modPercent
+                )
+                Utils.Percent.zero
+                (getAllMods model)
+    in
+    { yield | credits = yield.credits * (1 + Utils.Percent.toFloat totalYieldMod) }
 
 
 dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
@@ -575,24 +572,9 @@ renderMissionRow model mission =
         yield =
             stats.yield
 
-        mods : List Mod
-        mods =
-            getAllMods model
-
-        totalYieldMod : Percent
-        totalYieldMod =
-            List.foldl
-                (\mod acc ->
-                    case mod of
-                        ModMissionYield modPercent ->
-                            Quantity.plus acc modPercent
-                )
-                Utils.Percent.zero
-                mods
-
         modifiedYield : MissionYield
         modifiedYield =
-            modifyYield totalYieldMod yield
+            modifyYield model yield
 
         icon : String -> Html Msg
         icon iconSrc =
