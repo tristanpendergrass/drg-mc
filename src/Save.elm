@@ -110,7 +110,7 @@ v0_1Decoder =
                     , missionStatuses = missionStatuses
                     , saveTimer = Utils.Timer.create
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
-                    , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
+                    , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
                     }
             in
             model
@@ -256,17 +256,17 @@ v0_2EncodeButtonStatus status =
 v0_2DwarfXpButtonsEncoder : DwarfXpButtonRecord ButtonStatus -> E.Value
 v0_2DwarfXpButtonsEncoder buttons =
     E.object
-        (Utils.Record.allDwarfXpButtons
+        (allDwarfXpButtons
             |> List.map
                 (\dwarfXpButton ->
                     let
                         stats : DwarfXpButtonStats
                         stats =
-                            Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+                            dwarfXpButtonStats dwarfXpButton
 
                         buttonStatus : ButtonStatus
                         buttonStatus =
-                            Utils.Record.getByDwarfXpButton dwarfXpButton buttons
+                            getByDwarfXpButton buttons dwarfXpButton
                     in
                     ( stats.id_, v0_2EncodeButtonStatus buttonStatus )
                 )

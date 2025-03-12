@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import Duration exposing (Duration)
+import DwarfXp exposing (DwarfXp)
 import FeatherIcons
 import Html exposing (a)
 import Html.Events.Extra.Pointer as Pointer
@@ -20,22 +21,6 @@ type alias Flags =
     , initialGame : D.Value
     , initialSeed : Int
     }
-
-
-{-|
-
-  - Themes only work if in the list in tailwind.config.js.alias
-  - Also, DONT FORGET to update allThemes in Theme.elm when updating this list
-
--}
-type Theme
-    = Default
-    | DefaultLight
-    | DefaultDark
-    | Retro
-    | Cyberpunk
-    | Black
-    | Luxury
 
 
 type alias DebugSettings =
@@ -105,7 +90,7 @@ type alias MissionYield =
 
 type alias MissionStats =
     { title : String
-    , unlock : Maybe UnlockKind
+    , unlock : Maybe Unlock
     , duration : Duration
     , yield : MissionYield
     }
@@ -147,20 +132,6 @@ type DwarfLevelRequirements
 -- Level Unlocks
 
 
-type UnlockKind
-    = UnlockHaz2
-    | UnlockHaz3
-    | UnlockHaz4
-    | UnlockHaz5
-    | UnlockTheme Theme
-    | UnlockDwarfXpButtons -- Once this is unlocked the whole feature becomes available along with Dwarf Xp Button 1
-    | UnlockDwarfXpButton2
-    | UnlockDwarfXpButton3
-    | UnlockDwarfXpButton4
-    | UnlockDwarfXpButton5
-    | UnlockAbyssBar
-
-
 type UnlockCategory
     = UnlockFeature
     | UnlockActivity
@@ -168,7 +139,7 @@ type UnlockCategory
 
 
 type alias LevelUnlockStats =
-    { kind : UnlockKind
+    { kind : Unlock
     , title : String
     , category : UnlockCategory
     }
@@ -207,43 +178,6 @@ type alias DwarfRecord a =
 
 
 
--- Dwarf XP Buttons
-
-
-type DwarfXpPoint
-    = DwarfXpPoint
-
-
-type alias DwarfXp =
-    Quantity Float DwarfXpPoint
-
-
-type DwarfXpButton
-    = DwarfXpButton1
-    | DwarfXpButton2
-    | DwarfXpButton3
-    | DwarfXpButton4
-    | DwarfXpButton5
-
-
-type alias DwarfXpButtonStats =
-    { id_ : String
-    , xp : DwarfXp
-    , unlock : Maybe UnlockKind
-    , duration : Duration
-    }
-
-
-type alias DwarfXpButtonRecord a =
-    { dwarfXpButton1 : a
-    , dwarfXpButton2 : a
-    , dwarfXpButton3 : a
-    , dwarfXpButton4 : a
-    , dwarfXpButton5 : a
-    }
-
-
-
 -- Tabs
 
 
@@ -268,3 +202,189 @@ type alias TabRecord a =
     , abyssBarTab : a
     , settingsTab : a
     }
+
+
+{-|
+
+  - Themes only work if in the list in src/main.css. In the DaisyUI plugin part.
+  - Also, don't forget to update allThemes in Theme.elm when updating this list
+
+-}
+type Theme
+    = Default
+    | DefaultLight
+    | DefaultDark
+    | Retro
+    | Cyberpunk
+    | Black
+    | Luxury
+
+
+type Unlock
+    = UnlockHaz2
+    | UnlockHaz3
+    | UnlockHaz4
+    | UnlockHaz5
+    | UnlockTheme Theme
+    | UnlockDwarfXpButtons -- Once this is unlocked the whole feature becomes available along with Dwarf Xp Button 1
+    | UnlockDwarfXpButton2
+    | UnlockDwarfXpButton3
+    | UnlockDwarfXpButton4
+    | UnlockDwarfXpButton5
+    | UnlockAbyssBar
+
+
+
+{--| A kind is a game concept and it always has the following format:
+
+-- Things
+type Thing
+    = Thing1
+    | Thing2
+    | Thing3
+
+allThings : List Thing
+allThings =
+    [ Thing1, Thing2, Thing3 ]
+
+type alias ThingStats =
+    { kind : Thing
+    , title : String -- If the concept has a human-readable name, we call it title
+    , icon : String -- If the concept has an icon, we call it icon
+    , -- other stuff
+    }
+
+type alias ThingRecord a =
+    { thing1 : a
+    , thing2 : a
+    , thing3 : a
+    }
+
+thingRecord : a -> ThingRecord a
+thingRecord a =
+    { thing1 = a
+    , thing2 = a
+    , thing3 = a
+    }
+
+getByThing : ThingRecord a -> Thing -> a
+getByThing record kind =
+    case kind of
+        Thing1 -> record.thing1
+        Thing2 -> record.thing2
+        Thing3 -> record.thing3
+
+setByThing : a -> Thing -> ThingRecord a -> ThingRecord a
+setByThing value kind record =
+    case kind of
+        Thing1 -> { record | thing1 = value }
+        Thing2 -> { record | thing2 = value }
+        Thing3 -> { record | thing3 = value }
+
+updateByThing : (a -> a) -> ThingRecord a -> Thing -> -> ThingRecord a
+updateByThing f record kind =
+    setByThing (f (getByThing kind record)) thing record
+
+thingStats : Thing -> ThingStats
+thingStats =
+    getByThing allThingStats
+-}
+-- Dwarf XP Buttons
+
+
+type DwarfXpButton
+    = DwarfXpButton1
+    | DwarfXpButton2
+    | DwarfXpButton3
+    | DwarfXpButton4
+    | DwarfXpButton5
+
+
+allDwarfXpButtons : List DwarfXpButton
+allDwarfXpButtons =
+    [ DwarfXpButton1, DwarfXpButton2, DwarfXpButton3, DwarfXpButton4, DwarfXpButton5 ]
+
+
+type alias DwarfXpButtonStats =
+    { id_ : String
+    , xp : DwarfXp
+    , unlock : Maybe Unlock
+    , duration : Duration
+    }
+
+
+type alias DwarfXpButtonRecord a =
+    { dwarfXpButton1 : a
+    , dwarfXpButton2 : a
+    , dwarfXpButton3 : a
+    , dwarfXpButton4 : a
+    , dwarfXpButton5 : a
+    }
+
+
+dwarfXpButtonRecord : a -> DwarfXpButtonRecord a
+dwarfXpButtonRecord a =
+    { dwarfXpButton1 = a
+    , dwarfXpButton2 = a
+    , dwarfXpButton3 = a
+    , dwarfXpButton4 = a
+    , dwarfXpButton5 = a
+    }
+
+
+getByDwarfXpButton : DwarfXpButtonRecord a -> DwarfXpButton -> a
+getByDwarfXpButton record kind =
+    case kind of
+        DwarfXpButton1 ->
+            record.dwarfXpButton1
+
+        DwarfXpButton2 ->
+            record.dwarfXpButton2
+
+        DwarfXpButton3 ->
+            record.dwarfXpButton3
+
+        DwarfXpButton4 ->
+            record.dwarfXpButton4
+
+        DwarfXpButton5 ->
+            record.dwarfXpButton5
+
+
+setByDwarfXpButton : a -> DwarfXpButton -> DwarfXpButtonRecord a -> DwarfXpButtonRecord a
+setByDwarfXpButton value kind record =
+    case kind of
+        DwarfXpButton1 ->
+            { record | dwarfXpButton1 = value }
+
+        DwarfXpButton2 ->
+            { record | dwarfXpButton2 = value }
+
+        DwarfXpButton3 ->
+            { record | dwarfXpButton3 = value }
+
+        DwarfXpButton4 ->
+            { record | dwarfXpButton4 = value }
+
+        DwarfXpButton5 ->
+            { record | dwarfXpButton5 = value }
+
+
+updateByDwarfXpButton : (a -> a) -> DwarfXpButtonRecord a -> DwarfXpButton -> DwarfXpButtonRecord a
+updateByDwarfXpButton f record kind =
+    setByDwarfXpButton (f (getByDwarfXpButton record kind)) kind record
+
+
+allDwarfXpButtonStats : DwarfXpButtonRecord DwarfXpButtonStats
+allDwarfXpButtonStats =
+    { dwarfXpButton1 = { id_ = "dwarfXpButton1", xp = DwarfXp.float 1, unlock = Nothing, duration = Duration.minutes 1 }
+    , dwarfXpButton2 = { id_ = "dwarfXpButton2", xp = DwarfXp.float 2, unlock = Just UnlockDwarfXpButton2, duration = Duration.minutes 5 }
+    , dwarfXpButton3 = { id_ = "dwarfXpButton3", xp = DwarfXp.float 3, unlock = Just UnlockDwarfXpButton3, duration = Duration.minutes 60 }
+    , dwarfXpButton4 = { id_ = "dwarfXpButton4", xp = DwarfXp.float 4, unlock = Just UnlockDwarfXpButton4, duration = Duration.minutes 360 }
+    , dwarfXpButton5 = { id_ = "dwarfXpButton5", xp = DwarfXp.float 5, unlock = Just UnlockDwarfXpButton5, duration = Duration.minutes 1440 }
+    }
+
+
+dwarfXpButtonStats : DwarfXpButton -> DwarfXpButtonStats
+dwarfXpButtonStats kind =
+    getByDwarfXpButton allDwarfXpButtonStats kind

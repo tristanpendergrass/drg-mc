@@ -5,7 +5,7 @@ import Browser.Events
 import Config
 import Dict exposing (Dict)
 import Duration exposing (Duration, hours)
-import DwarfXp
+import DwarfXp exposing (DwarfXp)
 import FeatherIcons
 import Float.Extra
 import Html exposing (..)
@@ -15,7 +15,7 @@ import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra
-import Quantity
+import Quantity exposing (Quantity(..))
 import Random
 import Save
 import Test.Html.Query exposing (has)
@@ -59,7 +59,7 @@ defaultModel initialSeed now =
         , haz5 = ButtonReady
         }
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
-    , dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord ButtonReady
+    , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
     }
 
 
@@ -104,6 +104,90 @@ updateButton delta buttonDuration status =
                         ButtonOnCooldown newTimer
             in
             newStatus
+
+
+{-| A list of for each level how much xp is required to reach the next level.
+We should normally use Config.dwarfLevelingSchedule if you need the xp for a given level, but having it in order in a List helps with a lot of other utility functions in this file.
+-}
+dwarfXpTable : List ( Int, DwarfXp )
+dwarfXpTable =
+    let
+        helper : Int -> List ( Int, DwarfXp ) -> List ( Int, DwarfXp )
+        helper lvl accum =
+            case Config.dwarfLevelingSchedule lvl of
+                Ok (EarnDwarfXp xpToNextLevel) ->
+                    helper (lvl + 1) (accum ++ [ ( lvl, DwarfXp.float xpToNextLevel ) ])
+
+                _ ->
+                    accum
+    in
+    helper 1 []
+
+
+dwarfMaxLevel : Int
+dwarfMaxLevel =
+    dwarfXpTable
+        |> List.Extra.last
+        |> Maybe.map Tuple.first
+        |> Maybe.withDefault 1
+
+
+dwarfLevel : DwarfXp -> Int
+dwarfLevel xp =
+    let
+        helper : Int -> DwarfXp -> List ( Int, DwarfXp ) -> Int
+        helper lvl (Quantity remainingXp) remainingLevels =
+            case remainingLevels of
+                [] ->
+                    lvl
+
+                ( _, Quantity xpToNextLevel ) :: rest ->
+                    if remainingXp < xpToNextLevel then
+                        lvl
+
+                    else
+                        helper (lvl + 1) (DwarfXp.float (remainingXp - xpToNextLevel)) rest
+    in
+    helper 1 xp dwarfXpTable
+
+
+xpToLevel : Int -> DwarfXp
+xpToLevel lvl =
+    List.Extra.dropWhileRight (\( l, _ ) -> l >= lvl) dwarfXpTable
+        |> List.foldl (\( _, Quantity xp ) acc -> Quantity.plus acc (DwarfXp.float xp)) (DwarfXp.float 0)
+
+
+flatXpInCurrentLevel : DwarfXp -> DwarfXp
+flatXpInCurrentLevel xp =
+    let
+        currentLevel : Int
+        currentLevel =
+            dwarfLevel xp
+
+        xpInCurrentLevel : DwarfXp
+        xpInCurrentLevel =
+            Quantity.difference xp (xpToLevel currentLevel)
+    in
+    xpInCurrentLevel
+
+
+percentInLevel : DwarfXp -> Percent
+percentInLevel xp =
+    let
+        currentLevel : Int
+        currentLevel =
+            dwarfLevel xp
+
+        xpInCurrentLevel : DwarfXp
+        xpInCurrentLevel =
+            flatXpInCurrentLevel xp
+    in
+    case Config.dwarfLevelingSchedule currentLevel of
+        Ok (EarnDwarfXp total) ->
+            Utils.Percent.float (DwarfXp.toFloat xpInCurrentLevel / total)
+
+        _ ->
+            Utils.Percent.float 1
 
 
 addCredits : Float -> { a | credits : Float, level : Int } -> { a | credits : Float, level : Int }
@@ -190,9 +274,9 @@ update msg model =
                     let
                         buttonDuration : Duration
                         buttonDuration =
-                            (Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats).duration
+                            (dwarfXpButtonStats dwarfXpButton).duration
                     in
-                    Utils.Record.updateByDwarfXpButton dwarfXpButton (updateButton delta buttonDuration) statuses
+                    updateByDwarfXpButton (updateButton delta buttonDuration) statuses dwarfXpButton
 
                 timeBetweenSaves : Duration
                 timeBetweenSaves =
@@ -212,7 +296,7 @@ update msg model =
             ( { model
                 | currentTime = newCurrentTime
                 , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses Utils.Record.allMissions
-                , dwarfXpButtonStatuses = List.foldl updateDwarfXpButtonStatuses model.dwarfXpButtonStatuses Utils.Record.allDwarfXpButtons
+                , dwarfXpButtonStatuses = List.foldl updateDwarfXpButtonStatuses model.dwarfXpButtonStatuses allDwarfXpButtons
                 , saveTimer = newSaveTimer
               }
             , Cmd.batch
@@ -257,22 +341,22 @@ update msg model =
             let
                 stats : DwarfXpButtonStats
                 stats =
-                    Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+                    dwarfXpButtonStats dwarfXpButton
 
                 newStatuses : DwarfXpButtonRecord ButtonStatus
                 newStatuses =
-                    Utils.Record.setByDwarfXpButton dwarfXpButton (setButtonCooldown model) model.dwarfXpButtonStatuses
+                    setByDwarfXpButton (setButtonCooldown model) dwarfXpButton model.dwarfXpButtonStatuses
 
                 ( ( dwarf, newDwarfXp ), newSeed ) =
                     Random.step (dwarfXpGenerator stats.xp model.dwarfXp) model.seed
 
                 currentLevel : Int
                 currentLevel =
-                    DwarfXp.level (Utils.Record.getByDwarf dwarf model.dwarfXp)
+                    dwarfLevel (Utils.Record.getByDwarf dwarf model.dwarfXp)
 
                 newLevel : Int
                 newLevel =
-                    DwarfXp.level (Utils.Record.getByDwarf dwarf newDwarfXp)
+                    dwarfLevel (Utils.Record.getByDwarf dwarf newDwarfXp)
             in
             ( { model
                 | dwarfXpButtonStatuses = newStatuses
@@ -322,7 +406,7 @@ update msg model =
                         |> List.maximum
                         |> Maybe.withDefault 1
             in
-            ( { model | level = maxLevel }, Cmd.none )
+            ( { model | level = dwarfMaxLevel }, Cmd.none )
 
         HandleTabClick tab ->
             ( { model | currentTab = tab }, Cmd.none )
@@ -724,19 +808,15 @@ renderDwarf model dwarf =
 
         level : Int
         level =
-            DwarfXp.level xp
-
-        percentInLevel : Percent
-        percentInLevel =
-            DwarfXp.percentInLevel xp
+            dwarfLevel xp
 
         xpInLevelNumerator : DwarfXp
         xpInLevelNumerator =
-            DwarfXp.flatXpInCurrentLevel xp
+            flatXpInCurrentLevel xp
 
         progressInLevelSpan : Html Msg
         progressInLevelSpan =
-            case Config.dwarfLevelingSchedule (DwarfXp.level xp) of
+            case Config.dwarfLevelingSchedule level of
                 Ok (EarnDwarfXp xpToNextLevel) ->
                     span [ class "text-sm" ]
                         [ text (floatToString (DwarfXp.toFloat xpInLevelNumerator) ++ " / " ++ floatToString xpToNextLevel ++ " xp to next level") ]
@@ -763,7 +843,7 @@ renderDwarf model dwarf =
                 ]
                 [ text (String.fromInt level) ]
             ]
-        , progress [ class "progress progress-secondary xp-bar", value (String.fromFloat (Utils.Percent.toPercentage percentInLevel)), attribute "max" "100" ] []
+        , progress [ class "progress progress-secondary xp-bar", value (String.fromFloat (Utils.Percent.toPercentage (percentInLevel xp))), attribute "max" "100" ] []
         ]
 
 
@@ -826,7 +906,7 @@ renderCommendationsTab model =
     let
         unlockedXpButtons : List DwarfXpButton
         unlockedXpButtons =
-            List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) Utils.Record.allDwarfXpButtons
+            List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) allDwarfXpButtons
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
@@ -844,11 +924,11 @@ renderCommendationsTab model =
                             let
                                 stats : DwarfXpButtonStats
                                 stats =
-                                    Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats
+                                    dwarfXpButtonStats dwarfXpButton
                             in
                             renderButton
                                 model
-                                (Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses)
+                                (getByDwarfXpButton model.dwarfXpButtonStatuses dwarfXpButton)
                                 stats.duration
                                 (HandleDwarfXpButtonClick dwarfXpButton)
                                 ButtonSecondary
@@ -935,9 +1015,9 @@ numActiveItemsInTab model tab =
                 |> List.length
 
         CommendationsTab ->
-            Utils.Record.allDwarfXpButtons
+            allDwarfXpButtons
                 |> List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level)
-                |> List.filter (\dwarfXpButton -> Utils.Record.getByDwarfXpButton dwarfXpButton model.dwarfXpButtonStatuses == ButtonReady)
+                |> List.filter (\dwarfXpButton -> getByDwarfXpButton model.dwarfXpButtonStatuses dwarfXpButton == ButtonReady)
                 |> List.length
 
         AbyssBarTab ->
@@ -950,7 +1030,7 @@ numActiveItemsInTab model tab =
 squadBonus : Model -> Percent
 squadBonus model =
     Utils.Record.allDwarfs
-        |> List.map (\dwarf -> DwarfXp.level (Utils.Record.getByDwarf dwarf model.dwarfXp))
+        |> List.map (\dwarf -> dwarfLevel (Utils.Record.getByDwarf dwarf model.dwarfXp))
         |> List.sum
         |> (\s -> s - 4)
         -- Divide by 100 since it's a percentage i.e. sum of 10 levels = 0.1 multiplier

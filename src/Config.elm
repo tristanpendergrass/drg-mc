@@ -150,16 +150,6 @@ dwarfStats =
     }
 
 
-dwarfXpButtonStats : DwarfXpButtonRecord DwarfXpButtonStats
-dwarfXpButtonStats =
-    { dwarfXpButton1 = { id_ = "dwarfXpButton1", xp = Quantity 1, unlock = Nothing, duration = Duration.minutes 1 }
-    , dwarfXpButton2 = { id_ = "dwarfXpButton2", xp = Quantity 2, unlock = Just UnlockDwarfXpButton2, duration = Duration.minutes 5 }
-    , dwarfXpButton3 = { id_ = "dwarfXpButton3", xp = Quantity 3, unlock = Just UnlockDwarfXpButton3, duration = Duration.hours 1 }
-    , dwarfXpButton4 = { id_ = "dwarfXpButton4", xp = Quantity 4, unlock = Just UnlockDwarfXpButton4, duration = Duration.hours 6 }
-    , dwarfXpButton5 = { id_ = "dwarfXpButton5", xp = Quantity 5, unlock = Just UnlockDwarfXpButton5, duration = Duration.hours 24 }
-    }
-
-
 
 -- Tabs
 

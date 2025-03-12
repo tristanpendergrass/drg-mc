@@ -41,7 +41,7 @@ themeIsUnlocked currentLevel theme =
     kindIsUnlocked currentLevel (UnlockTheme theme)
 
 
-kindIsUnlocked : Int -> UnlockKind -> Bool
+kindIsUnlocked : Int -> Unlock -> Bool
 kindIsUnlocked currentLevel kind =
     Config.levelUnlockStats
         |> Dict.toList
@@ -53,7 +53,7 @@ kindIsUnlocked currentLevel kind =
 
 dwarfXpButtonIsUnlocked : Int -> DwarfXpButton -> Bool
 dwarfXpButtonIsUnlocked currentLevel dwarfXpButton =
-    case (Utils.Record.getByDwarfXpButton dwarfXpButton Config.dwarfXpButtonStats).unlock of
+    case (dwarfXpButtonStats dwarfXpButton).unlock of
         Nothing ->
             True
 
