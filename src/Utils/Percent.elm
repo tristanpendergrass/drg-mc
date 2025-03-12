@@ -3,6 +3,7 @@ module Utils.Percent exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import Quantity exposing (Quantity(..))
+import Round
 
 
 type Percentile
@@ -65,3 +66,8 @@ percentEncoder percent =
 percentDecoder : D.Decoder Percent
 percentDecoder =
     D.map float D.float
+
+
+toString : Percent -> String
+toString percent =
+    Round.round 2 (toPercentage percent)

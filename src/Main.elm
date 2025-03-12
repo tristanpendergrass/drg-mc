@@ -891,14 +891,10 @@ renderMissionsTab model =
         yieldBonus =
             squadBonus model
 
-        yieldBonusString : String
-        yieldBonusString =
-            String.fromFloat (Utils.Percent.toPercentage yieldBonus)
-
         bonuses : List (Html Msg)
         bonuses =
             if Quantity.greaterThan Quantity.zero yieldBonus then
-                [ renderBonus ("+" ++ yieldBonusString ++ "% yield")
+                [ renderBonus ("+" ++ Utils.Percent.toString yieldBonus ++ "% yield")
                 ]
 
             else
