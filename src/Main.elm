@@ -230,6 +230,21 @@ setButtonCooldown model =
         ButtonOnCooldown Utils.Timer.create
 
 
+getAllMods : Model -> List Mod
+getAllMods model =
+    let
+        squadBonusPercent : Percent
+        squadBonusPercent =
+            squadBonus model
+    in
+    -- Only mod right now is the mission yield from squad bonus. If the bonus is greater than 0, return [ModMissionYield (Percent (squadBonus model))]
+    if Quantity.greaterThan Quantity.zero squadBonusPercent then
+        [ ModMissionYield squadBonusPercent ]
+
+    else
+        []
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -312,9 +327,24 @@ update msg model =
                 stats =
                     Utils.Record.getByMission mission Config.missionStats
 
+                mods : List Mod
+                mods =
+                    getAllMods model
+
+                totalYieldMod : Percent
+                totalYieldMod =
+                    List.foldl
+                        (\mod acc ->
+                            case mod of
+                                ModMissionYield modPercent ->
+                                    Quantity.plus acc modPercent
+                        )
+                        Utils.Percent.zero
+                        mods
+
                 modifiedYield : MissionYield
                 modifiedYield =
-                    modifyYield model stats.yield
+                    modifyYield totalYieldMod stats.yield
 
                 newMissionStatuses : MissionRecord ButtonStatus
                 newMissionStatuses =
@@ -410,6 +440,11 @@ update msg model =
 
         HandleTabClick tab ->
             ( { model | currentTab = tab }, Cmd.none )
+
+
+modifyYield : Percent -> MissionYield -> MissionYield
+modifyYield percent yield =
+    { yield | credits = yield.credits * (1 + Utils.Percent.toFloat percent) }
 
 
 dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
@@ -525,18 +560,6 @@ credits1Img =
     img [ src "credits1.png", class "w-6 inline-block" ] []
 
 
-modifyYield : Model -> MissionYield -> MissionYield
-modifyYield model yield =
-    let
-        creditsMultiplier : Float
-        creditsMultiplier =
-            squadBonus model
-                |> Utils.Percent.toFloat
-                |> (+) 1
-    in
-    { yield | credits = yield.credits * creditsMultiplier }
-
-
 renderMissionRow : Model -> Mission -> Html Msg
 renderMissionRow model mission =
     let
@@ -552,9 +575,24 @@ renderMissionRow model mission =
         yield =
             stats.yield
 
+        mods : List Mod
+        mods =
+            getAllMods model
+
+        totalYieldMod : Percent
+        totalYieldMod =
+            List.foldl
+                (\mod acc ->
+                    case mod of
+                        ModMissionYield modPercent ->
+                            Quantity.plus acc modPercent
+                )
+                Utils.Percent.zero
+                mods
+
         modifiedYield : MissionYield
         modifiedYield =
-            modifyYield model yield
+            modifyYield totalYieldMod yield
 
         icon : String -> Html Msg
         icon iconSrc =

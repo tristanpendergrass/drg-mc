@@ -9,6 +9,7 @@ import Json.Decode as D
 import Quantity exposing (Quantity(..))
 import Random
 import Time
+import Utils.Percent exposing (Percent)
 import Utils.Timer exposing (Timer)
 
 
@@ -388,3 +389,7 @@ allDwarfXpButtonStats =
 dwarfXpButtonStats : DwarfXpButton -> DwarfXpButtonStats
 dwarfXpButtonStats kind =
     getByDwarfXpButton allDwarfXpButtonStats kind
+
+
+type Mod
+    = ModMissionYield Percent
