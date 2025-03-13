@@ -60,6 +60,7 @@ defaultModel initialSeed now =
         }
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
+    , activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ]
     }
 
 
@@ -236,13 +237,20 @@ getAllMods model =
         squadBonusPercent : Percent
         squadBonusPercent =
             squadBonus model
-    in
-    -- Only mod right now is the mission yield from squad bonus. If the bonus is greater than 0, return [ModMissionYield (Percent (squadBonus model))]
-    if Quantity.greaterThan Quantity.zero squadBonusPercent then
-        [ ModMissionYield squadBonusPercent ]
 
-    else
-        []
+        squadMods : List Mod
+        squadMods =
+            if Quantity.greaterThan Quantity.zero squadBonusPercent then
+                [ ModMissionYield squadBonusPercent ]
+
+            else
+                []
+
+        dailySpecialMods : List Mod
+        dailySpecialMods =
+            List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).mod) model.activeDailySpecials
+    in
+    List.concat [ squadMods, dailySpecialMods ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -430,18 +438,11 @@ update msg model =
 modifyYield : Model -> MissionYield -> MissionYield
 modifyYield model yield =
     let
-        totalYieldMod : Percent
-        totalYieldMod =
-            List.foldl
-                (\mod acc ->
-                    case mod of
-                        ModMissionYield modPercent ->
-                            Quantity.plus acc modPercent
-                )
-                Utils.Percent.zero
-                (getAllMods model)
+        yieldBonus : Percent
+        yieldBonus =
+            getYieldBonus (getAllMods model)
     in
-    { yield | credits = yield.credits * (1 + Utils.Percent.toFloat totalYieldMod) }
+    { yield | credits = yield.credits * (1 + Utils.Percent.toFloat yieldBonus) }
 
 
 dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
@@ -889,7 +890,7 @@ renderMissionsTab model =
 
         yieldBonus : Percent
         yieldBonus =
-            squadBonus model
+            getYieldBonus (getAllMods model)
 
         bonuses : List (Html Msg)
         bonuses =
@@ -1053,6 +1054,18 @@ squadBonus model =
         |> toFloat
         |> (\x -> x / 100)
         |> Utils.Percent.float
+
+
+getYieldBonus : List Mod -> Percent
+getYieldBonus mods =
+    List.filterMap
+        (\mod ->
+            case mod of
+                ModMissionYield percent ->
+                    Just percent
+        )
+        mods
+        |> List.foldl Quantity.plus Quantity.zero
 
 
 renderLogo : Html Msg

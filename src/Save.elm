@@ -111,6 +111,7 @@ v0_1Decoder =
                     , saveTimer = Utils.Timer.create
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
                     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
+                    , activeDailySpecials = []
                     }
             in
             model
@@ -159,6 +160,7 @@ v0_2Decoder initialSeed =
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
+                        , activeDailySpecials = []
                         }
                 in
                 model
@@ -286,7 +288,7 @@ v0_2ThemeEncoder maybeTheme =
 encoder : Model -> E.Value
 encoder model =
     E.object
-        [ ( "v0.2"
+        [ ( "v0.3"
           , E.object
                 [ ( "currentTime", posixEncoder model.currentTime )
                 , ( "currentTab", v0_2TabEncoder model.currentTab )
@@ -313,6 +315,16 @@ encoder model =
                         , ( "engineer", E.float (DwarfXp.toFloat model.dwarfXp.engineer) )
                         , ( "driller", E.float (DwarfXp.toFloat model.dwarfXp.driller) )
                         ]
+                  )
+                , ( "activeDailySpecials"
+                  , E.list
+                        (\( dailySpecial, timer ) ->
+                            E.object
+                                [ ( "dailySpecial", E.string (dailySpecialStats dailySpecial).id_ )
+                                , ( "timer", Utils.Timer.timerEncoder timer )
+                                ]
+                        )
+                        model.activeDailySpecials
                   )
                 ]
           )

@@ -44,6 +44,7 @@ type alias Model =
     , missionStatuses : MissionRecord ButtonStatus
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
     , dwarfXp : DwarfRecord DwarfXp
+    , activeDailySpecials : List ( DailySpecial, Timer )
     }
 
 
@@ -393,3 +394,90 @@ dwarfXpButtonStats kind =
 
 type Mod
     = ModMissionYield Percent
+
+
+
+-- Daily Specials
+
+
+type DailySpecial
+    = DarkMorkite
+    | PotsOGold
+    | RedRockBlaster
+    | RockyMountain
+
+
+allDailySpecials : List DailySpecial
+allDailySpecials =
+    [ DarkMorkite, PotsOGold, RedRockBlaster, RockyMountain ]
+
+
+type alias DailySpecialStats =
+    { id_ : String
+    , title : String
+    , icon : String
+    , mod : Mod
+    }
+
+
+type alias DailySpecialRecord a =
+    { darkMorkite : a
+    , potsOGold : a
+    , redRockBlaster : a
+    , rockyMountain : a
+    }
+
+
+dailySpecialRecord : a -> DailySpecialRecord a
+dailySpecialRecord a =
+    { darkMorkite = a
+    , potsOGold = a
+    , redRockBlaster = a
+    , rockyMountain = a
+    }
+
+
+getByDailySpecial : DailySpecialRecord a -> DailySpecial -> a
+getByDailySpecial record kind =
+    case kind of
+        DarkMorkite ->
+            record.darkMorkite
+
+        PotsOGold ->
+            record.potsOGold
+
+        RedRockBlaster ->
+            record.redRockBlaster
+
+        RockyMountain ->
+            record.rockyMountain
+
+
+setByDailySpecial : a -> DailySpecial -> DailySpecialRecord a -> DailySpecialRecord a
+setByDailySpecial value kind record =
+    case kind of
+        DarkMorkite ->
+            { record | darkMorkite = value }
+
+        PotsOGold ->
+            { record | potsOGold = value }
+
+        RedRockBlaster ->
+            { record | redRockBlaster = value }
+
+        RockyMountain ->
+            { record | rockyMountain = value }
+
+
+allDailySpecialStats : DailySpecialRecord DailySpecialStats
+allDailySpecialStats =
+    { darkMorkite = { id_ = "darkMorkite", title = "Dark Morkite", icon = "dark-morkite.png", mod = ModMissionYield (Utils.Percent.float 0.1) }
+    , potsOGold = { id_ = "potsOGold", title = "Pots o' Gold", icon = "pots-o-gold.png", mod = ModMissionYield (Utils.Percent.float 0.2) }
+    , redRockBlaster = { id_ = "redRockBlaster", title = "Red Rock Blaster", icon = "red-rock-blaster.png", mod = ModMissionYield (Utils.Percent.float 0.3) }
+    , rockyMountain = { id_ = "rockyMountain", title = "Rocky Mountain", icon = "rocky-mountain.png", mod = ModMissionYield (Utils.Percent.float 0.4) }
+    }
+
+
+dailySpecialStats : DailySpecial -> DailySpecialStats
+dailySpecialStats kind =
+    getByDailySpecial allDailySpecialStats kind
