@@ -71,7 +71,7 @@ defaultModel seed1 now =
         }
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
-    , activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ]
+    , activeDailySpecials = []
     , dailySpecialCooldown = ButtonReady
     , dailySpecialOptions = dailySpecialOptions
     }
@@ -927,7 +927,7 @@ renderBuff : Buff -> Html Msg
 renderBuff { title, icon, description, mod } =
     -- Note: had a tooltip here at one point but I didn't like the effect
     -- Might revisit it later or something similar that lets users learn about the buffs
-    div [ class "flex flex-col items-center border border-content rounded-sm p-1" ]
+    div [ class "flex flex-col items-center border border-content rounded-sm p-1 bg-info text-info-content" ]
         [ div [ class "flex items-center gap-1" ]
             [ img [ src icon, class "w-6" ] []
             , div [ class "text-sm leading-none" ] [ text title ]
@@ -947,7 +947,7 @@ tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
     , headerWrapper = class "px-8 py-4 w-full flex items-center justify-between"
     , bonusesArea = class "w-full h-6 flex items-center gap-4 px-8"
-    , contentWrapper = class "p-8 pt-0 w-full flex justify-center"
+    , contentWrapper = class "pt-0 w-full flex justify-start px-8"
     }
 
 
@@ -1170,11 +1170,11 @@ renderAbyssBarTab model =
         , div [ tabLayout.bonusesArea ]
             []
         , div [ tabLayout.contentWrapper ]
-            [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
+            [ div [ class "flex flex-col items-center gap-4 max-w-[750px]" ]
                 [ case model.dailySpecialCooldown of
                     ButtonReady ->
-                        div [ class "flex flex-col items-center gap-4" ]
-                            [ p [] [ text "Select a daily special to apply" ]
+                        div [ class "flex flex-col gap-4" ]
+                            [ p [] [ text "Select a ", strong [] [ text "daily special" ], text " to give your crew an ", strong [ class "underline" ] [ text "awesome buff" ] ]
                             , div [ class "flex items-center gap-4" ]
                                 (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
                             ]
@@ -1204,9 +1204,10 @@ renderDailySpecialOption model option =
     div [ class "card card-sm bg-base-300 w-64 shadow-lg" ]
         [ figure [ class "pt-2 bg-warning" ]
             [ img [ src stats.icon, alt stats.title ] []
+            , img [ src "beer/beer.png", class "w-24 -ml-6" ] []
             ]
         , div [ class "card-body" ]
-            [ h2 [ class "card-title" ] [ text stats.title ]
+            [ h2 [ class "card-title" ] [ text "Daily Special: ", span [ class "underline" ] [ text stats.title ] ]
             , p [] [ text (modToString stats.buff.mod) ]
             , div [ class "card-actions justify-end" ]
                 [ button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Select" ]
