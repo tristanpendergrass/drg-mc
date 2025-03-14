@@ -112,6 +112,8 @@ v0_1Decoder =
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
                     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
                     , activeDailySpecials = []
+                    , dailySpecialCooldown = ButtonReady
+                    , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                     }
             in
             model
@@ -161,6 +163,8 @@ v0_2Decoder initialSeed =
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
                         , activeDailySpecials = []
+                        , dailySpecialCooldown = ButtonReady
+                        , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                         }
                 in
                 model
@@ -326,6 +330,7 @@ encoder model =
                         )
                         model.activeDailySpecials
                   )
+                , ( "dailySpecialCooldown", v0_2EncodeButtonStatus model.dailySpecialCooldown )
                 ]
           )
         ]

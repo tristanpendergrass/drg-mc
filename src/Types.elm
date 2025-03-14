@@ -45,6 +45,8 @@ type alias Model =
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
     , dwarfXp : DwarfRecord DwarfXp
     , activeDailySpecials : List ( DailySpecial, Timer )
+    , dailySpecialCooldown : ButtonStatus
+    , dailySpecialOptions : List DailySpecial
     }
 
 
@@ -61,6 +63,7 @@ type Msg
     | ResetGame
     | HandleTabClick Tab
     | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event
+    | HandleDailySpecialClick DailySpecial
 
 
 
@@ -471,10 +474,10 @@ setByDailySpecial value kind record =
 
 allDailySpecialStats : DailySpecialRecord DailySpecialStats
 allDailySpecialStats =
-    { darkMorkite = { id_ = "darkMorkite", title = "Dark Morkite", icon = "dark-morkite.png", mod = ModMissionYield (Utils.Percent.float 0.1) }
-    , potsOGold = { id_ = "potsOGold", title = "Pots o' Gold", icon = "pots-o-gold.png", mod = ModMissionYield (Utils.Percent.float 0.2) }
-    , redRockBlaster = { id_ = "redRockBlaster", title = "Red Rock Blaster", icon = "red-rock-blaster.png", mod = ModMissionYield (Utils.Percent.float 0.3) }
-    , rockyMountain = { id_ = "rockyMountain", title = "Rocky Mountain", icon = "rocky-mountain.png", mod = ModMissionYield (Utils.Percent.float 0.4) }
+    { darkMorkite = { id_ = "darkMorkite", title = "Dark Morkite", icon = "beer/dark_morkite.webp", mod = ModMissionYield (Utils.Percent.float 0.1) }
+    , potsOGold = { id_ = "potsOGold", title = "Pots o' Gold", icon = "beer/pots_o_gold.webp", mod = ModMissionYield (Utils.Percent.float 0.2) }
+    , redRockBlaster = { id_ = "redRockBlaster", title = "Red Rock Blaster", icon = "beer/red_rock_blaster.webp", mod = ModMissionYield (Utils.Percent.float 0.3) }
+    , rockyMountain = { id_ = "rockyMountain", title = "Rocky Mountain", icon = "beer/rocky_mountain.webp", mod = ModMissionYield (Utils.Percent.float 0.4) }
     }
 
 

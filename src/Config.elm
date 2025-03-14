@@ -181,3 +181,13 @@ defaultDebugSettings =
     , addedTime = Quantity.zero
     , buttonCooldownInstant = False
     }
+
+
+dailySpecialCooldown : Duration
+dailySpecialCooldown =
+    Duration.seconds 1
+
+
+dailySpecialBuffDuration : Duration
+dailySpecialBuffDuration =
+    Duration.minutes 1.5

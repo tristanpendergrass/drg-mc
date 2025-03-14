@@ -17,6 +17,7 @@ import Json.Encode as E
 import List.Extra
 import Quantity exposing (Quantity(..))
 import Random
+import Random.List
 import Save
 import Test.Html.Query exposing (has)
 import Theme
@@ -24,7 +25,7 @@ import Time
 import Types exposing (..)
 import Utils.Percent exposing (Percent)
 import Utils.Record
-import Utils.Timer exposing (durationLeft, hasTickedAVeryShortTime)
+import Utils.Timer exposing (Timer, durationLeft, hasTickedAVeryShortTime)
 import Utils.Unlocks
 
 
@@ -40,9 +41,19 @@ main =
 {--| Returns the amount of credits required to level up-}
 
 
+dailySpecialOptionsGenerator : Random.Generator (List DailySpecial)
+dailySpecialOptionsGenerator =
+    Random.List.shuffle allDailySpecials
+        |> Random.map (List.take 2)
+
+
 defaultModel : Random.Seed -> Time.Posix -> Model
-defaultModel initialSeed now =
-    { seed = initialSeed
+defaultModel seed1 now =
+    let
+        ( dailySpecialOptions, seed2 ) =
+            Random.step dailySpecialOptionsGenerator seed1
+    in
+    { seed = seed2
     , debugSettings = Config.defaultDebugSettings
     , currentTime = now
     , currentTab = MissionsTab
@@ -61,6 +72,8 @@ defaultModel initialSeed now =
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
     , activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ]
+    , dailySpecialCooldown = ButtonReady
+    , dailySpecialOptions = dailySpecialOptions
     }
 
 
@@ -301,6 +314,27 @@ update msg model =
                     in
                     updateByDwarfXpButton (updateButton delta buttonDuration) statuses dwarfXpButton
 
+                newDailySpecialCooldown : ButtonStatus
+                newDailySpecialCooldown =
+                    updateButton delta Config.dailySpecialCooldown model.dailySpecialCooldown
+
+                newDailySpecials : List ( DailySpecial, Timer )
+                newDailySpecials =
+                    -- Iterate over all daily specials, calculate the updated timer, and if it has completed remove the daily special from the list
+                    List.filterMap
+                        (\( dailySpecial, timer ) ->
+                            let
+                                ( newTimer, completions ) =
+                                    Utils.Timer.increment Config.dailySpecialBuffDuration delta timer
+                            in
+                            if completions > 0 then
+                                Nothing
+
+                            else
+                                Just ( dailySpecial, newTimer )
+                        )
+                        model.activeDailySpecials
+
                 timeBetweenSaves : Duration
                 timeBetweenSaves =
                     Duration.seconds 1
@@ -321,6 +355,8 @@ update msg model =
                 , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses Utils.Record.allMissions
                 , dwarfXpButtonStatuses = List.foldl updateDwarfXpButtonStatuses model.dwarfXpButtonStatuses allDwarfXpButtons
                 , saveTimer = newSaveTimer
+                , activeDailySpecials = newDailySpecials
+                , dailySpecialCooldown = newDailySpecialCooldown
               }
             , Cmd.batch
                 (List.filterMap identity
@@ -433,6 +469,20 @@ update msg model =
 
         HandleTabClick tab ->
             ( { model | currentTab = tab }, Cmd.none )
+
+        HandleDailySpecialClick dailySpecial ->
+            let
+                ( newDailySpecialOptions, seed2 ) =
+                    Random.step dailySpecialOptionsGenerator model.seed
+            in
+            ( { model
+                | activeDailySpecials = ( dailySpecial, Utils.Timer.create ) :: model.activeDailySpecials
+                , dailySpecialCooldown = ButtonOnCooldown Utils.Timer.create
+                , seed = seed2
+                , dailySpecialOptions = newDailySpecialOptions
+              }
+            , Cmd.none
+            )
 
 
 modifyYield : Model -> MissionYield -> MissionYield
@@ -1110,9 +1160,55 @@ renderAbyssBarTab model =
             []
         , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
-                []
+                [ case model.dailySpecialCooldown of
+                    ButtonReady ->
+                        div [ class "flex flex-col items-center gap-4" ]
+                            [ p [] [ text "Select a daily special to apply" ]
+                            , div [ class "flex items-center gap-4" ]
+                                (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
+                            ]
+
+                    ButtonOnCooldown cooldown ->
+                        let
+                            hasTickedAVeryShortTime : Bool
+                            hasTickedAVeryShortTime =
+                                Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialCooldown cooldown
+                        in
+                        div [ class "flex flex-col items-center gap-2" ]
+                            [ p [] [ text "Daily special will be ready in" ]
+                            , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) hasTickedAVeryShortTime
+                            ]
+                ]
             ]
         ]
+
+
+renderDailySpecialOption : Model -> DailySpecial -> Html Msg
+renderDailySpecialOption model option =
+    let
+        stats : DailySpecialStats
+        stats =
+            dailySpecialStats option
+    in
+    div [ class "card card-sm bg-base-300 w-64 shadow-lg" ]
+        [ figure [ class "pt-2 bg-warning" ]
+            [ img [ src stats.icon, alt stats.title ] []
+            ]
+        , div [ class "card-body" ]
+            [ h2 [ class "card-title" ] [ text stats.title ]
+            , p [] [ modDescription stats.mod ]
+            , div [ class "card-actions justify-end" ]
+                [ button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Select" ]
+                ]
+            ]
+        ]
+
+
+modDescription : Mod -> Html Msg
+modDescription mod =
+    case mod of
+        ModMissionYield percent ->
+            span [] [ text "Increases mission yield by ", strong [] [ text (Utils.Percent.toString percent ++ "%") ] ]
 
 
 view : Model -> Html Msg

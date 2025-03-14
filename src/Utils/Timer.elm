@@ -42,6 +42,11 @@ percentComplete (Timer { current }) =
     current
 
 
+isComplete : Timer -> Bool
+isComplete (Timer { current }) =
+    Quantity.greaterThanOrEqualTo (Utils.Percent.float 1.0) current
+
+
 durationLeft : Duration -> Timer -> Duration
 durationLeft totalDuration timer =
     let
