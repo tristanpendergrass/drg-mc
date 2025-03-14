@@ -399,6 +399,14 @@ type Mod
     = ModMissionYield Percent
 
 
+type alias Buff =
+    { title : String
+    , icon : String
+    , description : String
+    , mod : Mod
+    }
+
+
 
 -- Daily Specials
 
@@ -419,7 +427,7 @@ type alias DailySpecialStats =
     { id_ : String
     , title : String
     , icon : String
-    , mod : Mod
+    , buff : Buff
     }
 
 
@@ -474,10 +482,52 @@ setByDailySpecial value kind record =
 
 allDailySpecialStats : DailySpecialRecord DailySpecialStats
 allDailySpecialStats =
-    { darkMorkite = { id_ = "darkMorkite", title = "Dark Morkite", icon = "beer/dark_morkite.webp", mod = ModMissionYield (Utils.Percent.float 0.1) }
-    , potsOGold = { id_ = "potsOGold", title = "Pots o' Gold", icon = "beer/pots_o_gold.webp", mod = ModMissionYield (Utils.Percent.float 0.2) }
-    , redRockBlaster = { id_ = "redRockBlaster", title = "Red Rock Blaster", icon = "beer/red_rock_blaster.webp", mod = ModMissionYield (Utils.Percent.float 0.3) }
-    , rockyMountain = { id_ = "rockyMountain", title = "Rocky Mountain", icon = "beer/rocky_mountain.webp", mod = ModMissionYield (Utils.Percent.float 0.4) }
+    { darkMorkite =
+        { id_ = "darkMorkite"
+        , title = "Dark Morkite"
+        , icon = "beer/dark_morkite.webp"
+
+        -- , buff = ModMissionYield (Utils.Percent.float 0.1)
+        , buff =
+            { title = "Daily Special"
+            , icon = "beer/beer2.png"
+            , description = "Drinking Dark Morkite increases the yield of missions"
+            , mod = ModMissionYield (Utils.Percent.float 0.1)
+            }
+        }
+    , potsOGold =
+        { id_ = "potsOGold"
+        , title = "Pots o' Gold"
+        , icon = "beer/pots_o_gold.webp"
+        , buff =
+            { title = "Daily Special"
+            , icon = "beer/beer2.png"
+            , description = "Drinking Pots o' Gold increases the yield of missions"
+            , mod = ModMissionYield (Utils.Percent.float 0.2)
+            }
+        }
+    , redRockBlaster =
+        { id_ = "redRockBlaster"
+        , title = "Red Rock Blaster"
+        , icon = "beer/red_rock_blaster.webp"
+        , buff =
+            { title = "Daily Special"
+            , icon = "beer/beer2.png"
+            , description = "Drinking Red Rock Blaster increases the yield of missions"
+            , mod = ModMissionYield (Utils.Percent.float 0.3)
+            }
+        }
+    , rockyMountain =
+        { id_ = "rockyMountain"
+        , title = "Rocky Mountain"
+        , icon = "beer/rocky_mountain.webp"
+        , buff =
+            { title = "Daily Special"
+            , icon = "beer/beer2.png"
+            , description = "Drinking Rocky Mountain increases the yield of missions"
+            , mod = ModMissionYield (Utils.Percent.float 0.4)
+            }
+        }
     }
 
 

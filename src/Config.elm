@@ -190,4 +190,4 @@ dailySpecialCooldown =
 
 dailySpecialBuffDuration : Duration
 dailySpecialBuffDuration =
-    Duration.minutes 1.5
+    Duration.day

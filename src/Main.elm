@@ -244,26 +244,31 @@ setButtonCooldown model =
         ButtonOnCooldown Utils.Timer.create
 
 
-getAllMods : Model -> List Mod
-getAllMods model =
+getAllBuffs : Model -> List Buff
+getAllBuffs model =
     let
         squadBonusPercent : Percent
         squadBonusPercent =
             squadBonus model
 
-        squadMods : List Mod
+        squadMods : List Buff
         squadMods =
             if Quantity.greaterThan Quantity.zero squadBonusPercent then
-                [ ModMissionYield squadBonusPercent ]
+                [ { title = "Squad bonus", icon = "driller.webp", description = "Increase the yield of missions", mod = ModMissionYield squadBonusPercent } ]
 
             else
                 []
 
-        dailySpecialMods : List Mod
+        dailySpecialMods : List Buff
         dailySpecialMods =
-            List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).mod) model.activeDailySpecials
+            List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff) model.activeDailySpecials
     in
     List.concat [ squadMods, dailySpecialMods ]
+
+
+getAllMods : Model -> List Mod
+getAllMods model =
+    List.map .mod (getAllBuffs model)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -918,15 +923,30 @@ renderDwarf model dwarf =
         ]
 
 
-renderBonus : String -> Html Msg
-renderBonus label =
-    aside [ class "border border-primary py-1/2 px-1 text-xs" ] [ text label ]
+renderBuff : Buff -> Html Msg
+renderBuff { title, icon, description, mod } =
+    -- Note: had a tooltip here at one point but I didn't like the effect
+    -- Might revisit it later or something similar that lets users learn about the buffs
+    div [ class "flex flex-col items-center border border-content rounded-sm p-1" ]
+        [ div [ class "flex items-center gap-1" ]
+            [ img [ src icon, class "w-6" ] []
+            , div [ class "text-sm leading-none" ] [ text title ]
+            ]
+        , div [] [ text (modToString mod) ]
+        ]
+
+
+modToString : Mod -> String
+modToString mod =
+    case mod of
+        ModMissionYield percent ->
+            "+" ++ Utils.Percent.toString percent ++ "% yield"
 
 
 tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
     , headerWrapper = class "px-8 py-4 w-full flex items-center justify-between"
-    , bonusesArea = class "w-full h-6 flex items-center gap-4 px-8 overflow-y-hidden overflow-x-auto"
+    , bonusesArea = class "w-full h-6 flex items-center gap-4 px-8"
     , contentWrapper = class "p-8 pt-0 w-full flex justify-center"
     }
 
@@ -938,18 +958,9 @@ renderMissionsTab model =
         unlockedMissions =
             List.filter (Utils.Unlocks.missionIsUnlocked model.level) Utils.Record.allMissions
 
-        yieldBonus : Percent
-        yieldBonus =
-            getYieldBonus (getAllMods model)
-
         bonuses : List (Html Msg)
         bonuses =
-            if Quantity.greaterThan Quantity.zero yieldBonus then
-                [ renderBonus ("+" ++ Utils.Percent.toString yieldBonus ++ "% yield")
-                ]
-
-            else
-                []
+            List.map renderBuff (getAllBuffs model)
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
@@ -1196,19 +1207,12 @@ renderDailySpecialOption model option =
             ]
         , div [ class "card-body" ]
             [ h2 [ class "card-title" ] [ text stats.title ]
-            , p [] [ modDescription stats.mod ]
+            , p [] [ text (modToString stats.buff.mod) ]
             , div [ class "card-actions justify-end" ]
                 [ button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Select" ]
                 ]
             ]
         ]
-
-
-modDescription : Mod -> Html Msg
-modDescription mod =
-    case mod of
-        ModMissionYield percent ->
-            span [] [ text "Increases mission yield by ", strong [] [ text (Utils.Percent.toString percent ++ "%") ] ]
 
 
 view : Model -> Html Msg

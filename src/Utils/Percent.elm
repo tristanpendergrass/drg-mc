@@ -70,4 +70,15 @@ percentDecoder =
 
 toString : Percent -> String
 toString percent =
-    Round.round 2 (toPercentage percent)
+    let
+        rounded =
+            Round.round 2 (toPercentage percent)
+    in
+    if String.endsWith ".00" rounded then
+        String.dropRight 3 rounded
+
+    else if String.endsWith ".0" rounded then
+        String.dropRight 2 rounded
+
+    else
+        rounded
