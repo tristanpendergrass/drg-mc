@@ -74,6 +74,7 @@ defaultModel seed1 now =
     , activeDailySpecials = []
     , dailySpecialCooldown = ButtonReady
     , dailySpecialOptions = dailySpecialOptions
+    , maybeInitDecodeErr = Nothing
     }
 
 
@@ -85,10 +86,13 @@ init { initialSeed, now, initialGame } =
             Random.initialSeed initialSeed
     in
     case D.decodeValue (Save.decodeAnyVersion randomSeed) initialGame of
-        Err _ ->
-            ( defaultModel randomSeed (Time.millisToPosix now)
-            , Cmd.none
-            )
+        Err err ->
+            let
+                model1 : Model
+                model1 =
+                    defaultModel randomSeed (Time.millisToPosix now)
+            in
+            ( { model1 | maybeInitDecodeErr = Just err }, Cmd.none )
 
         Ok model ->
             ( model, Cmd.none )
@@ -254,7 +258,7 @@ getAllBuffs model =
         squadMods : List Buff
         squadMods =
             if Quantity.greaterThan Quantity.zero squadBonusPercent then
-                [ { title = "Squad bonus", icon = "driller.webp", description = "Increase the yield of missions", mod = ModMissionYield squadBonusPercent } ]
+                [ { title = "Squad bonus", icon = "engineer.webp", description = "Increase the yield of missions", mod = ModMissionYield squadBonusPercent } ]
 
             else
                 []
@@ -929,7 +933,7 @@ renderBuff { title, icon, description, mod } =
     -- Might revisit it later or something similar that lets users learn about the buffs
     div [ class "flex flex-col items-center border border-content rounded-sm p-1 bg-info text-info-content" ]
         [ div [ class "flex items-center gap-1" ]
-            [ img [ src icon, class "w-6" ] []
+            [ img [ src icon, class "w-4" ] []
             , div [ class "text-sm leading-none" ] [ text title ]
             ]
         , div [] [ text (modToString mod) ]
@@ -947,7 +951,7 @@ tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
     , headerWrapper = class "px-8 py-4 w-full flex items-center justify-between"
     , bonusesArea = class "w-full h-6 flex items-center gap-4 px-8"
-    , contentWrapper = class "pt-0 w-full flex justify-start px-8"
+    , contentWrapper = class "pt-0 w-full flex justify-center px-8"
     }
 
 
@@ -1224,58 +1228,67 @@ view model =
 
         -- Body
         , div [ class "flex w-full drawer drawer-open" ]
-            [ input [ id "my-drawer", type_ "checkbox", class "drawer-toggle" ] []
-            , div [ class "drawer-side w-48", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
-                [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
-                , aside
-                    [ class "bg-base-100 overflow-y-scroll h-full w-full"
-                    ]
-                    [ div [ class "sticky top-0 z-10 w-full bg-opacity-90 py-3 backdrop-blur-sm flex" ]
-                        [ renderLogo ]
-                    , ul
-                        [ class "menu w-full px-4 py-0"
+            (List.concat
+                [ [ input [ id "my-drawer", type_ "checkbox", class "drawer-toggle" ] []
+                  , div [ class "drawer-side w-48", attribute "style" "scroll-behavior: smooth; scroll-padding-top:5rem" ]
+                        [ label [ for "my-drawer", class "drawer-overlay", attribute "aria-label" "close sidebar" ] []
+                        , aside
+                            [ class "bg-base-100 overflow-y-scroll h-full w-full"
+                            ]
+                            [ div [ class "sticky top-0 z-10 w-full bg-opacity-90 py-3 backdrop-blur-sm flex" ]
+                                [ renderLogo ]
+                            , ul
+                                [ class "menu w-full px-4 py-0"
 
-                        -- , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
-                        ]
-                        [ renderDrawerTabRow model MissionsTab
-                        , renderDrawerTabRow model CommendationsTab
-                        , renderDrawerTabRow model AbyssBarTab
-                        , li [] [] -- This renders as a divider in the drawer
-                        , renderDrawerTabRow model SettingsTab
-                        ]
-                    ]
-                ]
-            , div [ class "drawer-content w-full h-full" ]
-                [ div [ class "flex h-full" ]
-                    [ case model.currentTab of
-                        MissionsTab ->
-                            renderMissionsTab model
-
-                        CommendationsTab ->
-                            renderCommendationsTab model
-
-                        AbyssBarTab ->
-                            renderAbyssBarTab model
-
-                        SettingsTab ->
-                            renderSettingsTab model
-                    , div [ class "h-full w-48 min-w-48 items-center p-4 overflow-y-scroll" ]
-                        [ div
-                            [ class "flex flex-col gap-4"
-                            , classList
-                                [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) )
+                                -- , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
+                                ]
+                                [ renderDrawerTabRow model MissionsTab
+                                , renderDrawerTabRow model CommendationsTab
+                                , renderDrawerTabRow model AbyssBarTab
+                                , li [] [] -- This renders as a divider in the drawer
+                                , renderDrawerTabRow model SettingsTab
                                 ]
                             ]
-                            (List.concat
-                                [ [ div [ class "w-full flex items-center justify-center prose" ] [ h3 [] [ text "Your crew" ] ] ]
-                                , List.map
-                                    (renderDwarf model)
-                                    Utils.Record.allDwarfs
-                                ]
-                            )
                         ]
-                    ]
+                  , div [ class "drawer-content w-full h-full" ]
+                        [ div [ class "flex h-full" ]
+                            [ case model.currentTab of
+                                MissionsTab ->
+                                    renderMissionsTab model
+
+                                CommendationsTab ->
+                                    renderCommendationsTab model
+
+                                AbyssBarTab ->
+                                    renderAbyssBarTab model
+
+                                SettingsTab ->
+                                    renderSettingsTab model
+                            , div [ class "h-full w-48 min-w-48 items-center p-4 overflow-y-scroll" ]
+                                [ div
+                                    [ class "flex flex-col gap-4"
+                                    , classList
+                                        [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) )
+                                        ]
+                                    ]
+                                    (List.concat
+                                        [ [ div [ class "w-full flex items-center justify-center prose" ] [ h3 [] [ text "Your crew" ] ] ]
+                                        , List.map
+                                            (renderDwarf model)
+                                            Utils.Record.allDwarfs
+                                        ]
+                                    )
+                                ]
+                            ]
+                        ]
+                  ]
+                , [ div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ] ]
+                , case model.maybeInitDecodeErr of
+                    Just err ->
+                        [ div [ class "fixed bottom-0 left-0 bg-error text-error-content rounded-lg p-4" ] [ text (D.errorToString err) ] ]
+
+                    Nothing ->
+                        []
                 ]
-            ]
-        , div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ]
+            )
         ]

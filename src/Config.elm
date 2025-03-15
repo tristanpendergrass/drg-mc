@@ -185,7 +185,7 @@ defaultDebugSettings =
 
 dailySpecialCooldown : Duration
 dailySpecialCooldown =
-    Duration.seconds 1
+    Duration.seconds 20
 
 
 dailySpecialBuffDuration : Duration

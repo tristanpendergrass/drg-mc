@@ -47,6 +47,7 @@ type alias Model =
     , activeDailySpecials : List ( DailySpecial, Timer )
     , dailySpecialCooldown : ButtonStatus
     , dailySpecialOptions : List DailySpecial
+    , maybeInitDecodeErr : Maybe D.Error
     }
 
 

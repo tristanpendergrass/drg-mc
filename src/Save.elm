@@ -7,6 +7,7 @@ import Json.Decode.Extra
 import Json.Decode.Pipeline exposing (hardcoded, optional, required)
 import Json.Encode as E
 import Json.Encode.Extra
+import List
 import List.Extra
 import Quantity
 import Random
@@ -25,7 +26,8 @@ import Utils.Timer
 decodeAnyVersion : Random.Seed -> Decoder Model
 decodeAnyVersion seed =
     D.oneOf
-        [ v0_2Decoder seed
+        [ v0_3Decoder seed
+        , v0_2Decoder seed
         , v0_1Decoder
         ]
 
@@ -114,6 +116,7 @@ v0_1Decoder =
                     , activeDailySpecials = []
                     , dailySpecialCooldown = ButtonReady
                     , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
+                    , maybeInitDecodeErr = Nothing
                     }
             in
             model
@@ -165,6 +168,7 @@ v0_2Decoder initialSeed =
                         , activeDailySpecials = []
                         , dailySpecialCooldown = ButtonReady
                         , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
+                        , maybeInitDecodeErr = Nothing
                         }
                 in
                 model
@@ -229,6 +233,75 @@ v0_2DwarfRecordDecoder valueDecoder =
         (D.field "driller" valueDecoder)
 
 
+v0_3Decoder : Random.Seed -> Decoder Model
+v0_3Decoder initialSeed =
+    D.field "v0.3" <|
+        (D.succeed
+            (\currentTime currentTab theme level credits resources missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown ->
+                let
+                    model : Model
+                    model =
+                        { seed = initialSeed
+                        , debugSettings = Config.defaultDebugSettings
+                        , currentTime = currentTime
+                        , currentTab = currentTab
+                        , theme = theme
+                        , level = level
+                        , credits = credits
+                        , resources = resources
+                        , missionStatuses = missionStatuses
+                        , saveTimer = Utils.Timer.create
+                        , dwarfXp = dwarfXp
+                        , dwarfXpButtonStatuses = dwarfXpButtonStatuses
+                        , activeDailySpecials = activeDailySpecials
+                        , dailySpecialCooldown = dailySpecialCooldown
+                        , dailySpecialOptions = dailySpecialOptions
+                        , maybeInitDecodeErr = Nothing
+                        }
+                in
+                model
+            )
+            |> required "currentTime" posixDecoder
+            |> required "currentTab" v0_2TabDecoder
+            |> optional "theme" (D.map Just themeDecoder) Nothing
+            |> required "level" D.int
+            |> required "credits" D.float
+            |> required "resources" v0_1ResourcesDecoder
+            |> required "missionStatuses" v0_1MissionStatusesDecoder
+            |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
+            |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
+            |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
+            |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
+            |> required "dailySpecialCooldown" buttonStatusDecoder
+        )
+
+
+activeDailySpecialDecoder : Decoder ( DailySpecial, Utils.Timer.Timer )
+activeDailySpecialDecoder =
+    D.map2 Tuple.pair
+        (D.field "dailySpecial" dailySpecialDecoder)
+        (D.field "timer" Utils.Timer.timerDecoder)
+
+
+dailySpecialDecoder : Decoder DailySpecial
+dailySpecialDecoder =
+    -- Just one of the daily specials by id
+    D.string
+        |> D.andThen
+            (\dailySpecialId ->
+                case List.Extra.find (\dailySpecial -> (dailySpecialStats dailySpecial).id_ == dailySpecialId) allDailySpecials of
+                    Just dailySpecial ->
+                        D.succeed dailySpecial
+
+                    Nothing ->
+                        D.fail ("Unknown daily special: " ++ dailySpecialId)
+            )
+
+
+
+-- Encoders
+
+
 buttonStatusEncoder : ButtonStatus -> E.Value
 buttonStatusEncoder status =
     case status of
@@ -289,7 +362,11 @@ v0_2ThemeEncoder maybeTheme =
             E.string (Theme.themeToString theme)
 
 
-encoder : Model -> E.Value
+dailySpecialEncoder : DailySpecial -> E.Value
+dailySpecialEncoder dailySpecial =
+    E.string (dailySpecialStats dailySpecial).id_
+
+
 encoder model =
     E.object
         [ ( "v0.3"
@@ -331,6 +408,7 @@ encoder model =
                         model.activeDailySpecials
                   )
                 , ( "dailySpecialCooldown", v0_2EncodeButtonStatus model.dailySpecialCooldown )
+                , ( "dailySpecialOptions", E.list dailySpecialEncoder model.dailySpecialOptions )
                 ]
           )
         ]
