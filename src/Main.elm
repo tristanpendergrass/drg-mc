@@ -950,7 +950,7 @@ modToString mod =
 tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
     , headerWrapper = class "px-8 py-4 w-full flex items-center justify-between"
-    , bonusesArea = class "w-full h-6 flex items-center gap-4 px-8"
+    , bonusesArea = class "w-full flex items-center gap-4 px-8 h-14"
     , contentWrapper = class "pt-0 w-full flex justify-center px-8"
     }
 
@@ -1077,13 +1077,19 @@ renderDrawerTabRow model tab =
                 [ ( "menu-active", isActive )
                 ]
             ]
-            [ span []
-                [ stats.icon
-                    |> FeatherIcons.withSize 20
-                    |> FeatherIcons.toHtml []
+            (List.concat
+                [ case stats.maybeIcon of
+                    Just icon ->
+                        [ icon
+                            |> FeatherIcons.withSize 16
+                            |> FeatherIcons.toHtml []
+                        ]
+
+                    Nothing ->
+                        []
+                , [ span [] [ text stats.title ] ]
                 ]
-            , span [] [ text stats.title ]
-            ]
+            )
         ]
 
 
@@ -1190,7 +1196,7 @@ renderAbyssBarTab model =
                                 Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialCooldown cooldown
                         in
                         div [ class "flex flex-col items-center gap-2" ]
-                            [ p [] [ text "Daily special will be ready in" ]
+                            [ p [] [ text "Select a new daily special in" ]
                             , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) hasTickedAVeryShortTime
                             ]
                 ]
@@ -1205,7 +1211,7 @@ renderDailySpecialOption model option =
         stats =
             dailySpecialStats option
     in
-    div [ class "card card-sm bg-base-300 w-64 shadow-lg" ]
+    div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
         [ figure [ class "pt-2 bg-warning" ]
             [ img [ src stats.icon, alt stats.title ] []
             , img [ src "beer/beer.png", class "w-24 -ml-6" ] []

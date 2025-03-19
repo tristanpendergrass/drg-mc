@@ -158,19 +158,19 @@ tabStats : TabRecord TabStats
 tabStats =
     { missionsTab =
         { title = "Missions"
-        , icon = FeatherIcons.target
+        , maybeIcon = Nothing
         }
     , commendationsTab =
         { title = "Dwarf Leveling"
-        , icon = FeatherIcons.award
+        , maybeIcon = Nothing
         }
     , abyssBarTab =
         { title = "Abyss Bar"
-        , icon = FeatherIcons.smile
+        , maybeIcon = Nothing
         }
     , settingsTab =
         { title = "Settings"
-        , icon = FeatherIcons.settings
+        , maybeIcon = Just FeatherIcons.settings
         }
     }
 

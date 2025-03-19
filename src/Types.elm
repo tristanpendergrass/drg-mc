@@ -198,7 +198,7 @@ type
 
 type alias TabStats =
     { title : String
-    , icon : FeatherIcons.Icon
+    , maybeIcon : Maybe FeatherIcons.Icon
     }
 
 
