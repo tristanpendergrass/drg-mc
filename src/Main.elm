@@ -75,6 +75,7 @@ defaultModel seed1 now =
     , dailySpecialCooldown = ButtonReady
     , dailySpecialOptions = dailySpecialOptions
     , maybeInitDecodeErr = Nothing
+    , minerals = mineralRecord 0
     }
 
 

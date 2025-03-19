@@ -117,6 +117,7 @@ v0_1Decoder =
                     , dailySpecialCooldown = ButtonReady
                     , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                     , maybeInitDecodeErr = Nothing
+                    , minerals = mineralRecord 0
                     }
             in
             model
@@ -169,6 +170,7 @@ v0_2Decoder initialSeed =
                         , dailySpecialCooldown = ButtonReady
                         , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                         , maybeInitDecodeErr = Nothing
+                        , minerals = mineralRecord 0
                         }
                 in
                 model
@@ -237,7 +239,7 @@ v0_3Decoder : Random.Seed -> Decoder Model
 v0_3Decoder initialSeed =
     D.field "v0.3" <|
         (D.succeed
-            (\currentTime currentTab theme level credits resources missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown ->
+            (\currentTime currentTab theme level credits resources missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals ->
                 let
                     model : Model
                     model =
@@ -257,6 +259,7 @@ v0_3Decoder initialSeed =
                         , dailySpecialCooldown = dailySpecialCooldown
                         , dailySpecialOptions = dailySpecialOptions
                         , maybeInitDecodeErr = Nothing
+                        , minerals = minerals
                         }
                 in
                 model
@@ -273,6 +276,7 @@ v0_3Decoder initialSeed =
             |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
             |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
             |> required "dailySpecialCooldown" buttonStatusDecoder
+            |> optional "minerals" mineralRecordDecoder (mineralRecord 0)
         )
 
 
@@ -296,6 +300,17 @@ dailySpecialDecoder =
                     Nothing ->
                         D.fail ("Unknown daily special: " ++ dailySpecialId)
             )
+
+
+mineralRecordDecoder : Decoder (MineralRecord Float)
+mineralRecordDecoder =
+    D.map6 MineralRecord
+        (D.field "jadiz" D.float)
+        (D.field "bismor" D.float)
+        (D.field "enorPearl" D.float)
+        (D.field "croppa" D.float)
+        (D.field "magnite" D.float)
+        (D.field "umanite" D.float)
 
 
 
@@ -409,6 +424,16 @@ encoder model =
                   )
                 , ( "dailySpecialCooldown", v0_2EncodeButtonStatus model.dailySpecialCooldown )
                 , ( "dailySpecialOptions", E.list dailySpecialEncoder model.dailySpecialOptions )
+                , ( "minerals"
+                  , E.object
+                        [ ( "jadiz", E.float model.minerals.jadiz )
+                        , ( "bismor", E.float model.minerals.bismor )
+                        , ( "enorPearl", E.float model.minerals.enorPearl )
+                        , ( "croppa", E.float model.minerals.croppa )
+                        , ( "magnite", E.float model.minerals.magnite )
+                        , ( "umanite", E.float model.minerals.umanite )
+                        ]
+                  )
                 ]
           )
         ]
