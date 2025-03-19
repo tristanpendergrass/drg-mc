@@ -48,6 +48,7 @@ type alias Model =
     , dailySpecialCooldown : ButtonStatus
     , dailySpecialOptions : List DailySpecial
     , maybeInitDecodeErr : Maybe D.Error
+    , minerals : MineralRecord Float
     }
 
 
@@ -535,3 +536,121 @@ allDailySpecialStats =
 dailySpecialStats : DailySpecial -> DailySpecialStats
 dailySpecialStats kind =
     getByDailySpecial allDailySpecialStats kind
+
+
+
+-- Minerals
+
+
+{-| | Jadiz |
+| Bismor |
+| Enor Pearl |
+| Croppa |
+| Magnite |
+| Bismor |
+| Umanite |
+-}
+type Mineral
+    = Jadiz
+    | Bismor
+    | EnorPearl
+    | Croppa
+    | Magnite
+    | Umanite
+
+
+allMinerals : List Mineral
+allMinerals =
+    [ Jadiz, Bismor, EnorPearl, Croppa, Magnite, Umanite ]
+
+
+type alias MineralStats =
+    { name : String
+    , icon : String
+    }
+
+
+type alias MineralRecord a =
+    { jadiz : a
+    , bismor : a
+    , enorPearl : a
+    , croppa : a
+    , magnite : a
+    , umanite : a
+    }
+
+
+mineralRecord : a -> MineralRecord a
+mineralRecord a =
+    { jadiz = a
+    , bismor = a
+    , enorPearl = a
+    , croppa = a
+    , magnite = a
+    , umanite = a
+    }
+
+
+getByMineral : MineralRecord a -> Mineral -> a
+getByMineral record kind =
+    case kind of
+        Jadiz ->
+            record.jadiz
+
+        Bismor ->
+            record.bismor
+
+        EnorPearl ->
+            record.enorPearl
+
+        Croppa ->
+            record.croppa
+
+        Magnite ->
+            record.magnite
+
+        Umanite ->
+            record.umanite
+
+
+setByMineral : a -> Mineral -> MineralRecord a -> MineralRecord a
+setByMineral value kind record =
+    case kind of
+        Jadiz ->
+            { record | jadiz = value }
+
+        Bismor ->
+            { record | bismor = value }
+
+        EnorPearl ->
+            { record | enorPearl = value }
+
+        Croppa ->
+            { record | croppa = value }
+
+        Magnite ->
+            { record | magnite = value }
+
+        Umanite ->
+            { record | umanite = value }
+
+
+updateByMineral : (a -> a) -> MineralRecord a -> Mineral -> MineralRecord a
+updateByMineral f record kind =
+    setByMineral (f (getByMineral record kind)) kind record
+
+
+allMineralStats : MineralRecord MineralStats
+allMineralStats =
+    { jadiz = { name = "Jadiz", icon = "minerals/jadiz.webp" }
+    , bismor = { name = "Bismor", icon = "minerals/bismor.webp" }
+    , enorPearl = { name = "Enor Pearl", icon = "minerals/enor_pearl.webp" }
+    , croppa = { name = "Croppa", icon = "minerals/croppa.webp" }
+    , magnite = { name = "Magnite", icon = "minerals/magnite.webp" }
+    , umanite = { name = "Umanite", icon = "minerals/umanite.webp" }
+    }
+
+
+mineralStats : Mineral -> MineralStats
+mineralStats kind =
+    getByMineral allMineralStats kind
