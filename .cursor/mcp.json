@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "elm": {
+      "command": "elm",
+      "args": ["make", "--output=/dev/null", "--report=json", "${file}"]
+    }
+  }
+}
