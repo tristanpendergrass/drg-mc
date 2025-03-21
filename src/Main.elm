@@ -10,7 +10,6 @@ import FeatherIcons
 import Float.Extra
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Attributes.Extra
 import Html.Events exposing (..)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
@@ -988,7 +987,7 @@ tabLayout =
 
 renderBiomeDropdownContent : Maybe Biome -> Html Msg
 renderBiomeDropdownContent maybeSelectedBiome =
-    ul [ class "menu menu-lg w-64 rounded-box bg-base-100 shadow-sm" ]
+    ul [ class "menu menu-lg w-80 rounded-box bg-base-100 shadow-sm" ]
         (List.concat
             [ [ li [ class "menu-title" ] [ text "Select biome" ] ]
             , List.map
@@ -997,16 +996,34 @@ renderBiomeDropdownContent maybeSelectedBiome =
                         stats =
                             biomeStats biome
                     in
-                    li []
+                    li [ class "flex flex-col" ]
                         [ a [ onClick (HandleMissionBiomeSelection biome) ]
                             [ img [ src stats.icon, class "w-6" ] []
                             , text stats.name
+                            , div [ class "flex items-center gap-1 ml-2" ]
+                                [ div [ class "flex items-center" ]
+                                    (List.map (\mineral -> img [ src (mineralStats mineral).icon, class "w-4 h-4" ] []) stats.abundantMinerals)
+                                , div [ class "flex items-center" ]
+                                    (List.map (\mineral -> img [ src (mineralStats mineral).icon, class "w-4 h-4 opacity-50" ] []) stats.scarceMinerals)
+                                ]
                             ]
                         ]
                 )
                 allBiomes
             ]
         )
+
+
+renderActiveBiome : Biome -> Html Msg
+renderActiveBiome biome =
+    div [ class "w-72 h-12 rounded overflow-hidden relative" ]
+        [ div
+            [ style "background-image" ("url(" ++ (biomeStats biome).image ++ ")")
+            , class "w-full h-full bg-cover bg-no-repeat bg-center"
+            ]
+            []
+        , div [ class "absolute top-0 left-0 bg-base-100 text-xs px-1 py-0.5 leading-none opacity-60" ] [ text (biomeStats biome).name ]
+        ]
 
 
 renderMissionsTab : Model -> Html Msg
@@ -1026,29 +1043,24 @@ renderMissionsTab model =
                 [ div [ class "w-full flex items-center justify-between" ]
                     [ div [ proseClass ] [ h1 [] [ text "Missions" ] ]
                     , div [ class "flex items-center gap-1" ]
-                        [ div [ class "w-72 h-12 bg-red-500" ] []
-                        , button [ class "btn btn-md btn-square" ]
+                        [ case model.missionBiome of
+                            Just biome ->
+                                renderActiveBiome biome
+
+                            Nothing ->
+                                div [ class "h-12 flex items-center" ] [ text "No biome selected" ]
+                        , button
+                            [ class "btn btn-md btn-square"
+                            , attribute "style" "anchor-name:--anchor-1"
+                            , attribute "popovertarget" "popover-1"
+                            ]
                             [ FeatherIcons.chevronDown
                                 |> FeatherIcons.toHtml []
                             ]
                         ]
                     ]
-                , button
-                    [ class "btn"
-                    , attribute "style" "anchor-name:--anchor-1"
-                    , attribute "popovertarget" "popover-1"
-                    ]
-                    [ text "Select mission" ]
                 , div [ class "dropdown", attribute "popover" "", id "popover-1", attribute "style" "position-anchor:--anchor-1" ]
                     [ renderBiomeDropdownContent model.missionBiome ]
-                , div [ class "text-sm" ]
-                    [ case model.missionBiome of
-                        Just biome ->
-                            text ("Selected biome: " ++ (biomeStats biome).name)
-
-                        Nothing ->
-                            text "No biome selected"
-                    ]
                 ]
             ]
         , div [ tabLayout.bonusesArea ]
