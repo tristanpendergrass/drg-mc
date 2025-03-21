@@ -49,6 +49,7 @@ type alias Model =
     , dailySpecialOptions : List DailySpecial
     , maybeInitDecodeErr : Maybe D.Error
     , minerals : MineralRecord Float
+    , missionBiome : Maybe Biome
     }
 
 
@@ -66,6 +67,7 @@ type Msg
     | HandleTabClick Tab
     | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event
     | HandleDailySpecialClick DailySpecial
+    | HandleMissionBiomeSelection Biome
 
 
 
@@ -654,3 +656,239 @@ allMineralStats =
 mineralStats : Mineral -> MineralStats
 mineralStats kind =
     getByMineral allMineralStats kind
+
+
+
+-- Biomes
+{--|
+| Crystalline Caverns        |
+| Hollow Bough               |
+| Salt Pits                  |
+| Sandblasted Corridors      |
+| Fungus Bogs                |
+| Azure Weald                |
+| Glacial Strata             |
+| Magma Core                 |
+| Dense Biozone              |
+| Radioactive Exclusion Zone |
+-}
+
+
+type Biome
+    = CrystallineCaverns
+    | HollowBough
+    | SaltPits
+    | SandblastedCorridors
+    | FungusBogs
+    | AzureWeald
+    | GlacialStrata
+    | MagmaCore
+    | DenseBiozone
+    | RadioactiveExclusionZone
+
+
+allBiomes : List Biome
+allBiomes =
+    [ CrystallineCaverns, HollowBough, SaltPits, SandblastedCorridors, FungusBogs, AzureWeald, GlacialStrata, MagmaCore, DenseBiozone, RadioactiveExclusionZone ]
+
+
+type alias BiomeStats =
+    { id_ : String
+    , name : String
+    , image : String
+    , icon : String
+    , abundantMinerals : List Mineral
+    , scarceMinerals : List Mineral
+    }
+
+
+type alias BiomeRecord a =
+    { crystallineCaverns : a
+    , hollowBough : a
+    , saltPits : a
+    , sandblastedCorridors : a
+    , fungusBogs : a
+    , azureWeald : a
+    , glacialStrata : a
+    , magmaCore : a
+    , denseBiozone : a
+    , radioactiveExclusionZone : a
+    }
+
+
+biomeRecord : a -> BiomeRecord a
+biomeRecord a =
+    { crystallineCaverns = a
+    , hollowBough = a
+    , saltPits = a
+    , sandblastedCorridors = a
+    , fungusBogs = a
+    , azureWeald = a
+    , glacialStrata = a
+    , magmaCore = a
+    , denseBiozone = a
+    , radioactiveExclusionZone = a
+    }
+
+
+getByBiome : BiomeRecord a -> Biome -> a
+getByBiome record kind =
+    case kind of
+        CrystallineCaverns ->
+            record.crystallineCaverns
+
+        HollowBough ->
+            record.hollowBough
+
+        SaltPits ->
+            record.saltPits
+
+        SandblastedCorridors ->
+            record.sandblastedCorridors
+
+        FungusBogs ->
+            record.fungusBogs
+
+        AzureWeald ->
+            record.azureWeald
+
+        GlacialStrata ->
+            record.glacialStrata
+
+        MagmaCore ->
+            record.magmaCore
+
+        DenseBiozone ->
+            record.denseBiozone
+
+        RadioactiveExclusionZone ->
+            record.radioactiveExclusionZone
+
+
+setByBiome : a -> Biome -> BiomeRecord a -> BiomeRecord a
+setByBiome value kind record =
+    case kind of
+        CrystallineCaverns ->
+            { record | crystallineCaverns = value }
+
+        HollowBough ->
+            { record | hollowBough = value }
+
+        SaltPits ->
+            { record | saltPits = value }
+
+        SandblastedCorridors ->
+            { record | sandblastedCorridors = value }
+
+        FungusBogs ->
+            { record | fungusBogs = value }
+
+        AzureWeald ->
+            { record | azureWeald = value }
+
+        GlacialStrata ->
+            { record | glacialStrata = value }
+
+        MagmaCore ->
+            { record | magmaCore = value }
+
+        DenseBiozone ->
+            { record | denseBiozone = value }
+
+        RadioactiveExclusionZone ->
+            { record | radioactiveExclusionZone = value }
+
+
+updateByBiome : (a -> a) -> BiomeRecord a -> Biome -> BiomeRecord a
+updateByBiome f record kind =
+    setByBiome (f (getByBiome record kind)) kind record
+
+
+allBiomeStats : BiomeRecord BiomeStats
+allBiomeStats =
+    { crystallineCaverns =
+        { id_ = "crystallineCaverns"
+        , name = "Crystalline Caverns"
+        , image = "biomes/crystallineCaverns_picture.webp"
+        , icon = "biomes/crystallineCaverns_icon.webp"
+        , abundantMinerals = [ Croppa, Bismor ]
+        , scarceMinerals = [ Magnite, Umanite ]
+        }
+    , hollowBough =
+        { id_ = "hollowBough"
+        , name = "Hollow Bough"
+        , image = "biomes/hollowBough_image.webp"
+        , icon = "biomes/hollowBough_icon.webp"
+        , abundantMinerals = [ Bismor, Umanite ]
+        , scarceMinerals = [ Magnite, EnorPearl ]
+        }
+    , saltPits =
+        { id_ = "saltPits"
+        , name = "Salt Pits"
+        , image = "biomes/saltPits_image.webp"
+        , icon = "biomes/saltPits_icon.webp"
+        , abundantMinerals = [ Magnite, Umanite ]
+        , scarceMinerals = [ Jadiz, EnorPearl ]
+        }
+    , sandblastedCorridors =
+        { id_ = "sandblastedCorridors"
+        , name = "Sandblasted Corridors"
+        , image = "biomes/sanblastedCorridors_image.webp"
+        , icon = "biomes/sanblastedCorridors_icon.webp"
+        , abundantMinerals = [ Magnite, EnorPearl ]
+        , scarceMinerals = [ Bismor, Jadiz ]
+        }
+    , fungusBogs =
+        { id_ = "fungusBogs"
+        , name = "Fungus Bogs"
+        , image = "biomes/fungusBogs_image.webp"
+        , icon = "biomes/fungusBogs_icon.webp"
+        , abundantMinerals = [ Croppa, Jadiz ]
+        , scarceMinerals = [ Bismor, Umanite ]
+        }
+    , azureWeald =
+        { id_ = "azureWeald"
+        , name = "Azure Weald"
+        , image = "biomes/azureWeald_image.webp"
+        , icon = "biomes/azureWeald_icon.webp"
+        , abundantMinerals = [ Croppa, Jadiz ]
+        , scarceMinerals = [ Bismor, Magnite ]
+        }
+    , glacialStrata =
+        { id_ = "glacialStrata"
+        , name = "Glacial Strata"
+        , image = "biomes/glacialStrata_image.webp"
+        , icon = "biomes/glacialStrata_icon.webp"
+        , abundantMinerals = [ Jadiz, Magnite ]
+        , scarceMinerals = [ Croppa, Umanite ]
+        }
+    , magmaCore =
+        { id_ = "magmaCore"
+        , name = "Magma Core"
+        , image = "biomes/magmaCore_image.webp"
+        , icon = "biomes/magmaCore_icon.webp"
+        , abundantMinerals = [ Bismor, Umanite ]
+        , scarceMinerals = [ Croppa, Jadiz ]
+        }
+    , denseBiozone =
+        { id_ = "denseBiozone"
+        , name = "Dense Biozone"
+        , image = "biomes/denseBiozone_picture.webp"
+        , icon = "biomes/denseBiozone_icon.webp"
+        , abundantMinerals = [ Croppa, EnorPearl ]
+        , scarceMinerals = [ Umanite, Jadiz ]
+        }
+    , radioactiveExclusionZone =
+        { id_ = "radioactiveExclusionZone"
+        , name = "Radioactive Exclusion Zone"
+        , image = "biomes/radioactiveExclusionZone_image.webp"
+        , icon = "biomes/radioactiveExclusionZone_icon.webp"
+        , abundantMinerals = [ EnorPearl, Umanite ]
+        , scarceMinerals = [ Croppa, Bismor ]
+        }
+    }
+
+
+biomeStats : Biome -> BiomeStats
+biomeStats kind =
+    getByBiome allBiomeStats kind

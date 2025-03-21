@@ -10,6 +10,7 @@ import FeatherIcons
 import Float.Extra
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Attributes.Extra
 import Html.Events exposing (..)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
@@ -30,6 +31,9 @@ import Utils.Unlocks
 
 
 port saveGame : E.Value -> Cmd msg
+
+
+port closePopover : String -> Cmd msg
 
 
 main : Program Flags Model Msg
@@ -76,6 +80,7 @@ defaultModel seed1 now =
     , dailySpecialOptions = dailySpecialOptions
     , maybeInitDecodeErr = Nothing
     , minerals = mineralRecord 0
+    , missionBiome = Nothing
     }
 
 
@@ -492,6 +497,11 @@ update msg model =
                 , dailySpecialOptions = newDailySpecialOptions
               }
             , Cmd.none
+            )
+
+        HandleMissionBiomeSelection biome ->
+            ( { model | missionBiome = Just biome }
+            , closePopover "popover-1"
             )
 
 
@@ -976,6 +986,29 @@ tabLayout =
     }
 
 
+renderBiomeDropdownContent : Maybe Biome -> Html Msg
+renderBiomeDropdownContent maybeSelectedBiome =
+    ul [ class "menu menu-lg w-64 rounded-box bg-base-100 shadow-sm" ]
+        (List.concat
+            [ [ li [ class "menu-title" ] [ text "Select biome" ] ]
+            , List.map
+                (\biome ->
+                    let
+                        stats =
+                            biomeStats biome
+                    in
+                    li []
+                        [ a [ onClick (HandleMissionBiomeSelection biome) ]
+                            [ img [ src stats.icon, class "w-6" ] []
+                            , text stats.name
+                            ]
+                        ]
+                )
+                allBiomes
+            ]
+        )
+
+
 renderMissionsTab : Model -> Html Msg
 renderMissionsTab model =
     let
@@ -989,8 +1022,33 @@ renderMissionsTab model =
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
-            [ div [ proseClass ]
-                [ h1 [] [ text "Missions" ]
+            [ div [ class "w-full" ]
+                [ div [ class "w-full flex items-center justify-between" ]
+                    [ div [ proseClass ] [ h1 [] [ text "Missions" ] ]
+                    , div [ class "flex items-center gap-1" ]
+                        [ div [ class "w-72 h-12 bg-red-500" ] []
+                        , button [ class "btn btn-md btn-square" ]
+                            [ FeatherIcons.chevronDown
+                                |> FeatherIcons.toHtml []
+                            ]
+                        ]
+                    ]
+                , button
+                    [ class "btn"
+                    , attribute "style" "anchor-name:--anchor-1"
+                    , attribute "popovertarget" "popover-1"
+                    ]
+                    [ text "Select mission" ]
+                , div [ class "dropdown", attribute "popover" "", id "popover-1", attribute "style" "position-anchor:--anchor-1" ]
+                    [ renderBiomeDropdownContent model.missionBiome ]
+                , div [ class "text-sm" ]
+                    [ case model.missionBiome of
+                        Just biome ->
+                            text ("Selected biome: " ++ (biomeStats biome).name)
+
+                        Nothing ->
+                            text "No biome selected"
+                    ]
                 ]
             ]
         , div [ tabLayout.bonusesArea ]

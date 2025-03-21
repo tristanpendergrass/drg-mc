@@ -20,3 +20,7 @@ const app = Elm.Main.init({
 app.ports.saveGame.subscribe(function(game) {
   localStorage.setItem(saveGameKey, JSON.stringify(game));
 });
+
+app.ports.closePopover.subscribe(function(popoverId) {
+  document.getElementById(popoverId).hidePopover();
+});

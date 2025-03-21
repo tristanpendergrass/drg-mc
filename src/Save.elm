@@ -118,6 +118,7 @@ v0_1Decoder =
                     , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                     , maybeInitDecodeErr = Nothing
                     , minerals = mineralRecord 0
+                    , missionBiome = Nothing
                     }
             in
             model
@@ -171,6 +172,7 @@ v0_2Decoder initialSeed =
                         , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                         , maybeInitDecodeErr = Nothing
                         , minerals = mineralRecord 0
+                        , missionBiome = Nothing
                         }
                 in
                 model
@@ -260,6 +262,7 @@ v0_3Decoder initialSeed =
                         , dailySpecialOptions = dailySpecialOptions
                         , maybeInitDecodeErr = Nothing
                         , minerals = minerals
+                        , missionBiome = Nothing
                         }
                 in
                 model
