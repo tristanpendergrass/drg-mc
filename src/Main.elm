@@ -872,6 +872,26 @@ renderHeader model =
                         renderNextUnlock model unlockLevel unlockStats
                 , renderProgressBar model
                 ]
+            , div [ class "grid grid-cols-2 grid-rows-3 gap-2 min-w-64" ]
+                (allMinerals
+                    |> List.map
+                        (\mineral ->
+                            let
+                                stats : MineralStats
+                                stats =
+                                    mineralStats mineral
+
+                                amount : Float
+                                amount =
+                                    getByMineral model.minerals mineral
+                            in
+                            div [ class "flex items-center w-full" ]
+                                [ img [ src stats.icon, class "w-4 mr-1" ] []
+                                , span [ class "text-xs inline-block w-full" ] [ text stats.name ]
+                                , span [ class "text-xs font-mono" ] [ text (floatToString amount) ]
+                                ]
+                        )
+                )
             ]
         ]
 

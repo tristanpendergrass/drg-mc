@@ -644,7 +644,7 @@ allMineralStats : MineralRecord MineralStats
 allMineralStats =
     { jadiz = { name = "Jadiz", icon = "minerals/jadiz.webp" }
     , bismor = { name = "Bismor", icon = "minerals/bismor.webp" }
-    , enorPearl = { name = "Enor Pearl", icon = "minerals/enor_pearl.webp" }
+    , enorPearl = { name = "Enor Pearl", icon = "minerals/enorPearl.webp" }
     , croppa = { name = "Croppa", icon = "minerals/croppa.webp" }
     , magnite = { name = "Magnite", icon = "minerals/magnite.webp" }
     , umanite = { name = "Umanite", icon = "minerals/umanite.webp" }
