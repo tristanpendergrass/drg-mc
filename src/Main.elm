@@ -1009,16 +1009,20 @@ renderDwarf model dwarf =
         progressInLevelSpan =
             case Config.dwarfLevelingSchedule level of
                 Ok (EarnDwarfXp xpToNextLevel) ->
-                    span [ class "text-sm" ]
+                    span [ class "text-xs" ]
                         [ text (floatToString (DwarfXp.toFloat xpInLevelNumerator) ++ " / " ++ floatToString xpToNextLevel ++ " xp to next level") ]
 
                 _ ->
-                    span [ class "text-sm" ]
+                    span [ class "text-xs" ]
                         [ text "Max level reached" ]
 
         dwarfImgSrc : String
         dwarfImgSrc =
             stats.imgSrc
+
+        percentComplete : Utils.Percent.Percent
+        percentComplete =
+            percentInLevel xp
     in
     div [ class "bg-base-300 text-base-content flex flex-col items-center relative overflow-hidden themed-rounded-borders shadow-sm" ]
         [ span [ class "w-full flex items-center justify-center gap-2" ]
@@ -1034,7 +1038,13 @@ renderDwarf model dwarf =
                 ]
                 [ text (String.fromInt level) ]
             ]
-        , progress [ class "progress progress-secondary xp-bar", value (String.fromFloat (Utils.Percent.toPercentage (percentInLevel xp))), attribute "max" "100" ] []
+        , div [ class "w-full h-2 relative" ]
+            [ div
+                [ class "absolute left-0 top-0 h-full bg-secondary xp-bar themed-rounded-borders"
+                , style "width" (String.fromFloat (Basics.min 100 (Utils.Percent.toPercentage percentComplete)) ++ "%")
+                ]
+                []
+            ]
         ]
 
 

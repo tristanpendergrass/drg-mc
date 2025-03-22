@@ -81,23 +81,17 @@ dwarfLevelingSchedule level =
     if level < 1 then
         Err ()
 
-    else if level < 2 then
-        Ok (EarnDwarfXp 1)
-
-    else if level < 3 then
-        Ok (EarnDwarfXp 2)
-
-    else if level < 4 then
-        Ok (EarnDwarfXp 3)
-
-    else if level < 11 then
+    else if level < 5 then
         Ok (EarnDwarfXp 5)
 
+    else if level < 11 then
+        Ok (EarnDwarfXp 10)
+
     else if level < 20 then
-        Ok (EarnDwarfXp 8)
+        Ok (EarnDwarfXp 15)
 
     else if level < 25 then
-        Ok (EarnDwarfXp 12)
+        Ok (EarnDwarfXp 25)
 
     else if level == 25 then
         Ok AtMaxDwarfLevel
