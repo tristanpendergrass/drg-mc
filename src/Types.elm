@@ -132,6 +132,7 @@ type UnlockCategory
     = UnlockFeature
     | UnlockActivity
     | UnlockCosmetic
+    | UnlockBiomes
 
 
 type alias LevelUnlockStats =
@@ -228,6 +229,7 @@ type Unlock
     | UnlockDwarfXpButton4
     | UnlockDwarfXpButton5
     | UnlockAbyssBar
+    | UnlockBiomeTier BiomeUnlockTier
 
 
 
@@ -686,7 +688,14 @@ type alias BiomeStats =
     , icon : String
     , abundantMineral : Mineral
     , scarceMineral : Mineral
+    , unlockTier : BiomeUnlockTier
     }
+
+
+type BiomeUnlockTier
+    = BiomeUnlockTier1
+    | BiomeUnlockTier2
+    | BiomeUnlockTier3
 
 
 type alias BiomeRecord a =
@@ -800,6 +809,7 @@ allBiomeStats =
         , icon = "biomes/crystallineCaverns_icon.webp"
         , abundantMineral = Jadiz
         , scarceMineral = Bismor
+        , unlockTier = BiomeUnlockTier1
         }
     , hollowBough =
         { id_ = "hollowBough"
@@ -808,6 +818,7 @@ allBiomeStats =
         , icon = "biomes/hollowBough_icon.webp"
         , abundantMineral = Jadiz
         , scarceMineral = Croppa
+        , unlockTier = BiomeUnlockTier1
         }
     , saltPits =
         { id_ = "saltPits"
@@ -816,6 +827,7 @@ allBiomeStats =
         , icon = "biomes/saltPits_icon.webp"
         , abundantMineral = EnorPearl
         , scarceMineral = Bismor
+        , unlockTier = BiomeUnlockTier1
         }
     , sandblastedCorridors =
         { id_ = "sandblastedCorridors"
@@ -824,6 +836,7 @@ allBiomeStats =
         , icon = "biomes/sanblastedCorridors_icon.webp"
         , abundantMineral = EnorPearl
         , scarceMineral = Magnite
+        , unlockTier = BiomeUnlockTier1
         }
     , fungusBogs =
         { id_ = "fungusBogs"
@@ -832,6 +845,7 @@ allBiomeStats =
         , icon = "biomes/fungusBogs_icon.webp"
         , abundantMineral = Croppa
         , scarceMineral = Jadiz
+        , unlockTier = BiomeUnlockTier2
         }
     , azureWeald =
         { id_ = "azureWeald"
@@ -840,6 +854,7 @@ allBiomeStats =
         , icon = "biomes/azureWeald_icon.webp"
         , abundantMineral = Croppa
         , scarceMineral = Umanite
+        , unlockTier = BiomeUnlockTier2
         }
     , glacialStrata =
         { id_ = "glacialStrata"
@@ -848,6 +863,7 @@ allBiomeStats =
         , icon = "biomes/glacialStrata_icon.webp"
         , abundantMineral = Magnite
         , scarceMineral = Umanite
+        , unlockTier = BiomeUnlockTier2
         }
     , magmaCore =
         { id_ = "magmaCore"
@@ -856,6 +872,7 @@ allBiomeStats =
         , icon = "biomes/magmaCore_icon.webp"
         , abundantMineral = Magnite
         , scarceMineral = Croppa
+        , unlockTier = BiomeUnlockTier2
         }
     , denseBiozone =
         { id_ = "denseBiozone"
@@ -864,6 +881,7 @@ allBiomeStats =
         , icon = "biomes/denseBiozone_icon.webp"
         , abundantMineral = Bismor
         , scarceMineral = Umanite
+        , unlockTier = BiomeUnlockTier3
         }
     , radioactiveExclusionZone =
         { id_ = "radioactiveExclusionZone"
@@ -872,6 +890,7 @@ allBiomeStats =
         , icon = "biomes/radioactiveExclusionZone_icon.webp"
         , abundantMineral = Umanite
         , scarceMineral = EnorPearl
+        , unlockTier = BiomeUnlockTier3
         }
     }
 

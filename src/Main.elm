@@ -757,7 +757,7 @@ renderMissionRow model mission =
         , td []
             [ div [ class "flex items-center gap-1" ]
                 [ span [ class "text-sm" ] [ text creditsYieldString ]
-                , span [ class "text-sm" ] [ text "//" ]
+                , span [ class "text-sm", classList [ ( "hidden", model.missionBiome == Nothing ) ] ] [ text "//" ]
                 , div [ class "flex items-center gap-1" ]
                     (case model.missionBiome of
                         Just biome ->
@@ -921,6 +921,9 @@ renderNextUnlock model unlockLevel unlockStats =
 
                 UnlockCosmetic ->
                     "Cosmetic"
+
+                UnlockBiomes ->
+                    "Biomes"
     in
     div [ class "flex-col items-start text-lg" ]
         [ span []
@@ -1038,7 +1041,7 @@ renderDwarf model dwarf =
                 ]
                 [ text (String.fromInt level) ]
             ]
-        , div [ class "w-full h-2 relative" ]
+        , div [ class "w-full h-2 relative bg-secondary/15" ]
             [ div
                 [ class "absolute left-0 top-0 h-full bg-secondary xp-bar themed-rounded-borders"
                 , style "width" (String.fromFloat (Basics.min 100 (Utils.Percent.toPercentage percentComplete)) ++ "%")
@@ -1046,6 +1049,11 @@ renderDwarf model dwarf =
                 []
             ]
         ]
+
+
+unlockedBiomes : Int -> List Biome
+unlockedBiomes level =
+    List.filter (Utils.Unlocks.biomeIsUnlocked level) allBiomes
 
 
 renderBuff : Buff -> Html Msg
@@ -1076,8 +1084,8 @@ tabLayout =
     }
 
 
-renderBiomeDropdownContent : Maybe Biome -> Html Msg
-renderBiomeDropdownContent maybeSelectedBiome =
+renderBiomeDropdownContent : Model -> Html Msg
+renderBiomeDropdownContent model =
     ul [ class "menu menu-lg w-80 rounded-box bg-base-100 shadow-sm" ]
         (List.concat
             [ [ li [ class "menu-title" ] [ text "Select a biome" ] ]
@@ -1100,7 +1108,7 @@ renderBiomeDropdownContent maybeSelectedBiome =
                             ]
                         ]
                 )
-                allBiomes
+                (unlockedBiomes model.level)
             ]
         )
 
@@ -1133,7 +1141,10 @@ renderMissionsTab model =
             [ div [ class "w-full" ]
                 [ div [ class "w-full flex items-center justify-between" ]
                     [ div [ proseClass ] [ h1 [] [ text "Missions" ] ]
-                    , div [ class "flex items-center gap-2" ]
+                    , div
+                        [ class "flex items-center gap-2"
+                        , classList [ ( "hidden", List.length (unlockedBiomes model.level) <= 1 ) ]
+                        ]
                         [ case model.missionBiome of
                             Just biome ->
                                 renderActiveBiome biome
@@ -1151,7 +1162,7 @@ renderMissionsTab model =
                         ]
                     ]
                 , div [ class "dropdown", attribute "popover" "", id "popover-1", attribute "style" "position-anchor:--anchor-1" ]
-                    [ renderBiomeDropdownContent model.missionBiome ]
+                    [ renderBiomeDropdownContent model ]
                 ]
             ]
         , div [ tabLayout.bonusesArea ]
