@@ -1,7 +1,7 @@
 module Utils.Unlocks exposing (..)
 
+import AssocList as Dict exposing (Dict)
 import Config
-import Dict exposing (Dict)
 import Types exposing (..)
 import Utils.Record
 

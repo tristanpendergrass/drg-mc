@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import AssocList as Dict exposing (Dict)
 import Duration exposing (Duration)
 import DwarfXp exposing (DwarfXp)
 import FeatherIcons
@@ -92,7 +93,7 @@ type alias MissionRecord a =
 
 type alias MissionYield =
     { credits : Float
-    , minerals : MineralRecord Int
+    , minerals : Dict Mineral ( Float, Float )
     }
 
 
@@ -100,7 +101,7 @@ type alias MissionStats =
     { title : String
     , unlock : Maybe Unlock
     , duration : Duration
-    , yield : MissionYield
+    , credits : Float
     }
 
 

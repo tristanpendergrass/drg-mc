@@ -1,9 +1,9 @@
 port module Main exposing (defaultModel, main)
 
+import AssocList as Dict exposing (Dict)
 import Browser
 import Browser.Events
 import Config
-import Dict exposing (Dict)
 import Duration exposing (Duration, hours)
 import DwarfXp exposing (DwarfXp)
 import FeatherIcons
@@ -384,9 +384,13 @@ update msg model =
                 stats =
                     Utils.Record.getByMission mission Config.missionStats
 
+                yield : MissionYield
+                yield =
+                    { credits = stats.credits, minerals = Dict.empty }
+
                 modifiedYield : MissionYield
                 modifiedYield =
-                    modifyYield model stats.yield
+                    modifyYield model yield
 
                 newMissionStatuses : MissionRecord ButtonStatus
                 newMissionStatuses =
@@ -632,14 +636,6 @@ renderMissionRow model mission =
         missionStatus =
             Utils.Record.getByMission mission model.missionStatuses
 
-        yield : MissionYield
-        yield =
-            stats.yield
-
-        modifiedYield : MissionYield
-        modifiedYield =
-            modifyYield model yield
-
         icon : String -> Html Msg
         icon iconSrc =
             img [ src iconSrc, class "w-4 inline" ] []
@@ -685,7 +681,7 @@ renderMissionRow model mission =
         buttonText =
             case missionStatus of
                 ButtonReady ->
-                    "Gain " ++ floatToFixedDecimalString modifiedYield.credits 2 ++ "m credits"
+                    "Gain " ++ floatToFixedDecimalString stats.credits 2 ++ "m credits"
 
                 ButtonOnCooldown _ ->
                     "On cooldown"
