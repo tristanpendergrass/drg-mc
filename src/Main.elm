@@ -989,7 +989,7 @@ renderBiomeDropdownContent : Maybe Biome -> Html Msg
 renderBiomeDropdownContent maybeSelectedBiome =
     ul [ class "menu menu-lg w-80 rounded-box bg-base-100 shadow-sm" ]
         (List.concat
-            [ [ li [ class "menu-title" ] [ text "Select biome" ] ]
+            [ [ li [ class "menu-title" ] [ text "Select a biome" ] ]
             , List.map
                 (\biome ->
                     let
@@ -1016,7 +1016,7 @@ renderBiomeDropdownContent maybeSelectedBiome =
 
 renderActiveBiome : Biome -> Html Msg
 renderActiveBiome biome =
-    div [ class "w-72 h-12 rounded overflow-hidden relative" ]
+    div [ class "w-72 h-12 rounded overflow-hidden relative shadow" ]
         [ div
             [ style "background-image" ("url(" ++ (biomeStats biome).image ++ ")")
             , class "w-full h-full bg-cover bg-no-repeat bg-center"
@@ -1042,13 +1042,13 @@ renderMissionsTab model =
             [ div [ class "w-full" ]
                 [ div [ class "w-full flex items-center justify-between" ]
                     [ div [ proseClass ] [ h1 [] [ text "Missions" ] ]
-                    , div [ class "flex items-center gap-1" ]
+                    , div [ class "flex items-center gap-2" ]
                         [ case model.missionBiome of
                             Just biome ->
                                 renderActiveBiome biome
 
                             Nothing ->
-                                div [ class "h-12 flex items-center" ] [ text "No biome selected" ]
+                                div [ class "h-12 flex items-center" ] [ text "Select a biome" ]
                         , button
                             [ class "btn btn-md btn-square"
                             , attribute "style" "anchor-name:--anchor-1"

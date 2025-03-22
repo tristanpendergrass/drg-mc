@@ -27,11 +27,19 @@ module.exports = {
             opacity: '0.25',
           },
         },
+        'gooey-pulse': {
+          '0%': { transform: 'scale(0.90)' },
+          '40%': { transform: 'scale(1.06)' },
+          '60%': { transform: 'scale(0.98)' },
+          '80%': { transform: 'scale(1.01)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'rocket-enter': 'rocketUp 2s ease-out',
         'rocket-exit': 'rocketDown 0.5s ease-in',
         smokeRise: 'smokeRise 2s ease-out forwards',
+        'gooey-pulse': 'gooey-pulse 0.6s ease-in-out'
       },
     },
   },
