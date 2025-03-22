@@ -40,7 +40,6 @@ type alias Model =
     , theme : Maybe Theme -- Nothing means the user has never adjusted this setting
     , level : Int
     , credits : Float -- All the credits ever earned by the player, equivalent to experience points
-    , resources : ResourceRecord Int -- Current resource stocks
     , missionStatuses : MissionRecord ButtonStatus
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
     , dwarfXp : DwarfRecord DwarfXp
@@ -93,7 +92,7 @@ type alias MissionRecord a =
 
 type alias MissionYield =
     { credits : Float
-    , resources : ResourceRecord Int
+    , minerals : MineralRecord Int
     }
 
 
@@ -108,19 +107,6 @@ type alias MissionStats =
 type ButtonStatus
     = ButtonReady -- Missions start this way too...
     | ButtonOnCooldown Timer
-
-
-
--- Resources
-
-
-type Resource
-    = Gold
-
-
-type alias ResourceRecord a =
-    { gold : a
-    }
 
 
 

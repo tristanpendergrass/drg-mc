@@ -64,7 +64,6 @@ defaultModel seed1 now =
     , theme = Nothing
     , level = 1
     , credits = 0
-    , resources = { gold = 0 }
     , missionStatuses =
         { haz1 = ButtonReady
         , haz2 = ButtonReady
@@ -393,17 +392,12 @@ update msg model =
                 newMissionStatuses =
                     Utils.Record.setByMission mission (setButtonCooldown model) model.missionStatuses
 
-                newResources : ResourceRecord Int
-                newResources =
-                    Utils.Record.addResourceRecords modifiedYield.resources model.resources
-
                 addCreditsResult : Model
                 addCreditsResult =
                     addCredits modifiedYield.credits model
             in
             ( { model
                 | missionStatuses = newMissionStatuses
-                , resources = newResources
                 , credits = addCreditsResult.credits
                 , level = addCreditsResult.level
               }

@@ -108,7 +108,7 @@ currentVersionTest =
                         model : Model
                         model =
                             defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                                |> (\m -> { m | dwarfXpButtonStatuses = Utils.Record.dwarfXpButtonRecord (ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.5))) })
+                                |> (\m -> { m | dwarfXpButtonStatuses = dwarfXpButtonRecord (ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.5))) })
                     in
                     Save.encoder model
                         |> E.encode 0

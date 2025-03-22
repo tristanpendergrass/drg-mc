@@ -48,12 +48,10 @@ posixEncoder posix =
 
 
 -- v0.1
-
-
-v0_1ResourcesDecoder : Decoder (ResourceRecord Int)
-v0_1ResourcesDecoder =
-    D.map ResourceRecord <|
-        D.field "gold" D.int
+-- v0_1ResourcesDecoder : Decoder (ResourceRecord Int)
+-- v0_1ResourcesDecoder =
+--     D.map ResourceRecord <|
+--         D.field "gold" D.int
 
 
 percentDecoder : Decoder Utils.Percent.Percent
@@ -96,8 +94,8 @@ themeDecoder =
 
 v0_1Decoder : Decoder Model
 v0_1Decoder =
-    D.map7
-        (\_ currentTime currentTab level credits resources missionStatuses ->
+    D.map6
+        (\_ currentTime currentTab level credits missionStatuses ->
             let
                 model : Model
                 model =
@@ -108,7 +106,6 @@ v0_1Decoder =
                     , theme = Just Default
                     , level = level
                     , credits = credits
-                    , resources = resources
                     , missionStatuses = missionStatuses
                     , saveTimer = Utils.Timer.create
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
@@ -130,7 +127,6 @@ v0_1Decoder =
         (D.succeed MissionsTab)
         (D.field "level" D.int)
         (D.field "credits" D.float)
-        (D.field "resources" v0_1ResourcesDecoder)
         (D.field "missionStatuses" v0_1MissionStatusesDecoder)
 
 
@@ -151,7 +147,7 @@ v0_2Decoder : Random.Seed -> Decoder Model
 v0_2Decoder initialSeed =
     D.field "v0.2" <|
         (D.succeed
-            (\currentTime currentTab theme level credits resources missionStatuses dwarfXp dwarfXpButtonStatuses ->
+            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses ->
                 let
                     model : Model
                     model =
@@ -162,7 +158,6 @@ v0_2Decoder initialSeed =
                         , theme = theme
                         , level = level
                         , credits = credits
-                        , resources = resources
                         , missionStatuses = missionStatuses
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
@@ -182,7 +177,6 @@ v0_2Decoder initialSeed =
             |> optional "theme" (D.map Just themeDecoder) Nothing
             |> required "level" D.int
             |> required "credits" D.float
-            |> required "resources" v0_1ResourcesDecoder
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
@@ -241,7 +235,7 @@ v0_3Decoder : Random.Seed -> Decoder Model
 v0_3Decoder initialSeed =
     D.field "v0.3" <|
         (D.succeed
-            (\currentTime currentTab theme level credits resources missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals ->
+            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals ->
                 let
                     model : Model
                     model =
@@ -252,7 +246,6 @@ v0_3Decoder initialSeed =
                         , theme = theme
                         , level = level
                         , credits = credits
-                        , resources = resources
                         , missionStatuses = missionStatuses
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
@@ -272,7 +265,6 @@ v0_3Decoder initialSeed =
             |> optional "theme" (D.map Just themeDecoder) Nothing
             |> required "level" D.int
             |> required "credits" D.float
-            |> required "resources" v0_1ResourcesDecoder
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
@@ -385,6 +377,7 @@ dailySpecialEncoder dailySpecial =
     E.string (dailySpecialStats dailySpecial).id_
 
 
+encoder : Model -> E.Value
 encoder model =
     E.object
         [ ( "v0.3"
@@ -394,7 +387,6 @@ encoder model =
                 , ( "theme", v0_2ThemeEncoder model.theme )
                 , ( "level", E.int model.level )
                 , ( "credits", E.float model.credits )
-                , ( "resources", E.object [ ( "gold", E.int model.resources.gold ) ] )
                 , ( "missionStatuses"
                   , E.object
                         [ ( "haz1", buttonStatusEncoder model.missionStatuses.haz1 )

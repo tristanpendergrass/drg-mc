@@ -56,32 +56,6 @@ updateByMission mission f record =
 
 
 
--- Resources
-
-
-resourceRecord : a -> ResourceRecord a
-resourceRecord a =
-    { gold = a }
-
-
-getByResource : Resource -> ResourceRecord a -> a
-getByResource resource record =
-    case resource of
-        Gold ->
-            record.gold
-
-
-mapResources : (Resource -> a -> b) -> ResourceRecord a -> ResourceRecord b
-mapResources f record =
-    { gold = f Gold record.gold }
-
-
-addResourceRecords : ResourceRecord Int -> ResourceRecord Int -> ResourceRecord Int
-addResourceRecords a b =
-    mapResources (\r x -> x + getByResource r b) a
-
-
-
 -- Dwarfs
 
 

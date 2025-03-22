@@ -112,31 +112,31 @@ missionStats =
         { title = "Haz 1"
         , unlock = Nothing
         , duration = Duration.minutes 1
-        , yield = { credits = 1.25, resources = Utils.Record.resourceRecord 0 }
+        , yield = { credits = 1.25, minerals = mineralRecord 0 }
         }
     , haz2 =
         { title = "Haz 2"
         , unlock = Just UnlockHaz2
         , duration = Duration.minutes 5
-        , yield = { credits = 2.5, resources = Utils.Record.resourceRecord 0 }
+        , yield = { credits = 2.5, minerals = mineralRecord 0 }
         }
     , haz3 =
         { title = "Haz 3"
         , unlock = Just UnlockHaz3
         , duration = Duration.minutes 30
-        , yield = { credits = 4.0, resources = Utils.Record.resourceRecord 0 }
+        , yield = { credits = 4.0, minerals = mineralRecord 0 }
         }
     , haz4 =
         { title = "Haz 4"
         , unlock = Just UnlockHaz4
         , duration = Duration.hours 3
-        , yield = { credits = 7.75, resources = Utils.Record.resourceRecord 0 }
+        , yield = { credits = 7.75, minerals = mineralRecord 0 }
         }
     , haz5 =
         { title = "Haz 5"
         , unlock = Just UnlockHaz5
         , duration = Duration.hours 20
-        , yield = { credits = 12, resources = Utils.Record.resourceRecord 0 }
+        , yield = { credits = 12, minerals = mineralRecord 0 }
         }
     }
 
