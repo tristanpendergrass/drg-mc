@@ -279,6 +279,34 @@ getAllMods model =
     List.map .mod (getAllBuffs model)
 
 
+mineralYieldGenerator : Mission -> Biome -> Random.Generator (Dict Mineral Float)
+mineralYieldGenerator mission biome =
+    let
+        { abundantMineral, scarceMineral } =
+            biomeStats biome
+
+        { credits } =
+            Utils.Record.getByMission mission Config.missionStats
+    in
+    Random.map3
+        (\abundantMineralAmount scarceMineralAmount didGetScarce ->
+            if didGetScarce then
+                Dict.fromList [ ( scarceMineral, scarceMineralAmount * credits ), ( abundantMineral, abundantMineralAmount * credits ) ]
+
+            else
+                Dict.fromList [ ( abundantMineral, abundantMineralAmount * credits ) ]
+        )
+        (Random.float 0.5 1)
+        (Random.float 0.25 0.75)
+        (probabilityGenerator 0.5)
+
+
+probabilityGenerator : Float -> Random.Generator Bool
+probabilityGenerator probability =
+    Random.float 0 1
+        |> Random.map (\x -> x < probability)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -384,9 +412,17 @@ update msg model =
                 stats =
                     Utils.Record.getByMission mission Config.missionStats
 
+                ( mineralYield, seed2 ) =
+                    case model.missionBiome of
+                        Just biome ->
+                            Random.step (mineralYieldGenerator mission biome) model.seed
+
+                        Nothing ->
+                            ( Dict.empty, model.seed )
+
                 yield : MissionYield
                 yield =
-                    { credits = stats.credits, minerals = Dict.empty }
+                    { credits = stats.credits, minerals = mineralYield }
 
                 modifiedYield : MissionYield
                 modifiedYield =
@@ -401,9 +437,11 @@ update msg model =
                     addCredits modifiedYield.credits model
             in
             ( { model
-                | missionStatuses = newMissionStatuses
+                | seed = seed2
+                , missionStatuses = newMissionStatuses
                 , credits = addCreditsResult.credits
                 , level = addCreditsResult.level
+                , minerals = addMineralDictToRecord model.minerals modifiedYield.minerals
               }
             , Cmd.none
             )
@@ -510,6 +548,22 @@ modifyYield model yield =
             getYieldBonus (getAllMods model)
     in
     { yield | credits = yield.credits * (1 + Utils.Percent.toFloat yieldBonus) }
+
+
+addMineralDictToRecord : MineralRecord Float -> Dict Mineral Float -> MineralRecord Float
+addMineralDictToRecord record minerals =
+    Dict.foldl (\k v acc -> updateByMineral ((+) v) acc k) record minerals
+
+
+addDicts : Dict a Float -> Dict a Float -> Dict a Float
+addDicts dict1 dict2 =
+    Dict.merge
+        (\k v -> Dict.insert k v)
+        (\k v1 v2 -> Dict.insert k (v1 + v2))
+        (\k v -> Dict.insert k v)
+        dict1
+        dict2
+        Dict.empty
 
 
 dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
@@ -681,10 +735,15 @@ renderMissionRow model mission =
         buttonText =
             case missionStatus of
                 ButtonReady ->
-                    "Gain " ++ floatToFixedDecimalString stats.credits 2 ++ "m credits"
+                    -- "Gain " ++ floatToFixedDecimalString stats.credits 2 ++ "m credits"
+                    "Unload Cargo"
 
                 ButtonOnCooldown _ ->
                     "On cooldown"
+
+        creditsYieldString : String
+        creditsYieldString =
+            floatToFixedDecimalString stats.credits 2 ++ "m credits"
     in
     tr []
         [ td [ class "h-[70px]" ]
@@ -694,6 +753,38 @@ renderMissionRow model mission =
                     , [ icons ]
                     ]
                 )
+            ]
+        , td []
+            [ div [ class "flex items-center gap-1" ]
+                [ span [ class "text-sm" ] [ text creditsYieldString ]
+                , span [ class "text-sm" ] [ text "//" ]
+                , div [ class "flex items-center gap-1" ]
+                    (case model.missionBiome of
+                        Just biome ->
+                            let
+                                biomeInfo =
+                                    biomeStats biome
+
+                                abundantMineral =
+                                    img
+                                        [ src (mineralStats biomeInfo.abundantMineral).icon
+                                        , class "w-5"
+                                        ]
+                                        []
+
+                                scarceMineral =
+                                    img
+                                        [ src (mineralStats biomeInfo.scarceMineral).icon
+                                        , class "w-5 opacity-50"
+                                        ]
+                                        []
+                            in
+                            [ abundantMineral, scarceMineral ]
+
+                        Nothing ->
+                            []
+                    )
+                ]
             ]
         , td [ class "overflow-hidden relative flex justify-end items-center h-[70px]" ]
             [ renderButton model missionStatus stats.duration (HandleMissionClick mission) ButtonPrimary [ text buttonText ] ]
@@ -790,7 +881,7 @@ renderProgressBar model =
 
         progressBarTextClass : Attribute Msg
         progressBarTextClass =
-            class "px-3 py-1 rounded-sm bg-base-100 text-base-content text-3xl leading-none text-xl"
+            class "px-3 py-1 rounded-sm bg-base-100 text-base-content text-3xl leading-none text-xl opacity-75"
     in
     case Config.levelingSchedule model.level of
         AtMaxLevel ->
@@ -992,9 +1083,9 @@ renderBiomeDropdownContent maybeSelectedBiome =
                             , text stats.name
                             , div [ class "flex items-center gap-1 ml-2" ]
                                 [ div [ class "flex items-center" ]
-                                    (List.map (\mineral -> img [ src (mineralStats mineral).icon, class "w-4 h-4" ] []) stats.abundantMinerals)
+                                    [ img [ src (mineralStats stats.abundantMineral).icon, class "w-4 h-4" ] [] ]
                                 , div [ class "flex items-center" ]
-                                    (List.map (\mineral -> img [ src (mineralStats mineral).icon, class "w-4 h-4 opacity-50" ] []) stats.scarceMinerals)
+                                    [ img [ src (mineralStats stats.scarceMineral).icon, class "w-4 h-4 opacity-50" ] [] ]
                                 ]
                             ]
                         ]
@@ -1056,8 +1147,15 @@ renderMissionsTab model =
         , div [ tabLayout.bonusesArea ]
             bonuses
         , div [ tabLayout.contentWrapper ]
-            [ table [ class "table w-[750px] max-w-full" ]
-                [ tbody []
+            [ table [ class "table table-sm w-[750px] max-w-full" ]
+                [ thead []
+                    [ tr []
+                        [ th [] [ text "Hazard level" ]
+                        , th [] [ text "Yield" ]
+                        , th [ class "text-end" ] [ text "Status" ]
+                        ]
+                    ]
+                , tbody []
                     (List.map (renderMissionRow model) unlockedMissions)
                 ]
             ]

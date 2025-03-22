@@ -93,7 +93,7 @@ type alias MissionRecord a =
 
 type alias MissionYield =
     { credits : Float
-    , minerals : Dict Mineral ( Float, Float )
+    , minerals : Dict Mineral Float
     }
 
 
@@ -684,8 +684,8 @@ type alias BiomeStats =
     , name : String
     , image : String
     , icon : String
-    , abundantMinerals : List Mineral
-    , scarceMinerals : List Mineral
+    , abundantMineral : Mineral
+    , scarceMineral : Mineral
     }
 
 
@@ -798,80 +798,80 @@ allBiomeStats =
         , name = "Crystalline Caverns"
         , image = "biomes/crystallineCaverns_image4.webp"
         , icon = "biomes/crystallineCaverns_icon.webp"
-        , abundantMinerals = [ Croppa, Bismor ]
-        , scarceMinerals = [ Magnite, Umanite ]
+        , abundantMineral = Jadiz
+        , scarceMineral = Bismor
         }
     , hollowBough =
         { id_ = "hollowBough"
         , name = "Hollow Bough"
         , image = "biomes/hollowBough_image.webp"
         , icon = "biomes/hollowBough_icon.webp"
-        , abundantMinerals = [ Bismor, Umanite ]
-        , scarceMinerals = [ Magnite, EnorPearl ]
+        , abundantMineral = Jadiz
+        , scarceMineral = Croppa
         }
     , saltPits =
         { id_ = "saltPits"
         , name = "Salt Pits"
         , image = "biomes/saltPits_image.webp"
         , icon = "biomes/saltPits_icon.webp"
-        , abundantMinerals = [ Magnite, Umanite ]
-        , scarceMinerals = [ Jadiz, EnorPearl ]
+        , abundantMineral = EnorPearl
+        , scarceMineral = Bismor
         }
     , sandblastedCorridors =
         { id_ = "sandblastedCorridors"
         , name = "Sandblasted Corridors"
         , image = "biomes/sanblastedCorridors_image.webp"
         , icon = "biomes/sanblastedCorridors_icon.webp"
-        , abundantMinerals = [ Magnite, EnorPearl ]
-        , scarceMinerals = [ Bismor, Jadiz ]
+        , abundantMineral = EnorPearl
+        , scarceMineral = Magnite
         }
     , fungusBogs =
         { id_ = "fungusBogs"
         , name = "Fungus Bogs"
         , image = "biomes/fungusBogs_image.webp"
         , icon = "biomes/fungusBogs_icon.webp"
-        , abundantMinerals = [ Croppa, Jadiz ]
-        , scarceMinerals = [ Bismor, Umanite ]
+        , abundantMineral = Croppa
+        , scarceMineral = Jadiz
         }
     , azureWeald =
         { id_ = "azureWeald"
         , name = "Azure Weald"
         , image = "biomes/azureWeald_image.webp"
         , icon = "biomes/azureWeald_icon.webp"
-        , abundantMinerals = [ Croppa, Jadiz ]
-        , scarceMinerals = [ Bismor, Magnite ]
+        , abundantMineral = Croppa
+        , scarceMineral = Umanite
         }
     , glacialStrata =
         { id_ = "glacialStrata"
         , name = "Glacial Strata"
         , image = "biomes/glacialStrata_image.webp"
         , icon = "biomes/glacialStrata_icon.webp"
-        , abundantMinerals = [ Jadiz, Magnite ]
-        , scarceMinerals = [ Croppa, Umanite ]
+        , abundantMineral = Magnite
+        , scarceMineral = Umanite
         }
     , magmaCore =
         { id_ = "magmaCore"
         , name = "Magma Core"
         , image = "biomes/magmaCore_image.webp"
         , icon = "biomes/magmaCore_icon.webp"
-        , abundantMinerals = [ Bismor, Umanite ]
-        , scarceMinerals = [ Croppa, Jadiz ]
+        , abundantMineral = Magnite
+        , scarceMineral = Croppa
         }
     , denseBiozone =
         { id_ = "denseBiozone"
         , name = "Dense Biozone"
         , image = "biomes/denseBiozone_picture.webp"
         , icon = "biomes/denseBiozone_icon.webp"
-        , abundantMinerals = [ Croppa, EnorPearl ]
-        , scarceMinerals = [ Umanite, Jadiz ]
+        , abundantMineral = Bismor
+        , scarceMineral = Umanite
         }
     , radioactiveExclusionZone =
         { id_ = "radioactiveExclusionZone"
         , name = "Radioactive Exclusion Zone"
         , image = "biomes/radioactiveExclusionZone_image.webp"
         , icon = "biomes/radioactiveExclusionZone_icon.webp"
-        , abundantMinerals = [ EnorPearl, Umanite ]
-        , scarceMinerals = [ Croppa, Bismor ]
+        , abundantMineral = Umanite
+        , scarceMineral = EnorPearl
         }
     }
 
