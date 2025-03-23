@@ -965,7 +965,10 @@ renderHeader model =
                         renderNextUnlock model unlockLevel unlockStats
                 , renderProgressBar model
                 ]
-            , div [ class "grid grid-cols-2 grid-rows-3 gap-2 min-w-64" ]
+            , div
+                [ class "grid grid-cols-2 grid-rows-3 gap-2 min-w-64"
+                , classList [ ( "hidden", not (Utils.Unlocks.biomesFeatureIsUnlocked model.level) ) ]
+                ]
                 (allMinerals
                     |> List.map
                         (\mineral ->

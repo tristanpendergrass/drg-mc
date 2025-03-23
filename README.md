@@ -62,11 +62,7 @@ $ npm test path/to/file -- --watch
 - [ ] Way to reset the game for real players
   - [x] Add button
   - [ ] Add "Are you sure" modal
-- [ ] Abyss Bar daily special
-  - [ ] Design
-  - [ ] Implement
-  - [ ] Set up level it unlocks at
-  - [ ] Define final values
+- [x] Abyss Bar daily special
 - [ ] Biomes
   - [ ] Design
   - [ ] Add section showing how much of each resource in sidebar

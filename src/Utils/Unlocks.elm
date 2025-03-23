@@ -83,3 +83,8 @@ biomeIsUnlocked level biome =
             (biomeStats biome).unlockTier
     in
     kindIsUnlocked level (UnlockBiomeTier biomeUnlockTier)
+
+
+biomesFeatureIsUnlocked : Int -> Bool
+biomesFeatureIsUnlocked level =
+    kindIsUnlocked level (UnlockBiomeTier BiomeUnlockTier1)
