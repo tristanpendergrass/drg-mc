@@ -164,6 +164,10 @@ tabStats =
         { title = "Dwarf Leveling"
         , maybeIcon = Nothing
         }
+    , projectsTab =
+        { title = "Projects"
+        , maybeIcon = Nothing
+        }
     , abyssBarTab =
         { title = "Abyss Bar"
         , maybeIcon = Nothing

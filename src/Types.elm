@@ -184,6 +184,7 @@ type
     -- Don't forget to update allTabs too!
     = MissionsTab
     | CommendationsTab
+    | ProjectsTab
     | AbyssBarTab
     | SettingsTab
 
@@ -197,6 +198,7 @@ type alias TabStats =
 type alias TabRecord a =
     { missionsTab : a
     , commendationsTab : a
+    , projectsTab : a
     , abyssBarTab : a
     , settingsTab : a
     }
@@ -398,6 +400,7 @@ type alias Buff =
     , icon : String
     , description : String
     , mod : Mod
+    , mult : Int -- How many times the buff is applied. 1 is normal, 2 is double, etc.
     }
 
 
@@ -487,6 +490,7 @@ allDailySpecialStats =
             , icon = "beer/beer2.png"
             , description = "Drinking Dark Morkite increases the yield of missions"
             , mod = ModMissionYield (Utils.Percent.float 0.1)
+            , mult = 1
             }
         }
     , potsOGold =
@@ -498,6 +502,7 @@ allDailySpecialStats =
             , icon = "beer/beer2.png"
             , description = "Drinking Pots o' Gold increases the yield of missions"
             , mod = ModMissionYield (Utils.Percent.float 0.2)
+            , mult = 1
             }
         }
     , redRockBlaster =
@@ -509,6 +514,7 @@ allDailySpecialStats =
             , icon = "beer/beer2.png"
             , description = "Drinking Red Rock Blaster increases the yield of missions"
             , mod = ModMissionYield (Utils.Percent.float 0.3)
+            , mult = 1
             }
         }
     , rockyMountain =
@@ -520,6 +526,7 @@ allDailySpecialStats =
             , icon = "beer/beer2.png"
             , description = "Drinking Rocky Mountain increases the yield of missions"
             , mod = ModMissionYield (Utils.Percent.float 0.4)
+            , mult = 1
             }
         }
     }
@@ -899,3 +906,97 @@ allBiomeStats =
 biomeStats : Biome -> BiomeStats
 biomeStats kind =
     getByBiome allBiomeStats kind
+
+
+
+-- Projects
+
+
+type Project
+    = Mule1
+    | Mule2
+
+
+allProjects : List Project
+allProjects =
+    [ Mule1, Mule2 ]
+
+
+type alias ProjectStats =
+    { name : String
+    , buff : Buff
+    , costs : Dict Mineral Float
+    , maxLevels : Int
+    }
+
+
+type alias ProjectRecord a =
+    { mule1 : a
+    , mule2 : a
+    }
+
+
+projectRecord : a -> ProjectRecord a
+projectRecord a =
+    { mule1 = a
+    , mule2 = a
+    }
+
+
+getByProject : ProjectRecord a -> Project -> a
+getByProject record kind =
+    case kind of
+        Mule1 ->
+            record.mule1
+
+        Mule2 ->
+            record.mule2
+
+
+setByProject : a -> Project -> ProjectRecord a -> ProjectRecord a
+setByProject value kind record =
+    case kind of
+        Mule1 ->
+            { record | mule1 = value }
+
+        Mule2 ->
+            { record | mule2 = value }
+
+
+updateByProject : (a -> a) -> ProjectRecord a -> Project -> ProjectRecord a
+updateByProject f record kind =
+    setByProject (f (getByProject record kind)) kind record
+
+
+allProjectStats : ProjectRecord ProjectStats
+allProjectStats =
+    { mule1 =
+        { name = "M.U.L.E."
+        , buff =
+            { title = "Faster Mining"
+            , icon = "projects/mule1.png"
+            , description = "Increases mining speed"
+            , mod = ModMissionYield (Utils.Percent.float 1.0)
+            , mult = 1
+            }
+        , costs = Dict.fromList [ ( Bismor, 20 ), ( Croppa, 20 ) ]
+        , maxLevels = 2
+        }
+    , mule2 =
+        { name = "M.U.L.E. Upgrade II"
+        , buff =
+            { title = "Bigger Storage"
+            , icon = "projects/mule2.png"
+            , description = "Increases mineral storage capacity"
+            , mod = ModMissionYield (Utils.Percent.float 2.0)
+            , mult = 1
+            }
+        , costs = Dict.fromList [ ( Bismor, 40 ), ( Croppa, 40 ) ]
+        , maxLevels = 2
+        }
+    }
+
+
+projectStats : Project -> ProjectStats
+projectStats kind =
+    getByProject allProjectStats kind

@@ -57,17 +57,10 @@ $ npm test path/to/file -- --watch
 
 # v0.3
 - [ ] Show unlock modal list
-- [ ] Add elm-review
 - [x] Debug: allow buttons to have no cd
 - [x] Way to reset the game for real players
 - [x] Abyss Bar daily special
-- [ ] Biomes
-  - [ ] Design
-  - [ ] Add section showing how much of each resource in sidebar
-  - [ ] Add mineral trade terminal where resources converted to credits
-  - [ ] Add ability to choose biome for mission and corresponding change in yield
-  - [ ] Set up level where feature unlocks and unlock of additional biomes
-  - [ ] Define final values
+- [x] Biomes
 
 # v0.2
 - [x] Add animation of resource gained after click

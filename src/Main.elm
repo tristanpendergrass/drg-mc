@@ -261,7 +261,7 @@ getAllBuffs model =
         squadMods : List Buff
         squadMods =
             if Quantity.greaterThan Quantity.zero squadBonusPercent then
-                [ { title = "Squad bonus", icon = "engineer.webp", description = "Increase the yield of missions", mod = ModMissionYield squadBonusPercent } ]
+                [ { title = "Squad bonus", icon = "engineer.webp", description = "Increase the yield of missions", mod = ModMissionYield squadBonusPercent, mult = 1 } ]
 
             else
                 []
@@ -1312,6 +1312,9 @@ numActiveItemsInTab model tab =
                 |> List.filter (\dwarfXpButton -> getByDwarfXpButton model.dwarfXpButtonStatuses dwarfXpButton == ButtonReady)
                 |> List.length
 
+        ProjectsTab ->
+            0
+
         AbyssBarTab ->
             0
 
@@ -1365,6 +1368,9 @@ isTabUnlocked model tab =
 
         CommendationsTab ->
             Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level
+
+        ProjectsTab ->
+            True
 
         AbyssBarTab ->
             Utils.Unlocks.abyssBarFeatureUnlocked model.level
@@ -1430,6 +1436,19 @@ renderDailySpecialOption model option =
         ]
 
 
+renderProjectsTab : Model -> Html Msg
+renderProjectsTab model =
+    div [ tabLayout.container ]
+        [ div [ tabLayout.headerWrapper ]
+            [ div [ proseClass ]
+                [ h1 [] [ text "Projects" ]
+                ]
+            ]
+        , div [ tabLayout.contentWrapper ]
+            []
+        ]
+
+
 view : Model -> Html Msg
 view model =
     div [ class "w-screen h-screen overflow-hidden flex flex-col items-center bg-base-100" ]
@@ -1455,6 +1474,7 @@ view model =
                                 [ renderDrawerTabRow model MissionsTab
                                 , renderDrawerTabRow model CommendationsTab
                                 , renderDrawerTabRow model AbyssBarTab
+                                , renderDrawerTabRow model ProjectsTab
                                 , li [] [] -- This renders as a divider in the drawer
                                 , renderDrawerTabRow model SettingsTab
                                 ]
@@ -1468,6 +1488,9 @@ view model =
 
                                 CommendationsTab ->
                                     renderCommendationsTab model
+
+                                ProjectsTab ->
+                                    renderProjectsTab model
 
                                 AbyssBarTab ->
                                     renderAbyssBarTab model

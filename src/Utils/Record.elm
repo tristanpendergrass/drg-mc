@@ -118,6 +118,7 @@ allTabs : List Tab
 allTabs =
     [ MissionsTab
     , CommendationsTab
+    , ProjectsTab
     , AbyssBarTab
     , SettingsTab
     ]
@@ -127,6 +128,7 @@ tabRecord : a -> TabRecord a
 tabRecord a =
     { missionsTab = a
     , commendationsTab = a
+    , projectsTab = a
     , abyssBarTab = a
     , settingsTab = a
     }
@@ -140,6 +142,9 @@ getByTab tab record =
 
         CommendationsTab ->
             record.commendationsTab
+
+        ProjectsTab ->
+            record.projectsTab
 
         AbyssBarTab ->
             record.abyssBarTab
@@ -156,6 +161,9 @@ setByTab tab value record =
 
         CommendationsTab ->
             { record | commendationsTab = value }
+
+        ProjectsTab ->
+            { record | projectsTab = value }
 
         AbyssBarTab ->
             { record | abyssBarTab = value }
