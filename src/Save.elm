@@ -26,7 +26,7 @@ import Utils.Timer
 decodeAnyVersion : Random.Seed -> Decoder Model
 decodeAnyVersion seed =
     D.oneOf
-        [ v0_3Decoder seed
+        [ decoder seed
         , v0_2Decoder seed
         , v0_1Decoder
         ]
@@ -105,7 +105,7 @@ v0_1Decoder =
                     , currentTab = currentTab
                     , theme = Just Default
                     , level = level
-                    , credits = credits
+                    , morkite = credits
                     , missionStatuses = missionStatuses
                     , saveTimer = Utils.Timer.create
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
@@ -157,7 +157,7 @@ v0_2Decoder initialSeed =
                         , currentTab = currentTab
                         , theme = theme
                         , level = level
-                        , credits = credits
+                        , morkite = credits
                         , missionStatuses = missionStatuses
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
@@ -184,7 +184,7 @@ v0_2Decoder initialSeed =
 
 
 v0_2DwarfXpButtonRecordDecoder : Decoder a -> Decoder (DwarfXpButtonRecord a)
-v0_2DwarfXpButtonRecordDecoder decoder =
+v0_2DwarfXpButtonRecordDecoder d =
     D.map5
         (\dwarfXpButton1 dwarfXpButton2 dwarfXpButton3 dwarfXpButton4 dwarfXpButton5 ->
             { dwarfXpButton1 = dwarfXpButton1
@@ -194,11 +194,11 @@ v0_2DwarfXpButtonRecordDecoder decoder =
             , dwarfXpButton5 = dwarfXpButton5
             }
         )
-        (D.field "dwarfXpButton1" decoder)
-        (D.field "dwarfXpButton2" decoder)
-        (D.field "dwarfXpButton3" decoder)
-        (D.field "dwarfXpButton4" decoder)
-        (D.field "dwarfXpButton5" decoder)
+        (D.field "dwarfXpButton1" d)
+        (D.field "dwarfXpButton2" d)
+        (D.field "dwarfXpButton3" d)
+        (D.field "dwarfXpButton4" d)
+        (D.field "dwarfXpButton5" d)
 
 
 v0_2TabDecoder : Decoder Tab
@@ -231,11 +231,11 @@ v0_2DwarfRecordDecoder valueDecoder =
         (D.field "driller" valueDecoder)
 
 
-v0_3Decoder : Random.Seed -> Decoder Model
-v0_3Decoder initialSeed =
+decoder : Random.Seed -> Decoder Model
+decoder initialSeed =
     D.field "v0.3" <|
         (D.succeed
-            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals ->
+            (\currentTime currentTab theme level morkite missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals ->
                 let
                     model : Model
                     model =
@@ -245,7 +245,7 @@ v0_3Decoder initialSeed =
                         , currentTab = currentTab
                         , theme = theme
                         , level = level
-                        , credits = credits
+                        , morkite = morkite
                         , missionStatuses = missionStatuses
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
@@ -264,7 +264,7 @@ v0_3Decoder initialSeed =
             |> required "currentTab" v0_2TabDecoder
             |> optional "theme" (D.map Just themeDecoder) Nothing
             |> required "level" D.int
-            |> required "credits" D.float
+            |> required "morkite" D.float
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
@@ -386,7 +386,7 @@ encoder model =
                 , ( "currentTab", v0_2TabEncoder model.currentTab )
                 , ( "theme", v0_2ThemeEncoder model.theme )
                 , ( "level", E.int model.level )
-                , ( "credits", E.float model.credits )
+                , ( "morkite", E.float model.morkite )
                 , ( "missionStatuses"
                   , E.object
                         [ ( "haz1", buttonStatusEncoder model.missionStatuses.haz1 )

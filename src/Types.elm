@@ -40,7 +40,7 @@ type alias Model =
     , saveTimer : Timer
     , theme : Maybe Theme -- Nothing means the user has never adjusted this setting
     , level : Int
-    , credits : Float -- All the credits ever earned by the player, equivalent to experience points
+    , morkite : Float
     , missionStatuses : MissionRecord ButtonStatus
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
     , dwarfXp : DwarfRecord DwarfXp
@@ -92,7 +92,7 @@ type alias MissionRecord a =
 
 
 type alias MissionYield =
-    { credits : Float
+    { morkite : Float
     , minerals : Dict Mineral Float
     }
 
@@ -101,7 +101,7 @@ type alias MissionStats =
     { title : String
     , unlock : Maybe Unlock
     , duration : Duration
-    , credits : Float
+    , morkite : Float
     }
 
 
@@ -115,7 +115,7 @@ type ButtonStatus
 
 
 type LevelRequirements
-    = EarnCredits Float
+    = GainMorkite Float
     | AtMaxLevel
 
 

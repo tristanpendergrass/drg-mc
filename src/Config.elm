@@ -61,19 +61,19 @@ levelUnlockStats =
 levelingSchedule : Int -> LevelRequirements
 levelingSchedule level =
     if level < 6 then
-        EarnCredits (toFloat level * 5.0)
+        GainMorkite (toFloat level * 5.0)
 
     else if level < 12 then
-        EarnCredits (toFloat level * 10.0)
+        GainMorkite (toFloat level * 10.0)
 
     else if level < 14 then
-        EarnCredits (toFloat level * 15.0)
+        GainMorkite (toFloat level * 15.0)
 
     else if level < 20 then
-        EarnCredits (toFloat level * 20.0)
+        GainMorkite (toFloat level * 20.0)
 
     else if level < 25 then
-        EarnCredits (toFloat level * 40.0)
+        GainMorkite (toFloat level * 40.0)
 
     else
         AtMaxLevel
@@ -112,31 +112,31 @@ missionStats =
         { title = "Haz 1"
         , unlock = Nothing
         , duration = Duration.minutes 1
-        , credits = 1.25
+        , morkite = 1.25
         }
     , haz2 =
         { title = "Haz 2"
         , unlock = Just UnlockHaz2
         , duration = Duration.minutes 5
-        , credits = 2.5
+        , morkite = 2.5
         }
     , haz3 =
         { title = "Haz 3"
         , unlock = Just UnlockHaz3
         , duration = Duration.minutes 30
-        , credits = 4.0
+        , morkite = 4.0
         }
     , haz4 =
         { title = "Haz 4"
         , unlock = Just UnlockHaz4
         , duration = Duration.hours 3
-        , credits = 7.75
+        , morkite = 7.75
         }
     , haz5 =
         { title = "Haz 5"
         , unlock = Just UnlockHaz5
         , duration = Duration.hours 20
-        , credits = 12
+        , morkite = 12
         }
     }
 

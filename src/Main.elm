@@ -40,10 +40,6 @@ main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 
-
-{--| Returns the amount of credits required to level up-}
-
-
 dailySpecialOptionsGenerator : Random.Generator (List DailySpecial)
 dailySpecialOptionsGenerator =
     Random.List.shuffle allDailySpecials
@@ -63,7 +59,7 @@ defaultModel seed1 now =
     , saveTimer = Utils.Timer.create
     , theme = Nothing
     , level = 1
-    , credits = 0
+    , morkite = 0
     , missionStatuses =
         { haz1 = ButtonReady
         , haz2 = ButtonReady
@@ -212,26 +208,26 @@ percentInLevel xp =
             Utils.Percent.float 1
 
 
-addCredits : Float -> { a | credits : Float, level : Int } -> { a | credits : Float, level : Int }
-addCredits amount model =
+addMorkite : Float -> { a | morkite : Float, level : Int } -> { a | morkite : Float, level : Int }
+addMorkite amount model =
     case Config.levelingSchedule model.level of
-        EarnCredits creditsToNextLevel ->
+        GainMorkite morkiteToNextLevel ->
             let
-                newTotalCredits : Float
-                newTotalCredits =
-                    model.credits + amount
+                newTotalMorkite : Float
+                newTotalMorkite =
+                    model.morkite + amount
 
                 remainder : Float
                 remainder =
-                    newTotalCredits - creditsToNextLevel
+                    newTotalMorkite - morkiteToNextLevel
             in
             if remainder < 0 then
                 -- Not enough to level
-                { model | credits = newTotalCredits }
+                { model | morkite = newTotalMorkite }
 
             else
                 -- Enough to level once or more
-                addCredits remainder { model | credits = 0, level = model.level + 1 }
+                addMorkite remainder { model | morkite = 0, level = model.level + 1 }
 
         AtMaxLevel ->
             model
@@ -285,16 +281,16 @@ mineralYieldGenerator mission biome =
         { abundantMineral, scarceMineral } =
             biomeStats biome
 
-        { credits } =
+        { morkite } =
             Utils.Record.getByMission mission Config.missionStats
     in
     Random.map3
         (\abundantMineralAmount scarceMineralAmount didGetScarce ->
             if didGetScarce then
-                Dict.fromList [ ( scarceMineral, scarceMineralAmount * credits ), ( abundantMineral, abundantMineralAmount * credits ) ]
+                Dict.fromList [ ( scarceMineral, scarceMineralAmount * morkite ), ( abundantMineral, abundantMineralAmount * morkite ) ]
 
             else
-                Dict.fromList [ ( abundantMineral, abundantMineralAmount * credits ) ]
+                Dict.fromList [ ( abundantMineral, abundantMineralAmount * morkite ) ]
         )
         (Random.float 0.5 1)
         (Random.float 0.25 0.75)
@@ -422,7 +418,7 @@ update msg model =
 
                 yield : MissionYield
                 yield =
-                    { credits = stats.credits, minerals = mineralYield }
+                    { morkite = stats.morkite, minerals = mineralYield }
 
                 modifiedYield : MissionYield
                 modifiedYield =
@@ -432,15 +428,15 @@ update msg model =
                 newMissionStatuses =
                     Utils.Record.setByMission mission (setButtonCooldown model) model.missionStatuses
 
-                addCreditsResult : Model
-                addCreditsResult =
-                    addCredits modifiedYield.credits model
+                addMorkiteResult : Model
+                addMorkiteResult =
+                    addMorkite modifiedYield.morkite model
             in
             ( { model
                 | seed = seed2
                 , missionStatuses = newMissionStatuses
-                , credits = addCreditsResult.credits
-                , level = addCreditsResult.level
+                , morkite = addMorkiteResult.morkite
+                , level = addMorkiteResult.level
                 , minerals = addMineralDictToRecord model.minerals modifiedYield.minerals
               }
             , Cmd.none
@@ -547,7 +543,7 @@ modifyYield model yield =
         yieldBonus =
             getYieldBonus (getAllMods model)
     in
-    { yield | credits = yield.credits * (1 + Utils.Percent.toFloat yieldBonus) }
+    { yield | morkite = yield.morkite * (1 + Utils.Percent.toFloat yieldBonus) }
 
 
 addMineralDictToRecord : MineralRecord Float -> Dict Mineral Float -> MineralRecord Float
@@ -674,9 +670,9 @@ renderDuration d hasTickedAVeryShortTime =
             ]
 
 
-credits1Img : Html Msg
-credits1Img =
-    img [ src "credits1.png", class "w-6 inline-block" ] []
+morkiteImg : Html Msg
+morkiteImg =
+    img [ src "minerals/morkite.webp", class "w-6 inline-block" ] []
 
 
 renderMissionRow : Model -> Mission -> Html Msg
@@ -735,15 +731,14 @@ renderMissionRow model mission =
         buttonText =
             case missionStatus of
                 ButtonReady ->
-                    -- "Gain " ++ floatToFixedDecimalString stats.credits 2 ++ "m credits"
                     "Unload Cargo"
 
                 ButtonOnCooldown _ ->
                     "On cooldown"
 
-        creditsYieldString : String
-        creditsYieldString =
-            floatToFixedDecimalString stats.credits 2 ++ "m credits"
+        morkiteYieldString : String
+        morkiteYieldString =
+            floatToFixedDecimalString stats.morkite 2 ++ " morkite"
     in
     tr []
         [ td [ class "h-[70px]" ]
@@ -756,7 +751,7 @@ renderMissionRow model mission =
             ]
         , td []
             [ div [ class "flex items-center gap-1" ]
-                [ span [ class "text-sm" ] [ text creditsYieldString ]
+                [ span [ class "text-sm" ] [ text morkiteYieldString ]
                 , span [ class "text-sm", classList [ ( "hidden", model.missionBiome == Nothing ) ] ] [ text "//" ]
                 , div [ class "flex items-center gap-1" ]
                     (case model.missionBiome of
@@ -890,17 +885,17 @@ renderProgressBar model =
                 , filledPortion (Utils.Percent.float 1.0)
                 ]
 
-        EarnCredits creditsToNextLevel ->
+        GainMorkite morkiteToNextLevel ->
             let
                 percentComplete : Utils.Percent.Percent
                 percentComplete =
-                    Utils.Percent.float (model.credits / creditsToNextLevel)
+                    Utils.Percent.float (model.morkite / morkiteToNextLevel)
             in
             div [ outerBarClasses ]
                 [ span [ class "z-10 relative flex items-center gap-2", progressBarTextClass ]
-                    [ span [ class "font-semibold text-3xl leading-none font-mono mr-2" ] [ text (floatToString model.credits ++ " / " ++ floatToString creditsToNextLevel) ]
-                    , text "credits"
-                    , span [ class "flex items-center" ] [ credits1Img ]
+                    [ span [ class "font-semibold text-3xl leading-none font-mono mr-2" ] [ text (floatToString model.morkite ++ " / " ++ floatToString morkiteToNextLevel) ]
+                    , text "morkite"
+                    , span [ class "flex items-center" ] [ morkiteImg ]
                     , text "to next level"
                     ]
                 , filledPortion percentComplete
