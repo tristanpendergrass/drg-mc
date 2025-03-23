@@ -68,6 +68,7 @@ type Msg
     | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event
     | HandleDailySpecialClick DailySpecial
     | HandleMissionBiomeSelection Biome
+    | OpenModal String
 
 
 

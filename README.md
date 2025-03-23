@@ -59,9 +59,7 @@ $ npm test path/to/file -- --watch
 - [ ] Show unlock modal list
 - [ ] Add elm-review
 - [x] Debug: allow buttons to have no cd
-- [ ] Way to reset the game for real players
-  - [x] Add button
-  - [ ] Add "Are you sure" modal
+- [x] Way to reset the game for real players
 - [x] Abyss Bar daily special
 - [ ] Biomes
   - [ ] Design

@@ -35,6 +35,9 @@ port saveGame : E.Value -> Cmd msg
 port closePopover : String -> Cmd msg
 
 
+port openModal : String -> Cmd msg
+
+
 main : Program Flags Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
@@ -316,6 +319,9 @@ update msg model =
 
         ResetGame ->
             ( defaultModel model.seed model.currentTime, Cmd.none )
+
+        OpenModal modalId ->
+            ( model, openModal modalId )
 
         HandleAnimationFrame n ->
             let
@@ -1231,21 +1237,21 @@ renderSettingsTab model =
             []
         , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 w-full max-w-[750px]" ]
-                [ button [ class "btn btn-error", onClick ResetGame ] [ text "Reset game" ]
-                , div [ class "divider" ] []
-                , div [ proseClass ]
-                    [ h2 [] [ text "Admin crimes" ]
-                    , div [ class "flex items-center gap-1" ]
-                        [ label [ for "button-no-cd" ] [ text "No CD button" ]
-                        , input
-                            [ type_ "checkbox"
-                            , class "checkbox"
-                            , id "button-no-cd"
-                            , checked model.debugSettings.buttonCooldownInstant
-                            , onCheck DebugSetButtonCooldownInstant
-                            ]
-                            []
+                [ button [ class "btn", onClick (OpenModal "my_modal_1") ] [ text "Reset game" ]
+                ]
+            , div [ class "divider" ] []
+            , div [ proseClass ]
+                [ h2 [] [ text "Admin crimes" ]
+                , div [ class "flex items-center gap-1" ]
+                    [ label [ for "button-no-cd" ] [ text "No CD button" ]
+                    , input
+                        [ type_ "checkbox"
+                        , class "checkbox"
+                        , id "button-no-cd"
+                        , checked model.debugSettings.buttonCooldownInstant
+                        , onCheck DebugSetButtonCooldownInstant
                         ]
+                        []
                     ]
                 ]
             ]
@@ -1495,4 +1501,23 @@ view model =
                         []
                 ]
             )
+        , Html.node "dialog"
+            [ id "my_modal_1", class "modal" ]
+            [ div [ class "modal-box" ]
+                [ h3 [ class "text-lg font-bold" ] [ text "Reset Game" ]
+                , p [ class "py-4" ] [ text "Are you sure you want to reset the game? All progress will be lost." ]
+                , div [ class "modal-action" ]
+                    [ Html.form [ method "dialog" ]
+                        [ button
+                            [ class "btn btn-error", onClick ResetGame ]
+                            [ text "Yes, Reset Game" ]
+                        ]
+                    , Html.form [ method "dialog" ]
+                        [ button [ class "btn" ] [ text "Cancel" ] ]
+                    ]
+                ]
+            , Html.form [ Html.Attributes.attribute "method" "dialog", class "modal-backdrop" ]
+                [ button [] [ text "close" ]
+                ]
+            ]
         ]
