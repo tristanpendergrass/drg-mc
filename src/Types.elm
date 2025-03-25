@@ -50,6 +50,7 @@ type alias Model =
     , maybeInitDecodeErr : Maybe D.Error
     , minerals : MineralRecord Float
     , missionBiome : Maybe Biome
+    , projectLevels : ProjectRecord Int
     }
 
 
@@ -68,6 +69,7 @@ type Msg
     | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event
     | HandleDailySpecialClick DailySpecial
     | HandleMissionBiomeSelection Biome
+    | HandleProjectUpgrade Project
     | OpenModal String
 
 

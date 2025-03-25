@@ -116,6 +116,7 @@ v0_1Decoder =
                     , maybeInitDecodeErr = Nothing
                     , minerals = mineralRecord 0
                     , missionBiome = Nothing
+                    , projectLevels = projectRecord 0
                     }
             in
             model
@@ -168,6 +169,7 @@ v0_2Decoder initialSeed =
                         , maybeInitDecodeErr = Nothing
                         , minerals = mineralRecord 0
                         , missionBiome = Nothing
+                        , projectLevels = projectRecord 0
                         }
                 in
                 model
@@ -235,7 +237,7 @@ decoder : Random.Seed -> Decoder Model
 decoder initialSeed =
     D.field "v0.3" <|
         (D.succeed
-            (\currentTime currentTab theme level morkite missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals ->
+            (\currentTime currentTab theme level morkite missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals missionBiome projectLevels ->
                 let
                     model : Model
                     model =
@@ -255,7 +257,8 @@ decoder initialSeed =
                         , dailySpecialOptions = dailySpecialOptions
                         , maybeInitDecodeErr = Nothing
                         , minerals = minerals
-                        , missionBiome = Nothing
+                        , missionBiome = missionBiome
+                        , projectLevels = projectLevels
                         }
                 in
                 model
@@ -268,10 +271,12 @@ decoder initialSeed =
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
-            |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
+            |> required "activeDailySpecials" (D.list (D.map2 Tuple.pair dailySpecialDecoder Utils.Timer.timerDecoder))
             |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
             |> required "dailySpecialCooldown" buttonStatusDecoder
-            |> optional "minerals" mineralRecordDecoder (mineralRecord 0)
+            |> required "minerals" mineralRecordDecoder
+            |> optional "missionBiome" (D.map Just biomeDecoder) Nothing
+            |> optional "projectLevels" (v0_3ProjectRecordDecoder D.int) (projectRecord 0)
         )
 
 
@@ -429,6 +434,38 @@ encoder model =
                         , ( "umanite", E.float model.minerals.umanite )
                         ]
                   )
+                , ( "projectLevels"
+                  , E.object
+                        [ ( "mule1", E.int model.projectLevels.mule1 )
+                        , ( "mule2", E.int model.projectLevels.mule2 )
+                        ]
+                  )
                 ]
           )
         ]
+
+
+v0_3ProjectRecordDecoder : Decoder a -> Decoder (ProjectRecord a)
+v0_3ProjectRecordDecoder d =
+    D.map2
+        (\mule1 mule2 ->
+            { mule1 = mule1
+            , mule2 = mule2
+            }
+        )
+        (D.field "mule1" d)
+        (D.field "mule2" d)
+
+
+biomeDecoder : Decoder Biome
+biomeDecoder =
+    D.string
+        |> D.andThen
+            (\biomeId ->
+                case List.Extra.find (\biome -> (biomeStats biome).id_ == biomeId) allBiomes of
+                    Just biome ->
+                        D.succeed biome
+
+                    Nothing ->
+                        D.fail ("Unknown biome: " ++ biomeId)
+            )

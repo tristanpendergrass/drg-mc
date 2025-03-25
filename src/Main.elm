@@ -78,6 +78,7 @@ defaultModel seed1 now =
     , maybeInitDecodeErr = Nothing
     , minerals = mineralRecord 0
     , missionBiome = Nothing
+    , projectLevels = projectRecord 0
     }
 
 
@@ -537,9 +538,58 @@ update msg model =
             )
 
         HandleMissionBiomeSelection biome ->
-            ( { model | missionBiome = Just biome }
-            , closePopover "popover-1"
-            )
+            ( { model | missionBiome = Just biome }, closePopover "popover-1" )
+
+        HandleProjectUpgrade project ->
+            let
+                stats =
+                    projectStats project
+
+                currentLevel =
+                    getByProject model.projectLevels project
+
+                maxLevelReached =
+                    currentLevel >= stats.maxLevels
+
+                -- Check if we have enough minerals
+                canUpgrade =
+                    if maxLevelReached then
+                        False
+
+                    else
+                        Dict.foldl
+                            (\mineral cost canAfford ->
+                                canAfford && (getByMineral model.minerals mineral >= cost)
+                            )
+                            True
+                            stats.costs
+
+                -- Only upgrade if we can afford it and haven't reached max level
+                updatedModel =
+                    if canUpgrade && not maxLevelReached then
+                        -- Subtract costs
+                        let
+                            updatedMinerals =
+                                Dict.foldl
+                                    (\mineral cost minerals ->
+                                        updateByMineral (\current -> current - cost) minerals mineral
+                                    )
+                                    model.minerals
+                                    stats.costs
+
+                            -- Increment project level
+                            updatedProjectLevels =
+                                updateByProject (\level -> level + 1) model.projectLevels project
+                        in
+                        { model
+                            | minerals = updatedMinerals
+                            , projectLevels = updatedProjectLevels
+                        }
+
+                    else
+                        model
+            in
+            ( updatedModel, Cmd.none )
 
 
 modifyYield : Model -> MissionYield -> MissionYield
@@ -1445,7 +1495,112 @@ renderProjectsTab model =
                 ]
             ]
         , div [ tabLayout.contentWrapper ]
-            []
+            [ div [ class "list bg-base-100 rounded-box shadow-md" ]
+                [ li [ class "p-4 pb-2 text-xs opacity-60 tracking-wide" ]
+                    [ text "Available Projects" ]
+                , div [] (List.map (renderProjectRow model) allProjects)
+                ]
+            ]
+        ]
+
+
+renderProjectRow : Model -> Project -> Html Msg
+renderProjectRow model project =
+    let
+        stats : ProjectStats
+        stats =
+            projectStats project
+
+        currentLevel : Int
+        currentLevel =
+            getByProject model.projectLevels project
+
+        maxLevelReached : Bool
+        maxLevelReached =
+            currentLevel >= stats.maxLevels
+
+        -- Calculate if we have enough minerals for upgrade
+        canUpgrade : Bool
+        canUpgrade =
+            if maxLevelReached then
+                False
+
+            else
+                Dict.foldl
+                    (\mineral cost canAfford ->
+                        canAfford && (getByMineral model.minerals mineral >= cost)
+                    )
+                    True
+                    stats.costs
+
+        -- Render mineral costs
+        mineralCosts : List (Html Msg)
+        mineralCosts =
+            Dict.toList stats.costs
+                |> List.map
+                    (\( mineral, cost ) ->
+                        let
+                            available =
+                                getByMineral model.minerals mineral
+
+                            hasEnough =
+                                available >= cost
+                        in
+                        div
+                            [ class "flex items-center gap-1"
+                            , classList [ ( "opacity-50", not hasEnough ) ]
+                            ]
+                            [ img
+                                [ class "size-4"
+                                , src (mineralStats mineral).icon
+                                ]
+                                []
+                            , span
+                                [ class "text-xs"
+                                , classList [ ( "text-error", not hasEnough ) ]
+                                ]
+                                [ text (String.fromFloat cost) ]
+                            ]
+                    )
+    in
+    li [ class "list-row" ]
+        [ div []
+            [ img
+                [ class "size-10 rounded-box"
+                , src stats.buff.icon
+                ]
+                []
+            ]
+        , div []
+            [ div [] [ text stats.name ]
+            , div [ class "text-xs uppercase font-semibold opacity-60" ]
+                [ text stats.buff.description ]
+            ]
+        , div [ class "flex flex-col items-center gap-1" ]
+            [ div [ class "text-sm font-bold" ]
+                [ text ("Level " ++ String.fromInt currentLevel ++ "/" ++ String.fromInt stats.maxLevels) ]
+            , div [ class "text-xs opacity-60" ]
+                [ text (modToString stats.buff.mod) ]
+            ]
+        , if maxLevelReached then
+            div [ class "text-sm font-bold text-success" ] [ text "MAX LEVEL" ]
+
+          else
+            div [ class "flex flex-col gap-1" ] mineralCosts
+        , button
+            [ class "btn btn-sm btn-primary"
+            , classList
+                [ ( "btn-disabled", not canUpgrade || maxLevelReached )
+                , ( "opacity-50", not canUpgrade || maxLevelReached )
+                ]
+            , onClick (HandleProjectUpgrade project)
+            ]
+            [ if maxLevelReached then
+                text "MAX"
+
+              else
+                text "UPGRADE"
+            ]
         ]
 
 
