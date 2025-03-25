@@ -270,8 +270,43 @@ getAllBuffs model =
         dailySpecialMods : List Buff
         dailySpecialMods =
             List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff) model.activeDailySpecials
+
+        projectMods : List Buff
+        projectMods =
+            allProjects
+                |> List.filterMap
+                    (\project ->
+                        let
+                            stats =
+                                projectStats project
+
+                            level =
+                                getByProject model.projectLevels project
+                        in
+                        if level > 0 then
+                            let
+                                baseBuff : Buff
+                                baseBuff =
+                                    stats.buff
+
+                                adjustedBuff : Buff
+                                adjustedBuff =
+                                    { baseBuff | mult = level }
+                            in
+                            Just adjustedBuff
+
+                        else
+                            Nothing
+                    )
     in
-    List.concat [ squadMods, dailySpecialMods ]
+    List.concat [ squadMods, dailySpecialMods, projectMods ]
+
+
+getModFromBuff : Buff -> Mod
+getModFromBuff buff =
+    case buff.mod of
+        ModMissionYield percent ->
+            ModMissionYield (Quantity.multiplyBy (toFloat buff.mult) percent)
 
 
 getAllMods : Model -> List Mod
@@ -595,11 +630,34 @@ update msg model =
 modifyYield : Model -> MissionYield -> MissionYield
 modifyYield model yield =
     let
-        yieldBonus : Percent
-        yieldBonus =
+        -- Get bonuses from buffs (daily specials, squad bonus)
+        buffYieldBonus : Percent
+        buffYieldBonus =
             getYieldBonus (getAllMods model)
+
+        -- Calculate project bonus based on project levels
+        projectBonus : Percent
+        projectBonus =
+            getProjectBonus model.projectLevels
+
+        -- Combine all bonuses
+        totalBonus : Percent
+        totalBonus =
+            Quantity.plus buffYieldBonus projectBonus
+
+        -- Calculate the bonus multiplier
+        bonusMultiplier : Float
+        bonusMultiplier =
+            1 + Utils.Percent.toFloat totalBonus
+
+        -- Apply bonus to minerals
+        modifiedMinerals : Dict Mineral Float
+        modifiedMinerals =
+            Dict.map (\_ value -> value * bonusMultiplier) yield.minerals
     in
-    { yield | morkite = yield.morkite * (1 + Utils.Percent.toFloat yieldBonus) }
+    { morkite = yield.morkite * bonusMultiplier
+    , minerals = modifiedMinerals
+    }
 
 
 addMineralDictToRecord : MineralRecord Float -> Dict Mineral Float -> MineralRecord Float
@@ -1533,6 +1591,21 @@ renderProjectRow model project =
                     True
                     stats.costs
 
+        -- Calculate current effect based on level
+        currentEffect : String
+        currentEffect =
+            if currentLevel <= 0 then
+                "No effect yet"
+
+            else
+                case stats.buff.mod of
+                    ModMissionYield percent ->
+                        let
+                            effectivePercent =
+                                Utils.Percent.toFloat percent * toFloat currentLevel
+                        in
+                        "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% yield"
+
         -- Render mineral costs
         mineralCosts : List (Html Msg)
         mineralCosts =
@@ -1579,8 +1652,8 @@ renderProjectRow model project =
         , div [ class "flex flex-col items-center gap-1" ]
             [ div [ class "text-sm font-bold" ]
                 [ text ("Level " ++ String.fromInt currentLevel ++ "/" ++ String.fromInt stats.maxLevels) ]
-            , div [ class "text-xs opacity-60" ]
-                [ text (modToString stats.buff.mod) ]
+            , div [ class "text-xs" ]
+                [ text currentEffect ]
             ]
         , if maxLevelReached then
             div [ class "text-sm font-bold text-success" ] [ text "MAX LEVEL" ]
@@ -1699,3 +1772,34 @@ view model =
                 ]
             ]
         ]
+
+
+getProjectBonus : ProjectRecord Int -> Percent
+getProjectBonus projectLevels =
+    allProjects
+        |> List.map
+            (\project ->
+                let
+                    stats =
+                        projectStats project
+
+                    level =
+                        getByProject projectLevels project
+
+                    baseBonus =
+                        case stats.buff.mod of
+                            ModMissionYield percent ->
+                                percent
+
+                    -- Apply bonus based on project level (level 0 = no bonus)
+                    effectiveBonus =
+                        if level <= 0 then
+                            Utils.Percent.float 0
+
+                        else
+                            -- Multiply by level to scale with level
+                            Utils.Percent.float (Utils.Percent.toFloat baseBonus * toFloat level)
+                in
+                effectiveBonus
+            )
+        |> List.foldl Quantity.plus Quantity.zero

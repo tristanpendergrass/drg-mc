@@ -434,6 +434,14 @@ encoder model =
                         , ( "umanite", E.float model.minerals.umanite )
                         ]
                   )
+                , ( "missionBiome"
+                  , case model.missionBiome of
+                        Just biome ->
+                            E.string (biomeStats biome).id_
+
+                        Nothing ->
+                            E.null
+                  )
                 , ( "projectLevels"
                   , E.object
                         [ ( "mule1", E.int model.projectLevels.mule1 )
