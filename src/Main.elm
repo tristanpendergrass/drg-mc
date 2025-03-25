@@ -850,9 +850,59 @@ renderMissionRow model mission =
                 ButtonOnCooldown _ ->
                     "On cooldown"
 
+        -- Base yield without bonuses
+        baseYield : MissionYield
+        baseYield =
+            { morkite = stats.morkite
+            , minerals = Dict.empty
+            }
+
+        -- Modified yield with all bonuses applied
+        modifiedYield : MissionYield
+        modifiedYield =
+            modifyYield model baseYield
+
+        -- Calculate the bonus percentage to display
+        bonusPercent : Float
+        bonusPercent =
+            if stats.morkite > 0 then
+                ((modifiedYield.morkite / stats.morkite) - 1) * 100
+
+            else
+                0
+
+        -- Format the values for display
         morkiteYieldString : String
         morkiteYieldString =
-            floatToFixedDecimalString stats.morkite 2 ++ " morkite"
+            if bonusPercent > 0 then
+                floatToFixedDecimalString modifiedYield.morkite 1 ++ " morkite"
+
+            else
+                floatToFixedDecimalString stats.morkite 1 ++ " morkite"
+
+        bonusText : Html Msg
+        bonusText =
+            if bonusPercent > 0 then
+                span [ class "text-xs text-success ml-1" ]
+                    [ text ("+" ++ String.fromFloat (round bonusPercent |> toFloat) ++ "%") ]
+
+            else
+                text ""
+
+        -- Estimate mineral yield ranges for display
+        estimateMineral : Mineral -> Float -> Float -> String
+        estimateMineral mineral minFactor maxFactor =
+            let
+                baseEstimate =
+                    stats.morkite * ((minFactor + maxFactor) / 2)
+
+                modifiedEstimate =
+                    baseEstimate * (1 + Utils.Percent.toFloat (getYieldBonus (getAllMods model) |> Quantity.plus (getProjectBonus model.projectLevels)))
+
+                roundedEstimate =
+                    round modifiedEstimate |> toFloat
+            in
+            String.fromFloat roundedEstimate
     in
     tr []
         [ td [ class "h-[70px]" ]
@@ -866,6 +916,7 @@ renderMissionRow model mission =
         , td []
             [ div [ class "flex items-center gap-1" ]
                 [ span [ class "text-sm" ] [ text morkiteYieldString ]
+                , bonusText
                 , span [ class "text-sm", classList [ ( "hidden", model.missionBiome == Nothing ) ] ] [ text "//" ]
                 , div [ class "flex items-center gap-1" ]
                     (case model.missionBiome of
@@ -874,19 +925,31 @@ renderMissionRow model mission =
                                 biomeInfo =
                                     biomeStats biome
 
+                                abundantAmount =
+                                    estimateMineral biomeInfo.abundantMineral 0.5 1.0
+
+                                scarceAmount =
+                                    estimateMineral biomeInfo.scarceMineral 0.25 0.75
+
                                 abundantMineral =
-                                    img
-                                        [ src (mineralStats biomeInfo.abundantMineral).icon
-                                        , class "w-5"
+                                    div [ class "flex items-center" ]
+                                        [ img
+                                            [ src (mineralStats biomeInfo.abundantMineral).icon
+                                            , class "w-5"
+                                            ]
+                                            []
+                                        , span [ class "text-xs ml-1" ] [ text ("~" ++ abundantAmount) ]
                                         ]
-                                        []
 
                                 scarceMineral =
-                                    img
-                                        [ src (mineralStats biomeInfo.scarceMineral).icon
-                                        , class "w-5 opacity-50"
+                                    div [ class "flex items-center" ]
+                                        [ img
+                                            [ src (mineralStats biomeInfo.scarceMineral).icon
+                                            , class "w-5 opacity-50"
+                                            ]
+                                            []
+                                        , span [ class "text-xs ml-1 opacity-50" ] [ text scarceAmount ]
                                         ]
-                                        []
                             in
                             [ abundantMineral, scarceMineral ]
 
