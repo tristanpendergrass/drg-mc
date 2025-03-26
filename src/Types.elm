@@ -546,14 +546,6 @@ dailySpecialStats kind =
 -- Minerals
 
 
-{-| | Jadiz |
-| Bismor |
-| Enor Pearl |
-| Croppa |
-| Magnite |
-| Bismor |
-| Umanite |
--}
 type Mineral
     = Jadiz
     | Bismor
@@ -662,18 +654,6 @@ mineralStats kind =
 
 
 -- Biomes
-{--|
-| Crystalline Caverns        |
-| Hollow Bough               |
-| Salt Pits                  |
-| Sandblasted Corridors      |
-| Fungus Bogs                |
-| Azure Weald                |
-| Glacial Strata             |
-| Magma Core                 |
-| Dense Biozone              |
-| Radioactive Exclusion Zone |
--}
 
 
 type Biome
@@ -918,13 +898,15 @@ biomeStats kind =
 
 
 type Project
-    = Mule1
-    | Mule2
+    = Mule -- M.U.L.E. upgrades increase the yield of missions
+    | Lloyd -- Lloyd upgrades increase the stats of daily specials
+    | Jukebox -- Jukebox upgrades increase the amount of dwarf xp
+    | Pickaxes -- Pickaxes upgrades increase the speed of missions
 
 
 allProjects : List Project
 allProjects =
-    [ Mule1, Mule2 ]
+    [ Mule, Lloyd, Jukebox, Pickaxes ]
 
 
 type alias ProjectStats =
@@ -936,36 +918,52 @@ type alias ProjectStats =
 
 
 type alias ProjectRecord a =
-    { mule1 : a
-    , mule2 : a
+    { mule : a
+    , lloyd : a
+    , jukebox : a
+    , pickaxes : a
     }
 
 
 projectRecord : a -> ProjectRecord a
 projectRecord a =
-    { mule1 = a
-    , mule2 = a
+    { mule = a
+    , lloyd = a
+    , jukebox = a
+    , pickaxes = a
     }
 
 
 getByProject : ProjectRecord a -> Project -> a
 getByProject record kind =
     case kind of
-        Mule1 ->
-            record.mule1
+        Mule ->
+            record.mule
 
-        Mule2 ->
-            record.mule2
+        Lloyd ->
+            record.lloyd
+
+        Jukebox ->
+            record.jukebox
+
+        Pickaxes ->
+            record.pickaxes
 
 
 setByProject : a -> Project -> ProjectRecord a -> ProjectRecord a
 setByProject value kind record =
     case kind of
-        Mule1 ->
-            { record | mule1 = value }
+        Mule ->
+            { record | mule = value }
 
-        Mule2 ->
-            { record | mule2 = value }
+        Lloyd ->
+            { record | lloyd = value }
+
+        Jukebox ->
+            { record | jukebox = value }
+
+        Pickaxes ->
+            { record | pickaxes = value }
 
 
 updateByProject : (a -> a) -> ProjectRecord a -> Project -> ProjectRecord a
@@ -975,11 +973,11 @@ updateByProject f record kind =
 
 allProjectStats : ProjectRecord ProjectStats
 allProjectStats =
-    { mule1 =
+    { mule =
         { name = "M.U.L.E."
         , buff =
             { title = "Faster Mining"
-            , icon = "projects/mule1.png"
+            , icon = "mule.webp"
             , description = "Increases mining speed"
             , mod = ModMissionYield (Utils.Percent.float 1.0)
             , mult = 1
@@ -987,16 +985,40 @@ allProjectStats =
         , costs = Dict.fromList [ ( Bismor, 20 ), ( Croppa, 20 ) ]
         , maxLevels = 2
         }
-    , mule2 =
-        { name = "M.U.L.E. Upgrade II"
+    , lloyd =
+        { name = "Lloyd"
         , buff =
-            { title = "Bigger Storage"
-            , icon = "projects/mule2.png"
-            , description = "Increases mineral storage capacity"
-            , mod = ModMissionYield (Utils.Percent.float 2.0)
+            { title = "Better Drinks"
+            , icon = "lloyd.jpg"
+            , description = "Increases the strength of daily specials"
+            , mod = ModDailySpecialBuffStrength (Utils.Percent.float 2.0)
             , mult = 1
             }
-        , costs = Dict.fromList [ ( Bismor, 40 ), ( Croppa, 40 ) ]
+        , costs = Dict.fromList [ ( Magnite, 40 ), ( Umanite, 40 ) ]
+        , maxLevels = 2
+        }
+    , jukebox =
+        { name = "Jukebox"
+        , buff =
+            { title = "Better Tunes"
+            , icon = "jukebox.jpg"
+            , description = "Increases dwarf XP gain"
+            , mod = ModDwarfXpGain (Utils.Percent.float 2.0)
+            , mult = 1
+            }
+        , costs = Dict.fromList [ ( Jadiz, 40 ), ( EnorPearl, 40 ) ]
+        , maxLevels = 2
+        }
+    , pickaxes =
+        { name = "Pickaxes"
+        , buff =
+            { title = "Faster Digging"
+            , icon = "pickaxe.webp"
+            , description = "Increases mission speed"
+            , mod = ModMissionSpeed (Utils.Percent.float 1.5)
+            , mult = 1
+            }
+        , costs = Dict.fromList [ ( Bismor, 30 ), ( Magnite, 30 ) ]
         , maxLevels = 2
         }
     }

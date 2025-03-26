@@ -63,9 +63,8 @@ $ npm test path/to/file -- --watch
 - [ ] Daily special
   - [ ] Show current daily special
   - [ ] Edit message to clarify it lasts 24 hrs
-- [ ] Projects
-  - [ ] Add the rest of the projects
-  - [ ] Show unavailable projects in different section
+- [x] Projects
+  - [x] Add the rest of the projects
 
 # v0.2
 - [x] Add animation of resource gained after click

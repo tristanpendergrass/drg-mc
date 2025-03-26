@@ -444,8 +444,10 @@ encoder model =
                   )
                 , ( "projectLevels"
                   , E.object
-                        [ ( "mule1", E.int model.projectLevels.mule1 )
-                        , ( "mule2", E.int model.projectLevels.mule2 )
+                        [ ( "mule", E.int model.projectLevels.mule )
+                        , ( "lloyd", E.int model.projectLevels.lloyd )
+                        , ( "jukebox", E.int model.projectLevels.jukebox )
+                        , ( "pickaxes", E.int model.projectLevels.pickaxes )
                         ]
                   )
                 ]
@@ -455,14 +457,18 @@ encoder model =
 
 v0_3ProjectRecordDecoder : Decoder a -> Decoder (ProjectRecord a)
 v0_3ProjectRecordDecoder d =
-    D.map2
-        (\mule1 mule2 ->
-            { mule1 = mule1
-            , mule2 = mule2
+    D.map4
+        (\mule lloyd jukebox pickaxes ->
+            { mule = mule
+            , lloyd = lloyd
+            , jukebox = jukebox
+            , pickaxes = pickaxes
             }
         )
-        (D.field "mule1" d)
-        (D.field "mule2" d)
+        (D.field "mule" d)
+        (D.field "lloyd" d)
+        (D.field "jukebox" d)
+        (D.field "pickaxes" d)
 
 
 biomeDecoder : Decoder Biome
