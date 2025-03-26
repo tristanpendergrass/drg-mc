@@ -267,9 +267,53 @@ getAllBuffs model =
             else
                 []
 
+        -- Get any daily special buff strength modifiers
+        buffStrengthMods : List Mod
+        buffStrengthMods =
+            model.activeDailySpecials
+                |> List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff.mod)
+                |> List.filter
+                    (\mod ->
+                        case mod of
+                            ModDailySpecialBuffStrength _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+
+        buffStrengthBonus : Percent
+        buffStrengthBonus =
+            getDailySpecialBuffStrength buffStrengthMods
+
+        buffStrengthMultiplier : Float
+        buffStrengthMultiplier =
+            1 + Utils.Percent.toFloat buffStrengthBonus
+
+        -- Apply buff strength modifier to daily special buffs
+        enhanceDailySpecial : DailySpecial -> Buff
+        enhanceDailySpecial dailySpecial =
+            let
+                baseBuff : Buff
+                baseBuff =
+                    (dailySpecialStats dailySpecial).buff
+            in
+            { baseBuff
+                | mod =
+                    case baseBuff.mod of
+                        ModMissionYield percent ->
+                            ModMissionYield (Quantity.multiplyBy buffStrengthMultiplier percent)
+
+                        ModMissionSpeed percent ->
+                            ModMissionSpeed (Quantity.multiplyBy buffStrengthMultiplier percent)
+
+                        ModDailySpecialBuffStrength _ ->
+                            baseBuff.mod
+            }
+
         dailySpecialMods : List Buff
         dailySpecialMods =
-            List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff) model.activeDailySpecials
+            List.map (\( dailySpecial, timer ) -> enhanceDailySpecial dailySpecial) model.activeDailySpecials
 
         projectMods : List Buff
         projectMods =
@@ -310,6 +354,9 @@ getModFromBuff buff =
 
         ModMissionSpeed percent ->
             ModMissionSpeed (Quantity.multiplyBy (toFloat buff.mult) percent)
+
+        ModDailySpecialBuffStrength percent ->
+            ModDailySpecialBuffStrength (Quantity.multiplyBy (toFloat buff.mult) percent)
 
 
 getAllMods : Model -> List Mod
@@ -1281,6 +1328,9 @@ modToString mod =
         ModMissionSpeed percent ->
             "+" ++ Utils.Percent.toString percent ++ "% speed"
 
+        ModDailySpecialBuffStrength percent ->
+            "+" ++ Utils.Percent.toString percent ++ "% buff strength"
+
 
 tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
@@ -1581,6 +1631,21 @@ getMissionSpeedBonus mods =
         |> List.foldl Quantity.plus Quantity.zero
 
 
+getDailySpecialBuffStrength : List Mod -> Percent
+getDailySpecialBuffStrength mods =
+    List.filterMap
+        (\mod ->
+            case mod of
+                ModDailySpecialBuffStrength percent ->
+                    Just percent
+
+                _ ->
+                    Nothing
+        )
+        mods
+        |> List.foldl Quantity.plus Quantity.zero
+
+
 renderLogo : Html Msg
 renderLogo =
     div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
@@ -1739,6 +1804,13 @@ renderProjectRow model project =
                                 Utils.Percent.toFloat percent * toFloat currentLevel
                         in
                         "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% speed"
+
+                    ModDailySpecialBuffStrength percent ->
+                        let
+                            effectivePercent =
+                                Utils.Percent.toFloat percent * toFloat currentLevel
+                        in
+                        "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% buff strength"
 
         -- Render mineral costs
         mineralCosts : List (Html Msg)
@@ -1926,6 +1998,9 @@ getProjectBonus projectLevels =
                                 percent
 
                             ModMissionSpeed percent ->
+                                percent
+
+                            ModDailySpecialBuffStrength percent ->
                                 percent
 
                     -- Apply bonus based on project level (level 0 = no bonus)

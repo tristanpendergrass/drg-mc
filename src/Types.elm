@@ -396,6 +396,7 @@ dwarfXpButtonStats kind =
 type Mod
     = ModMissionYield Percent
     | ModMissionSpeed Percent
+    | ModDailySpecialBuffStrength Percent
 
 
 type alias Buff =
