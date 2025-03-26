@@ -56,11 +56,16 @@ $ npm test path/to/file -- --watch
 - [ ] Scrollable areas as missized on ipad
 
 # v0.3
-- [ ] Show unlock modal list
 - [x] Debug: allow buttons to have no cd
 - [x] Way to reset the game for real players
 - [x] Abyss Bar daily special
 - [x] Biomes
+- [ ] Daily special
+  - [ ] Show current daily special
+  - [ ] Edit message to clarify it lasts 24 hrs
+- [ ] Projects
+  - [ ] Add the rest of the projects
+  - [ ] Show unavailable projects in different section
 
 # v0.2
 - [x] Add animation of resource gained after click

@@ -890,19 +890,35 @@ renderMissionRow model mission =
                 text ""
 
         -- Estimate mineral yield ranges for display
-        estimateMineral : Mineral -> Float -> Float -> String
+        estimateMineral : Mineral -> Float -> Float -> ( String, String )
         estimateMineral mineral minFactor maxFactor =
             let
-                baseEstimate =
-                    stats.morkite * ((minFactor + maxFactor) / 2)
+                baseEstimateMin =
+                    stats.morkite * minFactor
 
-                modifiedEstimate =
-                    baseEstimate * (1 + Utils.Percent.toFloat (getYieldBonus (getAllMods model) |> Quantity.plus (getProjectBonus model.projectLevels)))
+                baseEstimateMax =
+                    stats.morkite * maxFactor
 
-                roundedEstimate =
-                    round modifiedEstimate |> toFloat
+                bonusMultiplier =
+                    1 + Utils.Percent.toFloat (getYieldBonus (getAllMods model) |> Quantity.plus (getProjectBonus model.projectLevels))
+
+                modifiedEstimateMin =
+                    round (baseEstimateMin * bonusMultiplier)
+
+                modifiedEstimateMax =
+                    round (baseEstimateMax * bonusMultiplier)
+
+                rangeDisplay =
+                    String.fromInt modifiedEstimateMin ++ "-" ++ String.fromInt modifiedEstimateMax
+
+                -- For scarce mineral we just use average
+                averageEstimate =
+                    round ((baseEstimateMin + baseEstimateMax) / 2 * bonusMultiplier)
+
+                singleDisplay =
+                    String.fromInt averageEstimate
             in
-            String.fromFloat roundedEstimate
+            ( rangeDisplay, singleDisplay )
     in
     tr []
         [ td [ class "h-[70px]" ]
@@ -925,30 +941,31 @@ renderMissionRow model mission =
                                 biomeInfo =
                                     biomeStats biome
 
-                                abundantAmount =
+                                ( abundantRange, abundantAvg ) =
                                     estimateMineral biomeInfo.abundantMineral 0.5 1.0
 
-                                scarceAmount =
+                                ( scarceRange, scarceAvg ) =
                                     estimateMineral biomeInfo.scarceMineral 0.25 0.75
 
                                 abundantMineral =
-                                    div [ class "flex items-center" ]
+                                    div [ class "flex items-center tooltip", attribute "data-tip" "Estimated yield range" ]
                                         [ img
                                             [ src (mineralStats biomeInfo.abundantMineral).icon
                                             , class "w-5"
                                             ]
                                             []
-                                        , span [ class "text-xs ml-1" ] [ text ("~" ++ abundantAmount) ]
+                                        , span [ class "text-xs ml-1" ] [ text abundantRange ]
                                         ]
 
                                 scarceMineral =
-                                    div [ class "flex items-center" ]
-                                        [ img
+                                    div [ class "flex items-center ml-1 text-xs opacity-50" ]
+                                        [ span [] [ text "(" ]
+                                        , img
                                             [ src (mineralStats biomeInfo.scarceMineral).icon
-                                            , class "w-5 opacity-50"
+                                            , class "w-5 opacity-50 mx-1"
                                             ]
                                             []
-                                        , span [ class "text-xs ml-1 opacity-50" ] [ text scarceAmount ]
+                                        , span [] [ text ")" ]
                                         ]
                             in
                             [ abundantMineral, scarceMineral ]
