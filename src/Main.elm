@@ -385,18 +385,9 @@ update msg model =
                         baseDuration =
                             (Utils.Record.getByMission mission Config.missionStats).duration
 
-                        -- Apply speed bonus to reduce mission duration
-                        speedBonus : Percent
-                        speedBonus =
-                            getMissionSpeedBonus (getAllMods model)
-
-                        speedMultiplier : Float
-                        speedMultiplier =
-                            1 + Utils.Percent.toFloat speedBonus
-
                         buttonDuration : Duration
                         buttonDuration =
-                            Quantity.divideBy speedMultiplier baseDuration
+                            calculateAdjustedDuration baseDuration (getAllMods model)
                     in
                     Utils.Record.updateByMission mission (updateButton delta buttonDuration) statuses
 
@@ -887,19 +878,9 @@ renderMissionRow model mission =
             else
                 0
 
-        -- Apply speed bonus to reduce mission duration
-        speedBonus : Percent
-        speedBonus =
-            getMissionSpeedBonus (getAllMods model)
-
-        speedMultiplier : Float
-        speedMultiplier =
-            1 + Utils.Percent.toFloat speedBonus
-
-        -- Calculate adjusted mission duration with speed bonus
         adjustedDuration : Duration
         adjustedDuration =
-            Quantity.divideBy speedMultiplier stats.duration
+            calculateAdjustedDuration stats.duration (getAllMods model)
 
         -- Format the values for display
         morkiteYieldString : String
@@ -1553,6 +1534,21 @@ squadBonus model =
         |> toFloat
         |> (\x -> x / 100)
         |> Utils.Percent.float
+
+
+calculateAdjustedDuration : Duration -> List Mod -> Duration
+calculateAdjustedDuration baseDuration mods =
+    let
+        -- Apply speed bonus to reduce mission duration
+        speedBonus : Percent
+        speedBonus =
+            getMissionSpeedBonus mods
+
+        speedMultiplier : Float
+        speedMultiplier =
+            1 + Utils.Percent.toFloat speedBonus
+    in
+    Quantity.divideBy speedMultiplier baseDuration
 
 
 getYieldBonus : List Mod -> Percent

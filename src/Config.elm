@@ -112,7 +112,7 @@ missionStats =
         { title = "Haz 1"
         , unlock = Nothing
         , duration = Duration.minutes 1
-        , morkite = 1.25
+        , morkite = 1.5
         }
     , haz2 =
         { title = "Haz 2"
