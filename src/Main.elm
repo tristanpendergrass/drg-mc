@@ -309,6 +309,9 @@ getAllBuffs model =
 
                         ModDailySpecialBuffStrength _ ->
                             baseBuff.mod
+
+                        ModDwarfXpGain percent ->
+                            ModDwarfXpGain (Quantity.multiplyBy buffStrengthMultiplier percent)
             }
 
         dailySpecialMods : List Buff
@@ -357,6 +360,9 @@ getModFromBuff buff =
 
         ModDailySpecialBuffStrength percent ->
             ModDailySpecialBuffStrength (Quantity.multiplyBy (toFloat buff.mult) percent)
+
+        ModDwarfXpGain percent ->
+            ModDwarfXpGain (Quantity.multiplyBy (toFloat buff.mult) percent)
 
 
 getAllMods : Model -> List Mod
@@ -549,7 +555,7 @@ update msg model =
                     setByDwarfXpButton (setButtonCooldown model) dwarfXpButton model.dwarfXpButtonStatuses
 
                 ( ( dwarf, newDwarfXp ), newSeed ) =
-                    Random.step (dwarfXpGenerator stats.xp model.dwarfXp) model.seed
+                    Random.step (dwarfXpGenerator stats.xp model.dwarfXp (getAllMods model)) model.seed
 
                 currentLevel : Int
                 currentLevel =
@@ -730,8 +736,23 @@ addDicts dict1 dict2 =
         Dict.empty
 
 
-dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
-dwarfXpGenerator xp dwarfXp =
+dwarfXpGenerator : DwarfXp -> DwarfRecord DwarfXp -> List Mod -> Random.Generator ( Dwarf, DwarfRecord DwarfXp )
+dwarfXpGenerator baseXp dwarfXp mods =
+    let
+        -- Calculate the XP gain bonus from all active mods
+        xpGainBonus : Percent
+        xpGainBonus =
+            getDwarfXpGainBonus mods
+
+        -- Apply the bonus to the base XP amount
+        bonusMultiplier : Float
+        bonusMultiplier =
+            1 + Utils.Percent.toFloat xpGainBonus
+
+        adjustedXp : DwarfXp
+        adjustedXp =
+            Quantity.multiplyBy bonusMultiplier baseXp
+    in
     Random.uniform Scout Utils.Record.allDwarfs
         |> Random.map
             (\dwarf ->
@@ -742,7 +763,7 @@ dwarfXpGenerator xp dwarfXp =
 
                     newXp : DwarfXp
                     newXp =
-                        Quantity.plus oldXp xp
+                        Quantity.plus oldXp adjustedXp
                 in
                 ( dwarf, Utils.Record.setByDwarf dwarf newXp dwarfXp )
             )
@@ -1331,6 +1352,9 @@ modToString mod =
         ModDailySpecialBuffStrength percent ->
             "+" ++ Utils.Percent.toString percent ++ "% buff strength"
 
+        ModDwarfXpGain percent ->
+            "+" ++ Utils.Percent.toString percent ++ "% xp gain"
+
 
 tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
@@ -1445,6 +1469,20 @@ renderCommendationsTab model =
         unlockedXpButtons : List DwarfXpButton
         unlockedXpButtons =
             List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level) allDwarfXpButtons
+
+        -- Get XP gain bonuses to display
+        xpGainBonuses : List Buff
+        xpGainBonuses =
+            getAllBuffs model
+                |> List.filter
+                    (\buff ->
+                        case buff.mod of
+                            ModDwarfXpGain _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
@@ -1453,7 +1491,7 @@ renderCommendationsTab model =
                 ]
             ]
         , div [ tabLayout.bonusesArea ]
-            []
+            (List.map renderBuff xpGainBonuses)
         , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col item-center gap-4 w-[300px]" ]
                 (unlockedXpButtons
@@ -1463,6 +1501,23 @@ renderCommendationsTab model =
                                 stats : DwarfXpButtonStats
                                 stats =
                                     dwarfXpButtonStats dwarfXpButton
+
+                                -- Display adjusted XP if there's a bonus
+                                xpGainBonus =
+                                    getDwarfXpGainBonus (getAllMods model)
+
+                                bonusMultiplier =
+                                    1 + Utils.Percent.toFloat xpGainBonus
+
+                                adjustedXp =
+                                    Quantity.multiplyBy bonusMultiplier stats.xp
+
+                                xpDisplay =
+                                    if Utils.Percent.toFloat xpGainBonus > 0 then
+                                        "+" ++ DwarfXp.toString adjustedXp ++ " xp"
+
+                                    else
+                                        "+" ++ DwarfXp.toString stats.xp ++ " xp"
                             in
                             renderButton
                                 model
@@ -1470,7 +1525,7 @@ renderCommendationsTab model =
                                 stats.duration
                                 (HandleDwarfXpButtonClick dwarfXpButton)
                                 ButtonSecondary
-                                [ text "+", text (DwarfXp.toString stats.xp), text " xp to random dwarf" ]
+                                [ text xpDisplay, text " to random dwarf" ]
                         )
                 )
             ]
@@ -1646,6 +1701,21 @@ getDailySpecialBuffStrength mods =
         |> List.foldl Quantity.plus Quantity.zero
 
 
+getDwarfXpGainBonus : List Mod -> Percent
+getDwarfXpGainBonus mods =
+    List.filterMap
+        (\mod ->
+            case mod of
+                ModDwarfXpGain percent ->
+                    Just percent
+
+                _ ->
+                    Nothing
+        )
+        mods
+        |> List.foldl Quantity.plus Quantity.zero
+
+
 renderLogo : Html Msg
 renderLogo =
     div [ class "flex-1 flex items-center justify-between gap-2 px-4" ]
@@ -1811,6 +1881,13 @@ renderProjectRow model project =
                                 Utils.Percent.toFloat percent * toFloat currentLevel
                         in
                         "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% buff strength"
+
+                    ModDwarfXpGain percent ->
+                        let
+                            effectivePercent =
+                                Utils.Percent.toFloat percent * toFloat currentLevel
+                        in
+                        "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% xp gain"
 
         -- Render mineral costs
         mineralCosts : List (Html Msg)
@@ -2001,6 +2078,9 @@ getProjectBonus projectLevels =
                                 percent
 
                             ModDailySpecialBuffStrength percent ->
+                                percent
+
+                            ModDwarfXpGain percent ->
                                 percent
 
                     -- Apply bonus based on project level (level 0 = no bonus)

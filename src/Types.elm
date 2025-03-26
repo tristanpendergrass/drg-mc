@@ -397,6 +397,7 @@ type Mod
     = ModMissionYield Percent
     | ModMissionSpeed Percent
     | ModDailySpecialBuffStrength Percent
+    | ModDwarfXpGain Percent
 
 
 type alias Buff =
@@ -417,12 +418,11 @@ type DailySpecial
     | PotsOGold
     | RedRockBlaster
     | RockyMountain
-    | SlayerStout
 
 
 allDailySpecials : List DailySpecial
 allDailySpecials =
-    [ DarkMorkite, PotsOGold, RedRockBlaster, RockyMountain, SlayerStout ]
+    [ DarkMorkite, PotsOGold, RedRockBlaster, RockyMountain ]
 
 
 type alias DailySpecialStats =
@@ -438,7 +438,6 @@ type alias DailySpecialRecord a =
     , potsOGold : a
     , redRockBlaster : a
     , rockyMountain : a
-    , slayerStout : a
     }
 
 
@@ -448,7 +447,6 @@ dailySpecialRecord a =
     , potsOGold = a
     , redRockBlaster = a
     , rockyMountain = a
-    , slayerStout = a
     }
 
 
@@ -467,9 +465,6 @@ getByDailySpecial record kind =
         RockyMountain ->
             record.rockyMountain
 
-        SlayerStout ->
-            record.slayerStout
-
 
 setByDailySpecial : a -> DailySpecial -> DailySpecialRecord a -> DailySpecialRecord a
 setByDailySpecial value kind record =
@@ -485,9 +480,6 @@ setByDailySpecial value kind record =
 
         RockyMountain ->
             { record | rockyMountain = value }
-
-        SlayerStout ->
-            { record | slayerStout = value }
 
 
 allDailySpecialStats : DailySpecialRecord DailySpecialStats
@@ -513,8 +505,8 @@ allDailySpecialStats =
         , buff =
             { title = "Daily Special"
             , icon = "beer/beer2.png"
-            , description = "Drinking Pots o' Gold increases the yield of missions"
-            , mod = ModMissionYield (Utils.Percent.float 0.2)
+            , description = "Drinking Pots o' Gold increases the XP gain of dwarfs"
+            , mod = ModDwarfXpGain (Utils.Percent.float 0.5)
             , mult = 1
             }
         }
@@ -537,20 +529,8 @@ allDailySpecialStats =
         , buff =
             { title = "Daily Special"
             , icon = "beer/beer2.png"
-            , description = "Drinking Rocky Mountain increases the yield of missions"
-            , mod = ModMissionYield (Utils.Percent.float 0.4)
-            , mult = 1
-            }
-        }
-    , slayerStout =
-        { id_ = "slayerStout"
-        , title = "Slayer Stout"
-        , icon = "beer/pumpkin_beer.webp" -- Using a placeholder icon
-        , buff =
-            { title = "Daily Special"
-            , icon = "beer/beer2.png"
-            , description = "Drinking Slayer Stout increases your mission speed"
-            , mod = ModMissionSpeed (Utils.Percent.float 0.25)
+            , description = "Drinking Rocky Mountain increases the speed of missions"
+            , mod = ModMissionSpeed (Utils.Percent.float 0.4)
             , mult = 1
             }
         }
