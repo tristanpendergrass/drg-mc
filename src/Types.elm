@@ -395,6 +395,7 @@ dwarfXpButtonStats kind =
 
 type Mod
     = ModMissionYield Percent
+    | ModMissionSpeed Percent
 
 
 type alias Buff =
@@ -415,11 +416,12 @@ type DailySpecial
     | PotsOGold
     | RedRockBlaster
     | RockyMountain
+    | SlayerStout
 
 
 allDailySpecials : List DailySpecial
 allDailySpecials =
-    [ DarkMorkite, PotsOGold, RedRockBlaster, RockyMountain ]
+    [ DarkMorkite, PotsOGold, RedRockBlaster, RockyMountain, SlayerStout ]
 
 
 type alias DailySpecialStats =
@@ -435,6 +437,7 @@ type alias DailySpecialRecord a =
     , potsOGold : a
     , redRockBlaster : a
     , rockyMountain : a
+    , slayerStout : a
     }
 
 
@@ -444,6 +447,7 @@ dailySpecialRecord a =
     , potsOGold = a
     , redRockBlaster = a
     , rockyMountain = a
+    , slayerStout = a
     }
 
 
@@ -462,6 +466,9 @@ getByDailySpecial record kind =
         RockyMountain ->
             record.rockyMountain
 
+        SlayerStout ->
+            record.slayerStout
+
 
 setByDailySpecial : a -> DailySpecial -> DailySpecialRecord a -> DailySpecialRecord a
 setByDailySpecial value kind record =
@@ -477,6 +484,9 @@ setByDailySpecial value kind record =
 
         RockyMountain ->
             { record | rockyMountain = value }
+
+        SlayerStout ->
+            { record | slayerStout = value }
 
 
 allDailySpecialStats : DailySpecialRecord DailySpecialStats
@@ -528,6 +538,18 @@ allDailySpecialStats =
             , icon = "beer/beer2.png"
             , description = "Drinking Rocky Mountain increases the yield of missions"
             , mod = ModMissionYield (Utils.Percent.float 0.4)
+            , mult = 1
+            }
+        }
+    , slayerStout =
+        { id_ = "slayerStout"
+        , title = "Slayer Stout"
+        , icon = "beer/pumpkin_beer.webp" -- Using a placeholder icon
+        , buff =
+            { title = "Daily Special"
+            , icon = "beer/beer2.png"
+            , description = "Drinking Slayer Stout increases your mission speed"
+            , mod = ModMissionSpeed (Utils.Percent.float 0.25)
             , mult = 1
             }
         }

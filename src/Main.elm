@@ -308,6 +308,9 @@ getModFromBuff buff =
         ModMissionYield percent ->
             ModMissionYield (Quantity.multiplyBy (toFloat buff.mult) percent)
 
+        ModMissionSpeed percent ->
+            ModMissionSpeed (Quantity.multiplyBy (toFloat buff.mult) percent)
+
 
 getAllMods : Model -> List Mod
 getAllMods model =
@@ -378,9 +381,22 @@ update msg model =
                 updateMissionStatuses : Mission -> MissionRecord ButtonStatus -> MissionRecord ButtonStatus
                 updateMissionStatuses mission statuses =
                     let
+                        baseDuration : Duration
+                        baseDuration =
+                            (Utils.Record.getByMission mission Config.missionStats).duration
+
+                        -- Apply speed bonus to reduce mission duration
+                        speedBonus : Percent
+                        speedBonus =
+                            getMissionSpeedBonus (getAllMods model)
+
+                        speedMultiplier : Float
+                        speedMultiplier =
+                            1 + Utils.Percent.toFloat speedBonus
+
                         buttonDuration : Duration
                         buttonDuration =
-                            (Utils.Record.getByMission mission Config.missionStats).duration
+                            Quantity.divideBy speedMultiplier baseDuration
                     in
                     Utils.Record.updateByMission mission (updateButton delta buttonDuration) statuses
 
@@ -871,6 +887,20 @@ renderMissionRow model mission =
             else
                 0
 
+        -- Apply speed bonus to reduce mission duration
+        speedBonus : Percent
+        speedBonus =
+            getMissionSpeedBonus (getAllMods model)
+
+        speedMultiplier : Float
+        speedMultiplier =
+            1 + Utils.Percent.toFloat speedBonus
+
+        -- Calculate adjusted mission duration with speed bonus
+        adjustedDuration : Duration
+        adjustedDuration =
+            Quantity.divideBy speedMultiplier stats.duration
+
         -- Format the values for display
         morkiteYieldString : String
         morkiteYieldString =
@@ -976,7 +1006,7 @@ renderMissionRow model mission =
                 ]
             ]
         , td [ class "overflow-hidden relative flex justify-end items-center h-[70px]" ]
-            [ renderButton model missionStatus stats.duration (HandleMissionClick mission) ButtonPrimary [ text buttonText ] ]
+            [ renderButton model missionStatus adjustedDuration (HandleMissionClick mission) ButtonPrimary [ text buttonText ] ]
         ]
 
 
@@ -1267,6 +1297,9 @@ modToString mod =
         ModMissionYield percent ->
             "+" ++ Utils.Percent.toString percent ++ "% yield"
 
+        ModMissionSpeed percent ->
+            "+" ++ Utils.Percent.toString percent ++ "% speed"
+
 
 tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
@@ -1529,6 +1562,24 @@ getYieldBonus mods =
             case mod of
                 ModMissionYield percent ->
                     Just percent
+
+                _ ->
+                    Nothing
+        )
+        mods
+        |> List.foldl Quantity.plus Quantity.zero
+
+
+getMissionSpeedBonus : List Mod -> Percent
+getMissionSpeedBonus mods =
+    List.filterMap
+        (\mod ->
+            case mod of
+                ModMissionSpeed percent ->
+                    Just percent
+
+                _ ->
+                    Nothing
         )
         mods
         |> List.foldl Quantity.plus Quantity.zero
@@ -1685,6 +1736,13 @@ renderProjectRow model project =
                                 Utils.Percent.toFloat percent * toFloat currentLevel
                         in
                         "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% yield"
+
+                    ModMissionSpeed percent ->
+                        let
+                            effectivePercent =
+                                Utils.Percent.toFloat percent * toFloat currentLevel
+                        in
+                        "+" ++ String.fromFloat (effectivePercent * 100 |> round |> toFloat |> (\n -> n / 1)) ++ "% speed"
 
         -- Render mineral costs
         mineralCosts : List (Html Msg)
@@ -1869,6 +1927,9 @@ getProjectBonus projectLevels =
                     baseBonus =
                         case stats.buff.mod of
                             ModMissionYield percent ->
+                                percent
+
+                            ModMissionSpeed percent ->
                                 percent
 
                     -- Apply bonus based on project level (level 0 = no bonus)
