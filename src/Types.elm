@@ -506,7 +506,7 @@ allDailySpecialStats =
             { title = "Daily Special"
             , icon = "beer/beer2.png"
             , description = "Drinking Pots o' Gold increases the XP gain of dwarfs"
-            , mod = ModDwarfXpGain (Utils.Percent.float 0.5)
+            , mod = ModDwarfXpGain (Utils.Percent.float 1.0)
             , mult = 1
             }
         }
