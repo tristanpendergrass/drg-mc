@@ -1767,16 +1767,45 @@ renderAbyssBarTab model =
                             [ h2 [ class "card-title" ] [ text "Current Daily Special" ]
                             , div [ class "flex flex-wrap gap-4" ]
                                 (List.map
-                                    (\( dailySpecial, _ ) ->
+                                    (\( dailySpecial, timer ) ->
                                         let
                                             stats =
                                                 dailySpecialStats dailySpecial
+
+                                            hasTickedAVeryShortTime =
+                                                Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialBuffDuration timer
+
+                                            durationLeft =
+                                                Utils.Timer.durationLeft Config.dailySpecialBuffDuration timer
+
+                                            hours =
+                                                floor (Duration.inHours durationLeft)
+
+                                            minutes =
+                                                floor (Duration.inMinutes durationLeft)
+                                                    |> modBy 60
+
+                                            seconds =
+                                                if not (Quantity.greaterThan Duration.minute durationLeft) && hasTickedAVeryShortTime then
+                                                    60
+
+                                                else
+                                                    floor (Duration.inSeconds durationLeft)
+                                                        |> modBy 60
+
+                                            timeString =
+                                                String.padLeft 2 '0' (String.fromInt hours)
+                                                    ++ ":"
+                                                    ++ String.padLeft 2 '0' (String.fromInt minutes)
+                                                    ++ ":"
+                                                    ++ String.padLeft 2 '0' (String.fromInt seconds)
                                         in
                                         div [ class "flex items-center gap-2" ]
                                             [ img [ src stats.icon, class "w-8 h-8" ] []
                                             , div [ class "flex flex-col" ]
                                                 [ span [ class "font-medium" ] [ text stats.title ]
                                                 , span [ class "text-sm opacity-70" ] [ text (modToString stats.buff.mod) ]
+                                                , span [ class "text-xs opacity-50" ] [ text timeString ]
                                                 ]
                                             ]
                                     )
