@@ -979,7 +979,7 @@ allProjectStats =
         , buff =
             { title = "Faster Mining"
             , icon = "mule.webp"
-            , description = "Increases mining speed"
+            , description = "Increases mission yield"
             , mod = ModMissionYield (Utils.Percent.float 1.0)
             , mult = 1
             }
@@ -992,7 +992,7 @@ allProjectStats =
             { title = "Better Drinks"
             , icon = "lloyd.jpg"
             , description = "Increases the strength of daily specials"
-            , mod = ModDailySpecialBuffStrength (Utils.Percent.float 2.0)
+            , mod = ModDailySpecialBuffStrength (Utils.Percent.float 1.0)
             , mult = 1
             }
         , costs = Dict.fromList [ ( Magnite, 40 ), ( Umanite, 40 ) ]

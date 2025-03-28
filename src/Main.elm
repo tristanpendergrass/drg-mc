@@ -252,6 +252,48 @@ setButtonCooldown model =
         ButtonOnCooldown Utils.Timer.create
 
 
+getBuffStrengthMultiplierFromProjects : Model -> Float
+getBuffStrengthMultiplierFromProjects model =
+    let
+        buffStrengthBonus : Percent
+        buffStrengthBonus =
+            getProjectBonus model.projectLevels
+
+        buffStrengthMultiplier : Float
+        buffStrengthMultiplier =
+            1 + Utils.Percent.toFloat buffStrengthBonus
+    in
+    buffStrengthMultiplier
+
+
+getEnhancedDailySpecialBuff : Model -> DailySpecial -> Buff
+getEnhancedDailySpecialBuff model dailySpecial =
+    let
+        baseBuff : Buff
+        baseBuff =
+            (dailySpecialStats dailySpecial).buff
+
+        buffStrengthMultiplier : Float
+        buffStrengthMultiplier =
+            getBuffStrengthMultiplierFromProjects model
+    in
+    { baseBuff
+        | mod =
+            case baseBuff.mod of
+                ModMissionYield percent ->
+                    ModMissionYield (Quantity.multiplyBy buffStrengthMultiplier percent)
+
+                ModMissionSpeed percent ->
+                    ModMissionSpeed (Quantity.multiplyBy buffStrengthMultiplier percent)
+
+                ModDailySpecialBuffStrength percent ->
+                    ModDailySpecialBuffStrength (Quantity.multiplyBy buffStrengthMultiplier percent)
+
+                ModDwarfXpGain percent ->
+                    ModDwarfXpGain (Quantity.multiplyBy buffStrengthMultiplier percent)
+    }
+
+
 getAllBuffs : Model -> List Buff
 getAllBuffs model =
     let
@@ -267,56 +309,9 @@ getAllBuffs model =
             else
                 []
 
-        -- Get any daily special buff strength modifiers
-        buffStrengthMods : List Mod
-        buffStrengthMods =
-            model.activeDailySpecials
-                |> List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff.mod)
-                |> List.filter
-                    (\mod ->
-                        case mod of
-                            ModDailySpecialBuffStrength _ ->
-                                True
-
-                            _ ->
-                                False
-                    )
-
-        buffStrengthBonus : Percent
-        buffStrengthBonus =
-            getDailySpecialBuffStrength buffStrengthMods
-
-        buffStrengthMultiplier : Float
-        buffStrengthMultiplier =
-            1 + Utils.Percent.toFloat buffStrengthBonus
-
-        -- Apply buff strength modifier to daily special buffs
-        enhanceDailySpecial : DailySpecial -> Buff
-        enhanceDailySpecial dailySpecial =
-            let
-                baseBuff : Buff
-                baseBuff =
-                    (dailySpecialStats dailySpecial).buff
-            in
-            { baseBuff
-                | mod =
-                    case baseBuff.mod of
-                        ModMissionYield percent ->
-                            ModMissionYield (Quantity.multiplyBy buffStrengthMultiplier percent)
-
-                        ModMissionSpeed percent ->
-                            ModMissionSpeed (Quantity.multiplyBy buffStrengthMultiplier percent)
-
-                        ModDailySpecialBuffStrength _ ->
-                            baseBuff.mod
-
-                        ModDwarfXpGain percent ->
-                            ModDwarfXpGain (Quantity.multiplyBy buffStrengthMultiplier percent)
-            }
-
         dailySpecialMods : List Buff
         dailySpecialMods =
-            List.map (\( dailySpecial, timer ) -> enhanceDailySpecial dailySpecial) model.activeDailySpecials
+            List.map (\( dailySpecial, _ ) -> getEnhancedDailySpecialBuff model dailySpecial) model.activeDailySpecials
 
         projectMods : List Buff
         projectMods =
@@ -1816,6 +1811,9 @@ renderAbyssBarTab model =
                                             stats =
                                                 dailySpecialStats dailySpecial
 
+                                            enhancedBuff =
+                                                getEnhancedDailySpecialBuff model dailySpecial
+
                                             hasTickedAVeryShortTime =
                                                 Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialBuffDuration timer
 
@@ -1848,7 +1846,7 @@ renderAbyssBarTab model =
                                             [ img [ src stats.icon, class "w-8 h-8" ] []
                                             , div [ class "flex flex-col" ]
                                                 [ span [ class "font-medium" ] [ text stats.title ]
-                                                , span [ class "text-sm opacity-70" ] [ text (modToString stats.buff.mod) ]
+                                                , span [ class "text-sm opacity-70" ] [ text (modToString enhancedBuff.mod) ]
                                                 , span [ class "text-xs opacity-50" ] [ text timeString ]
                                                 ]
                                             ]
@@ -1889,6 +1887,10 @@ renderDailySpecialOption model option =
         stats : DailySpecialStats
         stats =
             dailySpecialStats option
+
+        enhancedBuff : Buff
+        enhancedBuff =
+            getEnhancedDailySpecialBuff model option
     in
     div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
         [ figure [ class "pt-2 bg-warning" ]
@@ -1897,7 +1899,7 @@ renderDailySpecialOption model option =
             ]
         , div [ class "card-body" ]
             [ h2 [ class "card-title" ] [ text "Daily Special: ", span [ class "underline" ] [ text stats.title ] ]
-            , p [] [ text (modToString stats.buff.mod) ]
+            , p [] [ text (modToString enhancedBuff.mod) ]
             , div [ class "card-actions justify-end" ]
                 [ button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Select" ]
                 ]
@@ -1915,7 +1917,7 @@ renderProjectsTab model =
             ]
         , div [ tabLayout.contentWrapper ]
             [ div [ class "list bg-base-100 rounded-box shadow-md" ]
-                [ li [ class "p-4 pb-2 text-xs opacity-60 tracking-wide" ]
+                [ div [ class "p-4 pb-2 text-xs opacity-60 tracking-wide" ]
                     [ text "Available Projects" ]
                 , div [] (List.map (renderProjectRow model) allProjects)
                 ]
