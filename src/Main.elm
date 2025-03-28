@@ -1758,10 +1758,36 @@ renderAbyssBarTab model =
                 ]
             ]
         , div [ tabLayout.bonusesArea ]
-            []
+            (List.map renderBuff (List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff) model.activeDailySpecials))
         , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 max-w-[750px]" ]
-                [ case model.dailySpecialCooldown of
+                [ if not (List.isEmpty model.activeDailySpecials) then
+                    div [ class "card bg-base-300 shadow-lg w-full" ]
+                        [ div [ class "card-body" ]
+                            [ h2 [ class "card-title" ] [ text "Current Daily Special" ]
+                            , div [ class "flex flex-wrap gap-4" ]
+                                (List.map
+                                    (\( dailySpecial, _ ) ->
+                                        let
+                                            stats =
+                                                dailySpecialStats dailySpecial
+                                        in
+                                        div [ class "flex items-center gap-2" ]
+                                            [ img [ src stats.icon, class "w-8 h-8" ] []
+                                            , div [ class "flex flex-col" ]
+                                                [ span [ class "font-medium" ] [ text stats.title ]
+                                                , span [ class "text-sm opacity-70" ] [ text (modToString stats.buff.mod) ]
+                                                ]
+                                            ]
+                                    )
+                                    model.activeDailySpecials
+                                )
+                            ]
+                        ]
+
+                  else
+                    text ""
+                , case model.dailySpecialCooldown of
                     ButtonReady ->
                         div [ class "flex flex-col gap-4" ]
                             [ p [] [ text "Select a ", strong [] [ text "daily special" ], text " to give your crew an ", strong [ class "underline" ] [ text "awesome buff" ] ]
