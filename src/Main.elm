@@ -1758,7 +1758,19 @@ renderAbyssBarTab model =
                 ]
             ]
         , div [ tabLayout.bonusesArea ]
-            (List.map renderBuff (List.map (\( dailySpecial, _ ) -> (dailySpecialStats dailySpecial).buff) model.activeDailySpecials))
+            (List.map renderBuff
+                (List.filter
+                    (\buff ->
+                        case buff.mod of
+                            ModDailySpecialBuffStrength _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+                    (getAllBuffs model)
+                )
+            )
         , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 max-w-[750px]" ]
                 [ if not (List.isEmpty model.activeDailySpecials) then
