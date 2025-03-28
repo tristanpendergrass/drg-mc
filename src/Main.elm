@@ -1414,7 +1414,24 @@ renderMissionsTab model =
 
         bonuses : List (Html Msg)
         bonuses =
-            List.map renderBuff (getAllBuffs model)
+            List.map renderBuff
+                (List.filter
+                    (\buff ->
+                        case buff.mod of
+                            ModMissionYield _ ->
+                                True
+
+                            ModMissionSpeed _ ->
+                                True
+
+                            ModDailySpecialBuffStrength _ ->
+                                False
+
+                            ModDwarfXpGain _ ->
+                                False
+                    )
+                    (getAllBuffs model)
+                )
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
