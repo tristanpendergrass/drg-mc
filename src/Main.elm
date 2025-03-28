@@ -257,7 +257,7 @@ getBuffStrengthMultiplierFromProjects model =
     let
         buffStrengthBonus : Percent
         buffStrengthBonus =
-            getProjectBonus model.projectLevels
+            getDailySpecialBuffStrength (getAllMods model)
 
         buffStrengthMultiplier : Float
         buffStrengthMultiplier =
@@ -688,20 +688,10 @@ update msg model =
 modifyYield : Model -> MissionYield -> MissionYield
 modifyYield model yield =
     let
-        -- Get bonuses from buffs (daily specials, squad bonus)
-        buffYieldBonus : Percent
-        buffYieldBonus =
-            getYieldBonus (getAllMods model)
-
-        -- Calculate project bonus based on project levels
-        projectBonus : Percent
-        projectBonus =
-            getProjectBonus model.projectLevels
-
-        -- Combine all bonuses
+        -- Get bonuses from all buffs (daily specials, squad bonus, projects)
         totalBonus : Percent
         totalBonus =
-            Quantity.plus buffYieldBonus projectBonus
+            getYieldBonus (getAllMods model)
 
         -- Calculate the bonus multiplier
         bonusMultiplier : Float
@@ -977,7 +967,7 @@ renderMissionRow model mission =
                     stats.morkite * maxFactor
 
                 bonusMultiplier =
-                    1 + Utils.Percent.toFloat (getYieldBonus (getAllMods model) |> Quantity.plus (getProjectBonus model.projectLevels))
+                    1 + Utils.Percent.toFloat (getYieldBonus (getAllMods model))
 
                 modifiedEstimateMin =
                     round (baseEstimateMin * bonusMultiplier)
@@ -1698,6 +1688,21 @@ getYieldBonus mods =
         |> List.foldl Quantity.plus Quantity.zero
 
 
+getDwarfXpGainBonus : List Mod -> Percent
+getDwarfXpGainBonus mods =
+    List.filterMap
+        (\mod ->
+            case mod of
+                ModDwarfXpGain percent ->
+                    Just percent
+
+                _ ->
+                    Nothing
+        )
+        mods
+        |> List.foldl Quantity.plus Quantity.zero
+
+
 getMissionSpeedBonus : List Mod -> Percent
 getMissionSpeedBonus mods =
     List.filterMap
@@ -1719,21 +1724,6 @@ getDailySpecialBuffStrength mods =
         (\mod ->
             case mod of
                 ModDailySpecialBuffStrength percent ->
-                    Just percent
-
-                _ ->
-                    Nothing
-        )
-        mods
-        |> List.foldl Quantity.plus Quantity.zero
-
-
-getDwarfXpGainBonus : List Mod -> Percent
-getDwarfXpGainBonus mods =
-    List.filterMap
-        (\mod ->
-            case mod of
-                ModDwarfXpGain percent ->
                     Just percent
 
                 _ ->
@@ -2156,43 +2146,3 @@ view model =
                 ]
             ]
         ]
-
-
-getProjectBonus : ProjectRecord Int -> Percent
-getProjectBonus projectLevels =
-    allProjects
-        |> List.map
-            (\project ->
-                let
-                    stats =
-                        projectStats project
-
-                    level =
-                        getByProject projectLevels project
-
-                    baseBonus =
-                        case stats.buff.mod of
-                            ModMissionYield percent ->
-                                percent
-
-                            ModMissionSpeed percent ->
-                                percent
-
-                            ModDailySpecialBuffStrength percent ->
-                                percent
-
-                            ModDwarfXpGain percent ->
-                                percent
-
-                    -- Apply bonus based on project level (level 0 = no bonus)
-                    effectiveBonus =
-                        if level <= 0 then
-                            Utils.Percent.float 0
-
-                        else
-                            -- Multiply by level to scale with level
-                            Utils.Percent.float (Utils.Percent.toFloat baseBonus * toFloat level)
-                in
-                effectiveBonus
-            )
-        |> List.foldl Quantity.plus Quantity.zero
