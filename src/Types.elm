@@ -64,6 +64,7 @@ type Msg
     | DebugSetButtonCooldownInstant Bool
     | DebugGainLevel
     | DebugLevelToMax
+    | DebugGiveMinerals
     | ResetGame
     | HandleTabClick Tab
     | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event

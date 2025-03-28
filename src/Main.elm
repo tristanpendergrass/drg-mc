@@ -686,6 +686,9 @@ update msg model =
             in
             ( updatedModel, Cmd.none )
 
+        DebugGiveMinerals ->
+            ( { model | minerals = mineralRecord 100 }, Cmd.none )
+
 
 modifyYield : Model -> MissionYield -> MissionYield
 modifyYield model yield =
@@ -1237,24 +1240,36 @@ renderHeader model =
                 [ class "grid grid-cols-2 grid-rows-3 gap-2 min-w-64"
                 , classList [ ( "hidden", not (Utils.Unlocks.biomesFeatureIsUnlocked model.level) ) ]
                 ]
-                (allMinerals
-                    |> List.map
-                        (\mineral ->
-                            let
-                                stats : MineralStats
-                                stats =
-                                    mineralStats mineral
+                (List.concat
+                    [ allMinerals
+                        |> List.map
+                            (\mineral ->
+                                let
+                                    stats : MineralStats
+                                    stats =
+                                        mineralStats mineral
 
-                                amount : Float
-                                amount =
-                                    getByMineral model.minerals mineral
-                            in
-                            div [ class "flex items-center w-full" ]
-                                [ img [ src stats.icon, class "w-4 mr-1" ] []
-                                , span [ class "text-xs inline-block w-full" ] [ text stats.name ]
-                                , span [ class "text-xs font-mono" ] [ text (floatToString amount) ]
-                                ]
-                        )
+                                    amount : Float
+                                    amount =
+                                        getByMineral model.minerals mineral
+                                in
+                                div [ class "flex items-center w-full" ]
+                                    [ img [ src stats.icon, class "w-4 mr-1" ] []
+                                    , span [ class "text-xs inline-block w-full" ] [ text stats.name ]
+                                    , span [ class "text-xs font-mono" ] [ text (floatToString amount) ]
+                                    ]
+                            )
+                    , [ button
+                            [ class "opacity-25 btn btn-xs btn-square btn-ghost"
+                            , classList [ ( "hidden", Config.env /= Config.Dev ) ]
+                            , onClick DebugGiveMinerals
+                            ]
+                            [ FeatherIcons.package
+                                |> FeatherIcons.withSize 20
+                                |> FeatherIcons.toHtml []
+                            ]
+                      ]
+                    ]
                 )
             ]
         ]
