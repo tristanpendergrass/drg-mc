@@ -148,7 +148,7 @@ v0_2Decoder : Random.Seed -> Decoder Model
 v0_2Decoder initialSeed =
     D.field "v0.2" <|
         (D.succeed
-            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses ->
+            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialCooldown dailySpecialOptions ->
                 let
                     model : Model
                     model =
@@ -163,9 +163,9 @@ v0_2Decoder initialSeed =
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
-                        , activeDailySpecials = []
-                        , dailySpecialCooldown = ButtonReady
-                        , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
+                        , activeDailySpecials = activeDailySpecials
+                        , dailySpecialCooldown = dailySpecialCooldown
+                        , dailySpecialOptions = dailySpecialOptions
                         , maybeInitDecodeErr = Nothing
                         , minerals = mineralRecord 0
                         , missionBiome = Nothing
@@ -182,6 +182,9 @@ v0_2Decoder initialSeed =
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
+            |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
+            |> required "dailySpecialCooldown" buttonStatusDecoder
+            |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
         )
 
 
@@ -271,7 +274,7 @@ decoder initialSeed =
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
-            |> required "activeDailySpecials" (D.list (D.map2 Tuple.pair dailySpecialDecoder Utils.Timer.timerDecoder))
+            |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
             |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
             |> required "dailySpecialCooldown" buttonStatusDecoder
             |> required "minerals" mineralRecordDecoder
