@@ -15,8 +15,8 @@ type Env
 
 env : Env
 env =
-    -- Prod
-    Dev
+    -- Dev
+    Prod
 
 
 isProd : Bool
@@ -35,30 +35,25 @@ levelUnlockStats =
         [ ( 2, [ { kind = UnlockHaz2, title = "Haz 2", category = UnlockActivity } ] )
         , ( 3, [ { kind = UnlockHaz3, title = "Haz 3", category = UnlockActivity } ] )
         , ( 4, [ { kind = UnlockTheme Retro, title = "Retro Theme", category = UnlockCosmetic } ] )
-        , ( 5
-          , [ { kind = UnlockHaz4, title = "Haz 4", category = UnlockActivity }
-            , { kind = UnlockDwarfXpButtons, title = "Dwarf Xp Buttons", category = UnlockFeature }
-            ]
-          )
-        , ( 6
-          , [ { kind = UnlockTheme Black, title = "Theme: Black", category = UnlockCosmetic }
-            , { kind = UnlockDwarfXpButton2, title = "Dwarf Xp Button 2", category = UnlockActivity }
-            ]
-          )
-        , ( 7, [ { kind = UnlockHaz5, title = "Haz 5", category = UnlockActivity } ] )
-        , ( 8, [ { kind = UnlockTheme Luxury, title = "Theme: Luxury", category = UnlockCosmetic } ] )
-        , ( 10, [ { kind = UnlockDwarfXpButton3, title = "Dwarf Xp Button 3", category = UnlockActivity } ] )
-        , ( 11, [ { kind = UnlockDwarfXpButton4, title = "Dwarf Xp Button 4", category = UnlockActivity } ] )
-        , ( 12, [ { kind = UnlockDwarfXpButton5, title = "Dwarf Xp Button 5", category = UnlockActivity } ] )
+        , ( 5, [ { kind = UnlockHaz4, title = "Haz 4", category = UnlockActivity } ] )
+        , ( 6, [ { kind = UnlockDwarfXpButtons, title = "Dwarf Xp Buttons", category = UnlockFeature } ] )
+        , ( 7, [ { kind = UnlockTheme Black, title = "Theme: Black", category = UnlockCosmetic } ] )
+        , ( 8, [ { kind = UnlockDwarfXpButton2, title = "Dwarf Xp Button 2", category = UnlockActivity } ] )
+        , ( 9, [ { kind = UnlockHaz5, title = "Haz 5", category = UnlockActivity } ] )
+        , ( 10, [ { kind = UnlockTheme Luxury, title = "Theme: Luxury", category = UnlockCosmetic } ] )
+        , ( 11, [ { kind = UnlockDwarfXpButton3, title = "Dwarf Xp Button 3", category = UnlockActivity } ] )
+        , ( 12, [ { kind = UnlockDwarfXpButton4, title = "Dwarf Xp Button 4", category = UnlockActivity } ] )
+        , ( 13, [ { kind = UnlockDwarfXpButton5, title = "Dwarf Xp Button 5", category = UnlockActivity } ] )
         , ( 15, [ { kind = UnlockAbyssBar, title = "Abyss Bar", category = UnlockFeature } ] )
         , ( 20
           , [ { kind = UnlockBiomeTier BiomeUnlockTier1, title = "Biomes", category = UnlockFeature }
             , { kind = UnlockProjects, title = "Projects", category = UnlockFeature }
             ]
           )
-        , ( 22, [ { kind = UnlockBiomeTier BiomeUnlockTier2, title = "Biomes Tier II", category = UnlockBiomes } ] )
-        , ( 24, [ { kind = UnlockBiomeTier BiomeUnlockTier3, title = "Biomes Tier III", category = UnlockBiomes } ] )
-        , ( 25, [ { kind = UnlockTheme Cyberpunk, title = "Theme: Cyberpunk", category = UnlockCosmetic } ] )
+        , ( 23, [ { kind = UnlockTheme Cyberpunk, title = "Theme: Cyberpunk", category = UnlockCosmetic } ] )
+        , ( 25, [ { kind = UnlockBiomeTier BiomeUnlockTier2, title = "Biomes Tier II", category = UnlockBiomes } ] )
+        , ( 28, [ { kind = UnlockBiomeTier BiomeUnlockTier3, title = "Biomes Tier III", category = UnlockBiomes } ] )
+        , ( 30, [ { kind = UnlockTheme Cyberpunk, title = "Theme: Cyberpunk", category = UnlockCosmetic } ] )
         ]
 
 
@@ -68,16 +63,19 @@ levelingSchedule level =
         GainMorkite (toFloat level * 5.0)
 
     else if level < 12 then
-        GainMorkite (toFloat level * 10.0)
+        GainMorkite (toFloat level * 8.0)
 
     else if level < 14 then
-        GainMorkite (toFloat level * 15.0)
+        GainMorkite (toFloat level * 10.0)
 
     else if level < 20 then
-        GainMorkite (toFloat level * 20.0)
+        GainMorkite (toFloat level * 15.0)
 
     else if level < 25 then
-        GainMorkite (toFloat level * 40.0)
+        GainMorkite (toFloat level * 25.0)
+
+    else if level < 30 then
+        GainMorkite (toFloat level * 35.0)
 
     else
         AtMaxLevel
@@ -92,10 +90,10 @@ dwarfLevelingSchedule level =
         Err ()
 
     else if level < 5 then
-        Ok (EarnDwarfXp 5)
+        Ok (EarnDwarfXp 3)
 
     else if level < 11 then
-        Ok (EarnDwarfXp 10)
+        Ok (EarnDwarfXp 7)
 
     else if level < 20 then
         Ok (EarnDwarfXp 15)

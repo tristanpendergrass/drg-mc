@@ -1595,20 +1595,24 @@ renderSettingsTab model =
                 [ button [ class "btn", onClick (OpenModal "my_modal_1") ] [ text "Reset game" ]
                 ]
             , div [ class "divider" ] []
-            , div [ proseClass ]
-                [ h2 [] [ text "Admin crimes" ]
-                , div [ class "flex items-center gap-1" ]
-                    [ label [ for "button-no-cd" ] [ text "No CD button" ]
-                    , input
-                        [ type_ "checkbox"
-                        , class "checkbox"
-                        , id "button-no-cd"
-                        , checked model.debugSettings.buttonCooldownInstant
-                        , onCheck DebugSetButtonCooldownInstant
+            , if Config.isDev then
+                div [ proseClass ]
+                    [ h2 [] [ text "Admin crimes" ]
+                    , div [ class "flex items-center gap-1" ]
+                        [ label [ for "button-no-cd" ] [ text "No CD button" ]
+                        , input
+                            [ type_ "checkbox"
+                            , class "checkbox"
+                            , id "button-no-cd"
+                            , checked model.debugSettings.buttonCooldownInstant
+                            , onCheck DebugSetButtonCooldownInstant
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
+
+              else
+                div [] []
             ]
         ]
 
