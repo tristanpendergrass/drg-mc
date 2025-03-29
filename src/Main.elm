@@ -1395,13 +1395,14 @@ renderBiomeDropdownContent model =
 
 renderActiveBiome : Biome -> Html Msg
 renderActiveBiome biome =
-    div [ class "w-72 h-12 rounded overflow-hidden relative shadow" ]
-        [ div
-            [ style "background-image" ("url(" ++ (biomeStats biome).image ++ ")")
-            , class "w-full h-full bg-cover bg-no-repeat bg-center"
-            ]
-            []
-        , div [ class "absolute top-0 left-0 bg-base-100 text-xs px-1 py-0.5 leading-none opacity-60" ] [ text (biomeStats biome).name ]
+    button
+        [ class "btn btn-md w-72 h-12 rounded overflow-hidden relative shadow"
+        , attribute "style" "anchor-name:--anchor-1"
+        , attribute "popovertarget" "popover-1"
+        , style "background-image" ("url(" ++ (biomeStats biome).image ++ ")")
+        , class "bg-cover bg-no-repeat bg-center"
+        ]
+        [ div [ class "absolute top-0 left-0 bg-base-100 text-xs px-1 py-0.5 leading-none opacity-60" ] [ text (biomeStats biome).name ]
         ]
 
 
@@ -1447,10 +1448,14 @@ renderMissionsTab model =
                                 renderActiveBiome biome
 
                             Nothing ->
-                                div [ class "h-12 flex items-center" ] [ text "Select a biome" ]
+                                button
+                                    [ class "btn btn-md"
+                                    , attribute "style" "anchor-name:--anchor-1"
+                                    , attribute "popovertarget" "popover-1"
+                                    ]
+                                    [ text "Select a biome" ]
                         , button
                             [ class "btn btn-md btn-square"
-                            , attribute "style" "anchor-name:--anchor-1"
                             , attribute "popovertarget" "popover-1"
                             ]
                             [ FeatherIcons.chevronDown
