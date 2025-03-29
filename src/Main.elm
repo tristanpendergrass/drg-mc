@@ -630,6 +630,9 @@ update msg model =
         HandleMissionBiomeSelection biome ->
             ( { model | missionBiome = Just biome }, closePopover "popover-1" )
 
+        HandleClearBiomeSelection ->
+            ( { model | missionBiome = Nothing }, closePopover "popover-1" )
+
         HandleProjectUpgrade project ->
             let
                 stats =
@@ -1368,7 +1371,13 @@ renderBiomeDropdownContent : Model -> Html Msg
 renderBiomeDropdownContent model =
     ul [ class "menu menu-lg w-80 rounded-box bg-base-100 shadow-sm" ]
         (List.concat
-            [ [ li [ class "menu-title" ] [ text "Select a biome" ] ]
+            [ [ li [ class "menu-title" ]
+                    [ div [ class "flex flex-col" ]
+                        [ text "Select a biome"
+                        , div [ class "text-xs" ] [ text "Biomes contain an abundant and scarce mineral" ]
+                        ]
+                    ]
+              ]
             , List.map
                 (\biome ->
                     let
@@ -1389,6 +1398,14 @@ renderBiomeDropdownContent model =
                         ]
                 )
                 (unlockedBiomes model.level)
+            , [ li [ class "mt-2" ]
+                    [ button
+                        [ class "btn btn-sm w-full"
+                        , onClick HandleClearBiomeSelection
+                        ]
+                        [ text "Clear selection" ]
+                    ]
+              ]
             ]
         )
 
