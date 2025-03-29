@@ -1369,12 +1369,17 @@ tabLayout =
 
 renderBiomeDropdownContent : Model -> Html Msg
 renderBiomeDropdownContent model =
-    ul [ class "menu menu-lg w-80 rounded-box bg-base-100 shadow-sm" ]
+    ul [ class "menu menu-lg w-124 rounded-box bg-base-100 shadow-sm" ]
         (List.concat
             [ [ li [ class "menu-title" ]
                     [ div [ class "flex flex-col" ]
                         [ text "Select a biome"
-                        , div [ class "text-xs" ] [ text "Biomes contain an abundant and scarce mineral" ]
+                        , div [ class "text-xs flex items-center gap-1" ]
+                            [ FeatherIcons.info
+                                |> FeatherIcons.withSize 16
+                                |> FeatherIcons.toHtml []
+                            , div [] [ text "Biomes contain an abundant and a scarce mineral" ]
+                            ]
                         ]
                     ]
               ]
@@ -1390,9 +1395,13 @@ renderBiomeDropdownContent model =
                             , text stats.name
                             , div [ class "flex items-center gap-1 ml-2" ]
                                 [ div [ class "flex items-center" ]
-                                    [ img [ src (mineralStats stats.abundantMineral).icon, class "w-4 h-4" ] [] ]
+                                    [ img [ src (mineralStats stats.abundantMineral).icon, class "w-4 h-4" ] []
+                                    , span [ class "text-xs ml-1" ] [ text (mineralStats stats.abundantMineral).name ]
+                                    ]
                                 , div [ class "flex items-center" ]
-                                    [ img [ src (mineralStats stats.scarceMineral).icon, class "w-4 h-4 opacity-50" ] [] ]
+                                    [ img [ src (mineralStats stats.scarceMineral).icon, class "w-4 h-4 opacity-50" ] []
+                                    , span [ class "text-xs ml-1 opacity-50" ] [ text (mineralStats stats.scarceMineral).name ]
+                                    ]
                                 ]
                             ]
                         ]
