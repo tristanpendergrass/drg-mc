@@ -51,7 +51,11 @@ levelUnlockStats =
         , ( 11, [ { kind = UnlockDwarfXpButton4, title = "Dwarf Xp Button 4", category = UnlockActivity } ] )
         , ( 12, [ { kind = UnlockDwarfXpButton5, title = "Dwarf Xp Button 5", category = UnlockActivity } ] )
         , ( 15, [ { kind = UnlockAbyssBar, title = "Abyss Bar", category = UnlockFeature } ] )
-        , ( 20, [ { kind = UnlockBiomeTier BiomeUnlockTier1, title = "Biomes", category = UnlockFeature } ] )
+        , ( 20
+          , [ { kind = UnlockBiomeTier BiomeUnlockTier1, title = "Biomes", category = UnlockFeature }
+            , { kind = UnlockProjects, title = "Projects", category = UnlockFeature }
+            ]
+          )
         , ( 22, [ { kind = UnlockBiomeTier BiomeUnlockTier2, title = "Biomes Tier II", category = UnlockBiomes } ] )
         , ( 24, [ { kind = UnlockBiomeTier BiomeUnlockTier3, title = "Biomes Tier III", category = UnlockBiomes } ] )
         , ( 25, [ { kind = UnlockTheme Cyberpunk, title = "Theme: Cyberpunk", category = UnlockCosmetic } ] )

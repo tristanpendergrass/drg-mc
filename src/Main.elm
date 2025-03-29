@@ -1757,7 +1757,7 @@ isTabUnlocked model tab =
             Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level
 
         ProjectsTab ->
-            True
+            Utils.Unlocks.kindIsUnlocked model.level UnlockProjects
 
         AbyssBarTab ->
             Utils.Unlocks.abyssBarFeatureUnlocked model.level

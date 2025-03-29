@@ -236,6 +236,7 @@ type Unlock
     | UnlockDwarfXpButton5
     | UnlockAbyssBar
     | UnlockBiomeTier BiomeUnlockTier
+    | UnlockProjects -- Projects tab unlocks at the same time as biomes
 
 
 
