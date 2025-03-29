@@ -37,6 +37,9 @@ expectLevel expectedLevel result =
             Expect.equal expectedLevel model.level
 
 
+{-| Version-specific tests like this one act on mock data from SaveTestsData.elm. That file contains examples of the data found in local storage on our users' machines.
+All future versions of the game that want to support loading saves from this version will need to pass this test.
+-}
 v0_1DecoderTest : Test
 v0_1DecoderTest =
     describe "v0.1 decoder"
@@ -61,7 +64,32 @@ v0_1DecoderTest =
         ]
 
 
-{-| Tests the encoder and decoder of current version by encoding then decoding.
+v_02DecoderTest : Test
+v_02DecoderTest =
+    describe "v0.2 decoder"
+        [ describe "example2"
+            [ test "decodes ok" <|
+                \() ->
+                    let
+                        result : Result D.Error Model
+                        result =
+                            D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0)) SaveTestsData.v_02Example2
+                    in
+                    Expect.ok result
+            , test "decodes the right player level" <|
+                \() ->
+                    let
+                        result : Result D.Error Model
+                        result =
+                            D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0)) SaveTestsData.v_02Example2
+                    in
+                    expectLevel 1 result
+            ]
+        ]
+
+
+{-| The currentVersionTest does not use test mock data, but instead creates a json string then parses it, all using the current version encoder and decoder.
+There's usually a benefit to testing all the fields in the model.
 -}
 currentVersionTest : Test
 currentVersionTest =

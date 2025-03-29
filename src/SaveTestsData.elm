@@ -18,9 +18,6 @@ v1Example2 =
         """
 
 
-v2Examples : List String
-v2Examples =
-    [ """
-{"version":"v2","currentTime":1733356361259,"currentTab":"Missions","theme":"default","level":6,"credits":3.017500000000003,"resources":{"gold":0},"missionStatuses":{"haz1":null,"haz2":{"current":{"current":0.00934333333333334,"hasEverTicked":true}},"haz3":null,"haz4":null,"haz5":null},"dwarfXpButtonStatuses":{"dwarfXpButton1":null,"dwarfXpButton2":{"current":0.014593333333333323,"hasEverTicked":true},"dwarfXpButton3":null,"dwarfXpButton4":null,"dwarfXpButton5":null},"dwarfXp":{"scout":2,"gunner":0,"engineer":0,"driller":0}}
-"""
-    ]
+v_02Example2 : String
+v_02Example2 =
+    """{"v0.2":{"currentTime":1743286527004,"currentTab":"Missions","theme":null,"level":1,"credits":1.25,"resources":{"gold":0},"missionStatuses":{"haz1":{"current":0.5144666666666452,"hasEverTicked":true},"haz2":null,"haz3":null,"haz4":null,"haz5":null},"dwarfXpButtonStatuses":{"dwarfXpButton1":null,"dwarfXpButton2":null,"dwarfXpButton3":null,"dwarfXpButton4":null,"dwarfXpButton5":null},"dwarfXp":{"scout":0,"gunner":0,"engineer":0,"driller":0}}}"""
