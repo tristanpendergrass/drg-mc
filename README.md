@@ -21,6 +21,12 @@ There's some steps to follow for the first deploy to modify from the elm-empty-p
 * Log into Github on an account that can edit settings of your project
 * Your repo -> Settings -> Pages -> Build and Deployment -> Branch -> master branch, /docs folder
 
+## Deployment
+- [ ] Check Config environment switched to Prod
+- [ ] `npm test`
+- [ ] `npm run build-mac`
+- [ ] Commit files and push to github
+
 # Testing
 
 ```
