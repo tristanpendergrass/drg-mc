@@ -148,7 +148,7 @@ v0_2Decoder : Random.Seed -> Decoder Model
 v0_2Decoder initialSeed =
     D.field "v0.2" <|
         (D.succeed
-            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialCooldown dailySpecialOptions ->
+            (\currentTime currentTab theme level credits missionStatuses dwarfXp dwarfXpButtonStatuses ->
                 let
                     model : Model
                     model =
@@ -163,9 +163,9 @@ v0_2Decoder initialSeed =
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
-                        , activeDailySpecials = activeDailySpecials
-                        , dailySpecialCooldown = dailySpecialCooldown
-                        , dailySpecialOptions = dailySpecialOptions
+                        , activeDailySpecials = []
+                        , dailySpecialCooldown = ButtonReady
+                        , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                         , maybeInitDecodeErr = Nothing
                         , minerals = mineralRecord 0
                         , missionBiome = Nothing
@@ -182,9 +182,6 @@ v0_2Decoder initialSeed =
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
-            |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
-            |> required "dailySpecialCooldown" buttonStatusDecoder
-            |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
         )
 
 

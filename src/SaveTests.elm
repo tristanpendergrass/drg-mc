@@ -88,6 +88,18 @@ v_02DecoderTest =
         ]
 
 
+expectEqualToModel : Model -> Result D.Error Model -> Expectation
+expectEqualToModel expected result =
+    let
+        expected2 =
+            { expected | seed = Random.initialSeed 0 }
+
+        result2 =
+            Result.map (\r -> { r | seed = Random.initialSeed 0 }) result
+    in
+    Expect.equal (Ok expected2) result2
+
+
 {-| The currentVersionTest does not use test mock data, but instead creates a json string then parses it, all using the current version encoder and decoder.
 There's usually a benefit to testing all the fields in the model.
 -}
@@ -117,7 +129,7 @@ currentVersionTest =
                     Save.encoder model
                         |> E.encode 0
                         |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> Expect.equal (Ok model)
+                        |> expectEqualToModel model
             , test "encodes and decodes to the same model after changing the dwarf xp" <|
                 \() ->
                     let
@@ -129,7 +141,7 @@ currentVersionTest =
                     Save.encoder model
                         |> E.encode 0
                         |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> Expect.equal (Ok model)
+                        |> expectEqualToModel model
             , test "encodes and decodes to the same model after activating a dwarf xp boost" <|
                 \() ->
                     let
@@ -141,7 +153,7 @@ currentVersionTest =
                     Save.encoder model
                         |> E.encode 0
                         |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> Expect.equal (Ok model)
+                        |> expectEqualToModel model
             , test "encodes and decodes to the same model after changing the theme" <|
                 \() ->
                     let
@@ -153,6 +165,6 @@ currentVersionTest =
                     Save.encoder model
                         |> E.encode 0
                         |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> Expect.equal (Ok model)
+                        |> expectEqualToModel model
             ]
         ]
