@@ -151,4 +151,4 @@ timerV0_2Decoder =
 
 timerDecoder : D.Decoder Timer
 timerDecoder =
-    D.oneOf [ timerV0_1Decoder, timerV0_2Decoder ]
+    D.oneOf [ timerV0_2Decoder, timerV0_1Decoder ]

@@ -163,4 +163,52 @@ currentVersionTest =
                     |> E.encode 0
                     |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
                     |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing current tab" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | currentTab = ProjectsTab })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing morkite amount" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | morkite = 1000.0 })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing active daily specials" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ] })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing mission biome" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | missionBiome = Just FungusBogs })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
         ]
