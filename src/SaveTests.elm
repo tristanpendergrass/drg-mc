@@ -211,4 +211,74 @@ currentVersionTest =
                     |> E.encode 0
                     |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
                     |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing mission statuses" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m ->
+                                    { m
+                                        | missionStatuses =
+                                            { haz1 = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.3))
+                                            , haz2 = ButtonReady
+                                            , haz3 = ButtonReady
+                                            , haz4 = ButtonReady
+                                            , haz5 = ButtonReady
+                                            }
+                                    }
+                               )
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing daily special cooldown" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | dailySpecialCooldown = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.7)) })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing daily special options" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | dailySpecialOptions = [ DarkMorkite, RockyMountain, PotsOGold ] })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing minerals" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | minerals = mineralRecord 500.0 })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing project levels" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | projectLevels = projectRecord 3 })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
         ]
