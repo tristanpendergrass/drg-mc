@@ -67,24 +67,22 @@ v0_1DecoderTest =
 v_02DecoderTest : Test
 v_02DecoderTest =
     describe "v0.2 decoder"
-        [ describe "example2"
-            [ test "decodes ok" <|
-                \() ->
-                    let
-                        result : Result D.Error Model
-                        result =
-                            D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0)) SaveTestsData.v_02Example2
-                    in
-                    Expect.ok result
-            , test "decodes the right player level" <|
-                \() ->
-                    let
-                        result : Result D.Error Model
-                        result =
-                            D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0)) SaveTestsData.v_02Example2
-                    in
-                    expectLevel 1 result
-            ]
+        [ test "decodes ok" <|
+            \() ->
+                let
+                    result : Result D.Error Model
+                    result =
+                        D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0)) SaveTestsData.v_02Example1
+                in
+                Expect.ok result
+        , test "decodes the right player level" <|
+            \() ->
+                let
+                    result : Result D.Error Model
+                    result =
+                        D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0)) SaveTestsData.v_02Example1
+                in
+                expectLevel 1 result
         ]
 
 
@@ -106,65 +104,63 @@ There's usually a benefit to testing all the fields in the model.
 currentVersionTest : Test
 currentVersionTest =
     describe "current version"
-        [ describe "example1"
-            [ test "encodes and decodes ok" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                    in
-                    Save.encoder model
-                        |> E.encode 0
-                        |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> Expect.ok
-            , test "encodes and decodes to the same model" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                                |> (\m -> { m | level = 6 })
-                    in
-                    Save.encoder model
-                        |> E.encode 0
-                        |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> expectEqualToModel model
-            , test "encodes and decodes to the same model after changing the dwarf xp" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                                |> (\m -> { m | level = 6, dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 2) })
-                    in
-                    Save.encoder model
-                        |> E.encode 0
-                        |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> expectEqualToModel model
-            , test "encodes and decodes to the same model after activating a dwarf xp boost" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                                |> (\m -> { m | dwarfXpButtonStatuses = dwarfXpButtonRecord (ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.5))) })
-                    in
-                    Save.encoder model
-                        |> E.encode 0
-                        |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> expectEqualToModel model
-            , test "encodes and decodes to the same model after changing the theme" <|
-                \() ->
-                    let
-                        model : Model
-                        model =
-                            defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                                |> (\m -> { m | theme = Just DefaultDark })
-                    in
-                    Save.encoder model
-                        |> E.encode 0
-                        |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                        |> expectEqualToModel model
-            ]
+        [ test "encodes and decodes ok" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> Expect.ok
+        , test "encodes and decodes to the same model" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | level = 6 })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing the dwarf xp" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | level = 6, dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 2) })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after activating a dwarf xp boost" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | dwarfXpButtonStatuses = dwarfXpButtonRecord (ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.5))) })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
+        , test "encodes and decodes to the same model after changing the theme" <|
+            \() ->
+                let
+                    model : Model
+                    model =
+                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                            |> (\m -> { m | theme = Just DefaultDark })
+                in
+                Save.encoder model
+                    |> E.encode 0
+                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                    |> expectEqualToModel model
         ]
