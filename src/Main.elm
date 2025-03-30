@@ -2153,12 +2153,16 @@ view model =
                         ]
                   ]
                 , [ div [ class "fixed bottom-0 left-0 ml-6 mb-6" ] [ Theme.renderThemeDropdown model model.theme ] ]
-                , case model.maybeInitDecodeErr of
-                    Just err ->
-                        [ div [ class "fixed bottom-0 left-0 bg-error text-error-content rounded-lg p-4" ] [ text (D.errorToString err) ] ]
+                , if Config.isDev then
+                    case model.maybeInitDecodeErr of
+                        Just err ->
+                            [ div [ class "fixed bottom-0 left-0 bg-error text-error-content rounded-lg p-4" ] [ text (D.errorToString err) ] ]
 
-                    Nothing ->
-                        []
+                        Nothing ->
+                            []
+
+                  else
+                    []
                 ]
             )
         , Html.node "dialog"
