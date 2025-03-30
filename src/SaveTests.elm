@@ -98,187 +98,62 @@ expectEqualToModel expected result =
     Expect.equal (Ok expected2) result2
 
 
+testEncodeDecode : String -> (Model -> Model) -> Test
+testEncodeDecode description modifyModel =
+    test description <|
+        \() ->
+            let
+                model : Model
+                model =
+                    defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
+                        |> modifyModel
+            in
+            Save.encoder model
+                |> E.encode 0
+                |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
+                |> expectEqualToModel model
+
+
 {-| The currentVersionTest does not use test mock data, but instead creates a json string then parses it, all using the current version encoder and decoder.
 There's usually a benefit to testing all the fields in the model.
 -}
 currentVersionTest : Test
 currentVersionTest =
     describe "current version"
-        [ test "encodes and decodes ok" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> Expect.ok
-        , test "encodes and decodes to the same model" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | level = 6 })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing the dwarf xp" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | level = 6, dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 2) })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after activating a dwarf xp boost" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | dwarfXpButtonStatuses = dwarfXpButtonRecord (ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.5))) })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing the theme" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | theme = Just DefaultDark })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing current tab" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | currentTab = ProjectsTab })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing morkite amount" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | morkite = 1000.0 })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing active daily specials" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ] })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing mission biome" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | missionBiome = Just FungusBogs })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing mission statuses" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m ->
-                                    { m
-                                        | missionStatuses =
-                                            { haz1 = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.3))
-                                            , haz2 = ButtonReady
-                                            , haz3 = ButtonReady
-                                            , haz4 = ButtonReady
-                                            , haz5 = ButtonReady
-                                            }
-                                    }
-                               )
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing daily special cooldown" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | dailySpecialCooldown = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.7)) })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing daily special options" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | dailySpecialOptions = [ DarkMorkite, RockyMountain, PotsOGold ] })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing minerals" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | minerals = mineralRecord 500.0 })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
-        , test "encodes and decodes to the same model after changing project levels" <|
-            \() ->
-                let
-                    model : Model
-                    model =
-                        defaultModel (Random.initialSeed 0) (Time.millisToPosix 0)
-                            |> (\m -> { m | projectLevels = projectRecord 3 })
-                in
-                Save.encoder model
-                    |> E.encode 0
-                    |> D.decodeString (Save.decodeAnyVersion (Random.initialSeed 0))
-                    |> expectEqualToModel model
+        [ testEncodeDecode "encodes and decodes to the same model after changing the level"
+            (\m -> { m | level = 6 })
+        , testEncodeDecode "encodes and decodes to the same model after changing the dwarf xp"
+            (\m -> { m | dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 2) })
+        , testEncodeDecode "encodes and decodes to the same model after activating a dwarf xp boost"
+            (\m -> { m | dwarfXpButtonStatuses = dwarfXpButtonRecord (ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.5))) })
+        , testEncodeDecode "encodes and decodes to the same model after changing the theme"
+            (\m -> { m | theme = Just DefaultDark })
+        , testEncodeDecode "encodes and decodes to the same model after changing current tab"
+            (\m -> { m | currentTab = ProjectsTab })
+        , testEncodeDecode "encodes and decodes to the same model after changing morkite amount"
+            (\m -> { m | morkite = 1000.0 })
+        , testEncodeDecode "encodes and decodes to the same model after changing active daily specials"
+            (\m -> { m | activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ] })
+        , testEncodeDecode "encodes and decodes to the same model after changing mission biome"
+            (\m -> { m | missionBiome = Just FungusBogs })
+        , testEncodeDecode "encodes and decodes to the same model after changing mission statuses"
+            (\m ->
+                { m
+                    | missionStatuses =
+                        { haz1 = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.3))
+                        , haz2 = ButtonReady
+                        , haz3 = ButtonReady
+                        , haz4 = ButtonReady
+                        , haz5 = ButtonReady
+                        }
+                }
+            )
+        , testEncodeDecode "encodes and decodes to the same model after changing daily special cooldown"
+            (\m -> { m | dailySpecialCooldown = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float 0.7)) })
+        , testEncodeDecode "encodes and decodes to the same model after changing daily special options"
+            (\m -> { m | dailySpecialOptions = [ DarkMorkite, RockyMountain, PotsOGold ] })
+        , testEncodeDecode "encodes and decodes to the same model after changing minerals"
+            (\m -> { m | minerals = mineralRecord 500.0 })
+        , testEncodeDecode "encodes and decodes to the same model after changing project levels"
+            (\m -> { m | projectLevels = projectRecord 3 })
         ]
