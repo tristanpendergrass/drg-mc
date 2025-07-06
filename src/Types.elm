@@ -73,6 +73,7 @@ type Msg
     | HandleClearBiomeSelection
     | HandleProjectUpgrade Project
     | OpenModal String
+    | HandleKeyDown String
 
 
 

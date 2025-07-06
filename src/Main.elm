@@ -12,7 +12,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Events.Extra.Pointer as Pointer
-import Json.Decode as D
+import Json.Decode as Decode
 import Json.Encode as E
 import List.Extra
 import Quantity exposing (Quantity(..))
@@ -89,7 +89,10 @@ init { initialSeed, now, initialGame } =
         randomSeed =
             Random.initialSeed initialSeed
     in
-    case D.decodeValue (Save.decodeAnyVersion randomSeed) initialGame of
+    case Decode.decodeValue (Save.decodeAnyVersion randomSeed) initialGame of
+        Ok game ->
+            ( game, Cmd.none )
+
         Err err ->
             let
                 model1 : Model
@@ -97,9 +100,6 @@ init { initialSeed, now, initialGame } =
                     defaultModel randomSeed (Time.millisToPosix now)
             in
             ( { model1 | maybeInitDecodeErr = Just err }, Cmd.none )
-
-        Ok model ->
-            ( model, Cmd.none )
 
 
 
@@ -252,12 +252,46 @@ setButtonCooldown model =
         ButtonOnCooldown Utils.Timer.create
 
 
+getProjectBuffs : Model -> List Buff
+getProjectBuffs model =
+    allProjects
+        |> List.filterMap
+            (\project ->
+                let
+                    stats =
+                        projectStats project
+
+                    level =
+                        getByProject model.projectLevels project
+                in
+                if level > 0 then
+                    let
+                        baseBuff : Buff
+                        baseBuff =
+                            stats.buff
+
+                        adjustedBuff : Buff
+                        adjustedBuff =
+                            { baseBuff | mult = level }
+                    in
+                    Just adjustedBuff
+
+                else
+                    Nothing
+            )
+
+
 getBuffStrengthMultiplierFromProjects : Model -> Float
 getBuffStrengthMultiplierFromProjects model =
     let
+        -- Only get project mods to avoid circular dependency
+        projectMods : List Mod
+        projectMods =
+            List.map getModFromBuff (getProjectBuffs model)
+
         buffStrengthBonus : Percent
         buffStrengthBonus =
-            getDailySpecialBuffStrength (getAllMods model)
+            getDailySpecialBuffStrength projectMods
 
         buffStrengthMultiplier : Float
         buffStrengthMultiplier =
@@ -315,31 +349,7 @@ getAllBuffs model =
 
         projectMods : List Buff
         projectMods =
-            allProjects
-                |> List.filterMap
-                    (\project ->
-                        let
-                            stats =
-                                projectStats project
-
-                            level =
-                                getByProject model.projectLevels project
-                        in
-                        if level > 0 then
-                            let
-                                baseBuff : Buff
-                                baseBuff =
-                                    stats.buff
-
-                                adjustedBuff : Buff
-                                adjustedBuff =
-                                    { baseBuff | mult = level }
-                            in
-                            Just adjustedBuff
-
-                        else
-                            Nothing
-                    )
+            getProjectBuffs model
     in
     List.concat [ squadMods, dailySpecialMods, projectMods ]
 
@@ -684,6 +694,24 @@ update msg model =
             in
             ( updatedModel, Cmd.none )
 
+        HandleKeyDown key ->
+            if Config.isDev then
+                case key of
+                    "ArrowUp" ->
+                        ( { model | level = model.level + 1 }, Cmd.none )
+
+                    "ArrowDown" ->
+                        ( { model | level = dwarfMaxLevel }, Cmd.none )
+
+                    "ArrowRight" ->
+                        update (DebugAdvanceTime (Duration.hours 1)) model
+
+                    _ ->
+                        ( model, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
         DebugGiveMinerals ->
             ( { model | minerals = mineralRecord 100 }, Cmd.none )
 
@@ -768,6 +796,7 @@ subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Browser.Events.onAnimationFrame HandleAnimationFrame
+        , Browser.Events.onKeyDown (Decode.field "key" Decode.string |> Decode.map HandleKeyDown)
         ]
 
 
@@ -911,7 +940,7 @@ renderMissionRow model mission =
         buttonText =
             case missionStatus of
                 ButtonReady ->
-                    "Unload Cargo"
+                    "Ready"
 
                 ButtonOnCooldown _ ->
                     "On cooldown"
@@ -2156,7 +2185,7 @@ view model =
                 , if Config.isDev then
                     case model.maybeInitDecodeErr of
                         Just err ->
-                            [ div [ class "fixed bottom-0 left-0 bg-error text-error-content rounded-lg p-4" ] [ text (D.errorToString err) ] ]
+                            [ div [ class "fixed bottom-0 left-0 bg-error text-error-content rounded-lg p-4" ] [ text (Decode.errorToString err) ] ]
 
                         Nothing ->
                             []
