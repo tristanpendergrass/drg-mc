@@ -1390,8 +1390,8 @@ modToString mod =
 
 tabLayout =
     { container = class "flex flex-col items-center grow overflow-scroll"
-    , headerWrapper = class "px-8 py-4 w-full flex items-center justify-between"
-    , bonusesArea = class "w-full flex items-center gap-4 px-8 h-14"
+    , headerWrapper = class "px-8 py-4 w-full flex items-center justify-center"
+    , bonusesArea = class "w-full flex items-center justify-center gap-4 px-8 h-14"
     , contentWrapper = class "pt-0 w-full flex justify-center px-8"
     }
 
@@ -1491,31 +1491,29 @@ renderMissionsTab model =
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
-            [ div [ class "w-full" ]
-                [ div [ class "w-full flex items-center justify-between" ]
-                    [ div [ proseClass ] [ h1 [] [ text "Missions" ] ]
-                    , div
-                        [ class "flex items-center gap-2"
-                        , classList [ ( "hidden", List.length (unlockedBiomes model.level) <= 1 ) ]
-                        ]
-                        [ case model.missionBiome of
-                            Just biome ->
-                                renderActiveBiome biome
+            [ div [ class "relative w-full" ]
+                [ div [ proseClass, class "text-center mx-auto" ] [ h1 [] [ text "Missions" ] ]
+                , div
+                    [ class "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2"
+                    , classList [ ( "hidden", List.length (unlockedBiomes model.level) <= 1 ) ]
+                    ]
+                    [ case model.missionBiome of
+                        Just biome ->
+                            renderActiveBiome biome
 
-                            Nothing ->
-                                button
-                                    [ class "btn btn-md"
-                                    , attribute "style" "anchor-name:--anchor-1"
-                                    , attribute "popovertarget" "popover-1"
-                                    ]
-                                    [ text "Select a biome" ]
-                        , button
-                            [ class "btn btn-md btn-square"
-                            , attribute "popovertarget" "popover-1"
-                            ]
-                            [ FeatherIcons.chevronDown
-                                |> FeatherIcons.toHtml []
-                            ]
+                        Nothing ->
+                            button
+                                [ class "btn btn-md"
+                                , attribute "style" "anchor-name:--anchor-1"
+                                , attribute "popovertarget" "popover-1"
+                                ]
+                                [ text "Select a biome" ]
+                    , button
+                        [ class "btn btn-md btn-square"
+                        , attribute "popovertarget" "popover-1"
+                        ]
+                        [ FeatherIcons.chevronDown
+                            |> FeatherIcons.toHtml []
                         ]
                     ]
                 , div [ class "dropdown", attribute "popover" "", id "popover-1", attribute "style" "position-anchor:--anchor-1" ]
