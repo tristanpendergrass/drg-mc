@@ -117,6 +117,7 @@ v0_1Decoder =
                     , minerals = mineralRecord 0
                     , missionBiome = Nothing
                     , projectLevels = projectRecord 0
+                    , dragState = Nothing
                     }
             in
             model
@@ -170,6 +171,7 @@ v0_2Decoder initialSeed =
                         , minerals = mineralRecord 0
                         , missionBiome = Nothing
                         , projectLevels = projectRecord 0
+                        , dragState = Nothing
                         }
                 in
                 model
@@ -259,6 +261,7 @@ decoder initialSeed =
                         , minerals = minerals
                         , missionBiome = missionBiome
                         , projectLevels = projectLevels
+                        , dragState = Nothing
                         }
                 in
                 model

@@ -5,7 +5,6 @@ import Duration exposing (Duration)
 import DwarfXp exposing (DwarfXp)
 import FeatherIcons
 import Html exposing (a)
-import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as D
 import Quantity exposing (Quantity(..))
 import Random
@@ -51,13 +50,22 @@ type alias Model =
     , minerals : MineralRecord Float
     , missionBiome : Maybe Biome
     , projectLevels : ProjectRecord Int
+    , dragState : Maybe DragTarget
     }
+
+
+type DragTarget
+    = DragMission Mission
+    | DragDwarfXpButton DwarfXpButton
 
 
 type Msg
     = NoOp
     | HandleAnimationFrame Time.Posix
-    | HandleMissionClick Mission Pointer.Event
+    | HandlePointerDown DragTarget
+    | HandlePointerOver DragTarget
+    | HandlePointerLeave
+    | HandleGlobalPointerUp
     | HandleSetThemeClick Theme
     | DebugSetGameSpeed Float
     | DebugAdvanceTime Duration
@@ -67,7 +75,6 @@ type Msg
     | DebugGiveMinerals
     | ResetGame
     | HandleTabClick Tab
-    | HandleDwarfXpButtonClick DwarfXpButton Pointer.Event
     | HandleDailySpecialClick DailySpecial
     | HandleMissionBiomeSelection Biome
     | HandleClearBiomeSelection

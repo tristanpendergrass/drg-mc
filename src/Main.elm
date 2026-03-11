@@ -79,6 +79,7 @@ defaultModel seed1 now =
     , minerals = mineralRecord 0
     , missionBiome = Nothing
     , projectLevels = projectRecord 0
+    , dragState = Nothing
     }
 
 
@@ -509,74 +510,48 @@ update msg model =
                 )
             )
 
-        HandleMissionClick mission event ->
-            let
-                stats : MissionStats
-                stats =
-                    Utils.Record.getByMission mission Config.missionStats
+        HandlePointerDown target ->
+            ( { model | dragState = Just target }, Cmd.none )
 
-                ( mineralYield, seed2 ) =
-                    case model.missionBiome of
-                        Just biome ->
-                            Random.step (mineralYieldGenerator mission biome) model.seed
+        HandlePointerOver target ->
+            case model.dragState of
+                Just dragTarget ->
+                    if dragTarget /= target then
+                        let
+                            ( newModel, cmd ) =
+                                applyDragTargetAction target model
+                        in
+                        ( { newModel | dragState = Just target }, cmd )
 
-                        Nothing ->
-                            ( Dict.empty, model.seed )
+                    else
+                        noOp
 
-                yield : MissionYield
-                yield =
-                    { morkite = stats.morkite, minerals = mineralYield }
+                Nothing ->
+                    noOp
 
-                modifiedYield : MissionYield
-                modifiedYield =
-                    modifyYield model yield
+        HandlePointerLeave ->
+            case model.dragState of
+                Just target ->
+                    let
+                        ( newModel, cmd ) =
+                            applyDragTargetAction target model
+                    in
+                    ( newModel, cmd )
 
-                newMissionStatuses : MissionRecord ButtonStatus
-                newMissionStatuses =
-                    Utils.Record.setByMission mission (setButtonCooldown model) model.missionStatuses
+                Nothing ->
+                    noOp
 
-                addMorkiteResult : Model
-                addMorkiteResult =
-                    addMorkite modifiedYield.morkite model
-            in
-            ( { model
-                | seed = seed2
-                , missionStatuses = newMissionStatuses
-                , morkite = addMorkiteResult.morkite
-                , level = addMorkiteResult.level
-                , minerals = addMineralDictToRecord model.minerals modifiedYield.minerals
-              }
-            , Cmd.none
-            )
+        HandleGlobalPointerUp ->
+            case model.dragState of
+                Just target ->
+                    let
+                        ( newModel, cmd ) =
+                            applyDragTargetAction target model
+                    in
+                    ( { newModel | dragState = Nothing }, cmd )
 
-        HandleDwarfXpButtonClick dwarfXpButton event ->
-            let
-                stats : DwarfXpButtonStats
-                stats =
-                    dwarfXpButtonStats dwarfXpButton
-
-                newStatuses : DwarfXpButtonRecord ButtonStatus
-                newStatuses =
-                    setByDwarfXpButton (setButtonCooldown model) dwarfXpButton model.dwarfXpButtonStatuses
-
-                ( ( dwarf, newDwarfXp ), newSeed ) =
-                    Random.step (dwarfXpGenerator stats.xp model.dwarfXp (getAllMods model)) model.seed
-
-                currentLevel : Int
-                currentLevel =
-                    dwarfLevel (Utils.Record.getByDwarf dwarf model.dwarfXp)
-
-                newLevel : Int
-                newLevel =
-                    dwarfLevel (Utils.Record.getByDwarf dwarf newDwarfXp)
-            in
-            ( { model
-                | dwarfXpButtonStatuses = newStatuses
-                , dwarfXp = newDwarfXp
-                , seed = newSeed
-              }
-            , Cmd.none
-            )
+                Nothing ->
+                    noOp
 
         HandleSetThemeClick theme ->
             ( { model | theme = Just theme }, Cmd.none )
@@ -716,6 +691,91 @@ update msg model =
             ( { model | minerals = mineralRecord 100 }, Cmd.none )
 
 
+applyMissionClick : Mission -> Model -> ( Model, Cmd Msg )
+applyMissionClick mission model =
+    let
+        stats : MissionStats
+        stats =
+            Utils.Record.getByMission mission Config.missionStats
+
+        ( mineralYield, seed2 ) =
+            case model.missionBiome of
+                Just biome ->
+                    Random.step (mineralYieldGenerator mission biome) model.seed
+
+                Nothing ->
+                    ( Dict.empty, model.seed )
+
+        yield : MissionYield
+        yield =
+            { morkite = stats.morkite, minerals = mineralYield }
+
+        modifiedYield : MissionYield
+        modifiedYield =
+            modifyYield model yield
+
+        newMissionStatuses : MissionRecord ButtonStatus
+        newMissionStatuses =
+            Utils.Record.setByMission mission (setButtonCooldown model) model.missionStatuses
+
+        addMorkiteResult : Model
+        addMorkiteResult =
+            addMorkite modifiedYield.morkite model
+    in
+    ( { model
+        | seed = seed2
+        , missionStatuses = newMissionStatuses
+        , morkite = addMorkiteResult.morkite
+        , level = addMorkiteResult.level
+        , minerals = addMineralDictToRecord model.minerals modifiedYield.minerals
+      }
+    , Cmd.none
+    )
+
+
+applyDwarfXpButtonClick : DwarfXpButton -> Model -> ( Model, Cmd Msg )
+applyDwarfXpButtonClick dwarfXpButton model =
+    let
+        stats : DwarfXpButtonStats
+        stats =
+            dwarfXpButtonStats dwarfXpButton
+
+        newStatuses : DwarfXpButtonRecord ButtonStatus
+        newStatuses =
+            setByDwarfXpButton (setButtonCooldown model) dwarfXpButton model.dwarfXpButtonStatuses
+
+        ( ( dwarf, newDwarfXp ), newSeed ) =
+            Random.step (dwarfXpGenerator stats.xp model.dwarfXp (getAllMods model)) model.seed
+    in
+    ( { model
+        | dwarfXpButtonStatuses = newStatuses
+        , dwarfXp = newDwarfXp
+        , seed = newSeed
+      }
+    , Cmd.none
+    )
+
+
+applyDragTargetAction : DragTarget -> Model -> ( Model, Cmd Msg )
+applyDragTargetAction target model =
+    case target of
+        DragMission mission ->
+            case Utils.Record.getByMission mission model.missionStatuses of
+                ButtonReady ->
+                    applyMissionClick mission model
+
+                ButtonOnCooldown _ ->
+                    ( model, Cmd.none )
+
+        DragDwarfXpButton btn ->
+            case getByDwarfXpButton model.dwarfXpButtonStatuses btn of
+                ButtonReady ->
+                    applyDwarfXpButtonClick btn model
+
+                ButtonOnCooldown _ ->
+                    ( model, Cmd.none )
+
+
 modifyYield : Model -> MissionYield -> MissionYield
 modifyYield model yield =
     let
@@ -797,6 +857,7 @@ subscriptions _ =
     Sub.batch
         [ Browser.Events.onAnimationFrame HandleAnimationFrame
         , Browser.Events.onKeyDown (Decode.field "key" Decode.string |> Decode.map HandleKeyDown)
+        , Browser.Events.onMouseUp (Decode.succeed HandleGlobalPointerUp)
         ]
 
 
@@ -1075,7 +1136,7 @@ renderMissionRow model mission =
                 ]
             ]
         , td [ class "overflow-hidden relative flex justify-end items-center h-[70px]" ]
-            [ renderButton model missionStatus adjustedDuration (HandleMissionClick mission) ButtonPrimary [ text buttonText ] ]
+            [ renderButton model missionStatus adjustedDuration (DragMission mission) ButtonPrimary [ text buttonText ] ]
         ]
 
 
@@ -1084,8 +1145,8 @@ type ButtonVariant
     | ButtonSecondary
 
 
-renderButton : Model -> ButtonStatus -> Duration -> (Pointer.Event -> Msg) -> ButtonVariant -> List (Html Msg) -> Html Msg
-renderButton model buttonStatus buttonDuration msg variant children =
+renderButton : Model -> ButtonStatus -> Duration -> DragTarget -> ButtonVariant -> List (Html Msg) -> Html Msg
+renderButton model buttonStatus buttonDuration dragTarget variant children =
     case buttonStatus of
         ButtonReady ->
             let
@@ -1103,7 +1164,10 @@ renderButton model buttonStatus buttonDuration msg variant children =
                     [ button
                         [ class "btn"
                         , buttonVariantClass
-                        , Pointer.onUp msg
+                        , preventDefaultOn "pointerdown" (Decode.succeed ( HandlePointerDown dragTarget, True ))
+                        , Pointer.onOver (\_ -> HandlePointerOver dragTarget)
+                        , Pointer.onOut (\_ -> HandlePointerLeave)
+                        , Pointer.onUp (\_ -> HandleGlobalPointerUp)
                         ]
                         children
                     ]
@@ -1598,7 +1662,7 @@ renderCommendationsTab model =
                                 model
                                 (getByDwarfXpButton model.dwarfXpButtonStatuses dwarfXpButton)
                                 stats.duration
-                                (HandleDwarfXpButtonClick dwarfXpButton)
+                                (DragDwarfXpButton dwarfXpButton)
                                 ButtonSecondary
                                 [ text xpDisplay, text " to random dwarf" ]
                         )

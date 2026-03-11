@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run build-mac:*)",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --oneline -20)",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -40)",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline --diff-filter=M -S \"animation\" -- '*.elm' '*.css')",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log:*)",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"ripple\")",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"pulse\" -- '*.elm' '*.css')",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"bounce\")",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"click.*anim\")",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"particle\")",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"confetti\")",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"sparkle\")",
+      "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"float\" -- '*.elm' '*.css')",
+      "Bash(git -C /Users/tristanp/dev/drg-mc show 560b0da --stat)",
+      "Bash(git -C /Users/tristanp/dev/drg-mc show:*)",
+      "Bash(elm make:*)"
+    ]
+  }
+}
