@@ -17,7 +17,9 @@
       "Bash(git -C /Users/tristanp/dev/drg-mc log --all --oneline -S \"float\" -- '*.elm' '*.css')",
       "Bash(git -C /Users/tristanp/dev/drg-mc show 560b0da --stat)",
       "Bash(git -C /Users/tristanp/dev/drg-mc show:*)",
-      "Bash(elm make:*)"
+      "Bash(elm make:*)",
+      "Bash(xargs:*)",
+      "Bash(npx elm make:*)"
     ]
   }
 }

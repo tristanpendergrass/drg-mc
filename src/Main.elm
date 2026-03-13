@@ -2226,18 +2226,26 @@ view model =
                                 SettingsTab ->
                                     renderSettingsTab model
                             , div [ class "h-full w-48 min-w-48 items-center p-4 overflow-y-scroll" ]
-                                [ div
-                                    [ class "flex flex-col gap-4"
+                                [ div [ class "w-full flex items-center justify-center prose" ] [ h3 [] [ text "Your crew" ] ]
+                                , div
+                                    [ class "flex flex-col gap-4 mt-4"
+                                    , classList
+                                        [ ( "hidden", Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level )
+                                        ]
+                                    ]
+                                    [ div [ class "w-full flex items-center justify-center prose" ] [ h3 [] [ text "APD-B317 (Bosco)" ] ]
+                                    , div [ class "bg-base-300 text-base-content flex flex-col items-center themed-rounded-borders shadow-sm overflow-hidden" ]
+                                        [ img [ src "bosco.png", class "h-20 rounded-sm" ] [] ]
+                                    ]
+                                , div
+                                    [ class "flex flex-col gap-4 mt-4"
                                     , classList
                                         [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) )
                                         ]
                                     ]
-                                    (List.concat
-                                        [ [ div [ class "w-full flex items-center justify-center prose" ] [ h3 [] [ text "Your crew" ] ] ]
-                                        , List.map
-                                            (renderDwarf model)
-                                            Utils.Record.allDwarfs
-                                        ]
+                                    (List.map
+                                        (renderDwarf model)
+                                        Utils.Record.allDwarfs
                                     )
                                 ]
                             ]
