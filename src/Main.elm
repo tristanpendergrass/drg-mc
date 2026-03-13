@@ -927,22 +927,76 @@ renderDuration d hasTickedAVeryShortTime =
 
     else if minutes > 0 then
         wrapper
-            [ hide [ renderTimeSegment hours "hours" ]
-            , renderTimeSegment minutes "min"
+            [ renderTimeSegment minutes "min"
             , renderTimeSegment seconds "sec"
             ]
 
     else
         wrapper
-            [ hide [ renderTimeSegment hours "hours" ]
-            , hide [ renderTimeSegment minutes "min" ]
-            , renderTimeSegment seconds "sec"
+            [ renderTimeSegment seconds "sec"
             ]
 
 
 morkiteImg : Html Msg
 morkiteImg =
     img [ src "minerals/morkite.webp", class "w-6 inline-block" ] []
+
+
+doubleMorkiteImg : Html Msg
+doubleMorkiteImg =
+    div [ class "relative inline-block w-8 h-6" ]
+        [ img [ src "minerals/morkite.webp", class "w-5 absolute top-0 left-0 -rotate-12" ] []
+        , img [ src "minerals/morkite.webp", class "w-5 absolute top-0 right-0 rotate-12" ] []
+        ]
+
+
+renderMissionCard : Model -> Mission -> Html Msg
+renderMissionCard model mission =
+    let
+        stats =
+            Utils.Record.getByMission mission Config.missionStats
+
+        missionStatus =
+            Utils.Record.getByMission mission model.missionStatuses
+
+        adjustedDuration =
+            calculateAdjustedDuration stats.duration (getAllMods model)
+
+        buttonText =
+            case missionStatus of
+                ButtonReady ->
+                    "Ready"
+
+                ButtonOnCooldown _ ->
+                    "On cooldown"
+
+        largeMorkiteImg =
+            img [ src "minerals/morkite.webp", class "w-16 inline-block" ] []
+
+        largDoubleMorkiteImg =
+            div [ class "relative inline-block w-24 h-16" ]
+                [ img [ src "minerals/morkite.webp", class "w-14 absolute top-0 left-0 -rotate-12" ] []
+                , img [ src "minerals/morkite.webp", class "w-14 absolute top-0 right-0 rotate-12" ] []
+                ]
+
+        morkiteIcon =
+            case mission of
+                Haz1 ->
+                    largeMorkiteImg
+
+                _ ->
+                    largDoubleMorkiteImg
+    in
+    div [ class "card bg-base-300 shadow-sm w-88", classList [ ( "border border-primary", missionStatus == ButtonReady ) ] ]
+        [ div [ class "card-body p-4 items-center text-center" ]
+            [ h2 [ class "card-title text-3xl" ] [ text stats.title ]
+            , div [ class "flex items-center gap-2 text-4xl" ]
+                [ span [] [ text (floatToFixedDecimalString stats.morkite 1 ++ " Morkite") ]
+                , morkiteIcon
+                ]
+            , renderButton model missionStatus adjustedDuration (DragMission mission) ButtonPrimary [ text buttonText ]
+            ]
+        ]
 
 
 renderMissionRow : Model -> Mission -> Html Msg
@@ -1159,7 +1213,7 @@ renderButton model buttonStatus buttonDuration dragTarget variant children =
                         ButtonSecondary ->
                             class "btn-secondary"
             in
-            div [ class "flex items-center justify-end gap-8 w-full" ]
+            div [ class "flex items-center justify-end gap-8" ]
                 [ div [ class "relative inline-block" ]
                     [ button
                         [ class "btn"
@@ -1183,7 +1237,7 @@ renderButton model buttonStatus buttonDuration dragTarget variant children =
                 hasTickedAVeryShortTime =
                     Utils.Timer.hasTickedAVeryShortTime buttonDuration timer
             in
-            div [ class "flex items-end gap-8 w-full h-full" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
+            div [ class "flex items-end gap-8 h-full" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
 
 
 renderGameSpeedButton : Model -> Float -> Html Msg
@@ -1586,6 +1640,10 @@ renderMissionsTab model =
             ]
         , div [ tabLayout.bonusesArea ]
             bonuses
+        , div [ class "w-full flex justify-center px-8 pb-4" ]
+            [ div [ class "flex flex-wrap gap-8 w-[750px] max-w-full justify-center" ]
+                (List.map (renderMissionCard model) unlockedMissions)
+            ]
         , div [ tabLayout.contentWrapper ]
             [ table [ class "table table-sm w-[750px] max-w-full" ]
                 [ thead []
