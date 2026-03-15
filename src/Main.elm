@@ -1025,7 +1025,7 @@ renderMissionCard model mission =
         [ div [ class "card-body p-4 items-center text-center justify-center h-54 max-h-54" ]
             [ h2 [ class "card-title text-3xl" ] [ text stats.title ]
             , div [ class "flex items-center gap-2 text-4xl" ]
-                [ span [] [ text (floatToFixedDecimalString stats.morkite 1 ++ " Morkite") ]
+                [ span [] [ text (floatToFixedDecimalString stats.morkite 0 ++ " Morkite") ]
                 , morkiteIcon
                 ]
             , renderButton model missionStatus adjustedDuration (DragMission mission) ButtonPrimary [ text buttonText ]
@@ -1082,10 +1082,10 @@ renderMissionRow model mission =
         morkiteYieldString : String
         morkiteYieldString =
             if bonusPercent > 0 then
-                floatToFixedDecimalString modifiedYield.morkite 1 ++ " morkite"
+                floatToFixedDecimalString modifiedYield.morkite 0 ++ " morkite"
 
             else
-                floatToFixedDecimalString stats.morkite 1 ++ " morkite"
+                floatToFixedDecimalString stats.morkite 0 ++ " morkite"
 
         bonusText : Html Msg
         bonusText =
@@ -1600,39 +1600,36 @@ renderMissionsTab model =
     in
     div [ tabLayout.container ]
         [ div [ tabLayout.headerWrapper ]
-            [ div [ class "relative w-full" ]
-                [ div [ proseClass, class "text-center mx-auto" ] [ h1 [] [ text "Missions" ] ]
-                , div
-                    [ class "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2"
-                    , classList [ ( "hidden", List.length (unlockedBiomes model.level) <= 1 ) ]
-                    ]
-                    [ case model.missionBiome of
-                        Just biome ->
-                            renderActiveBiome biome
+            [ div [ proseClass, class "text-center mx-auto" ] [ h1 [] [ text "Missions" ] ]
+            ]
+        , div [ class "flex justify-center pb-4", classList [ ( "hidden", List.length (unlockedBiomes model.level) <= 1 ) ] ]
+            [ div [ class "flex items-center gap-2" ]
+                [ case model.missionBiome of
+                    Just biome ->
+                        renderActiveBiome biome
 
-                        Nothing ->
-                            button
-                                [ class "btn btn-md"
-                                , attribute "style" "anchor-name:--anchor-1"
-                                , attribute "popovertarget" "popover-1"
-                                ]
-                                [ text "Select a biome" ]
-                    , button
-                        [ class "btn btn-md btn-square"
-                        , attribute "popovertarget" "popover-1"
-                        ]
-                        [ FeatherIcons.chevronDown
-                            |> FeatherIcons.toHtml []
-                        ]
+                    Nothing ->
+                        button
+                            [ class "btn btn-md"
+                            , attribute "style" "anchor-name:--anchor-1"
+                            , attribute "popovertarget" "popover-1"
+                            ]
+                            [ text "Select a biome" ]
+                , button
+                    [ class "btn btn-md btn-square"
+                    , attribute "popovertarget" "popover-1"
                     ]
-                , div [ class "dropdown", attribute "popover" "", id "popover-1", attribute "style" "position-anchor:--anchor-1" ]
-                    [ renderBiomeDropdownContent model ]
+                    [ FeatherIcons.chevronDown
+                        |> FeatherIcons.toHtml []
+                    ]
                 ]
+            , div [ class "dropdown", attribute "popover" "", id "popover-1", attribute "style" "position-anchor:--anchor-1" ]
+                [ renderBiomeDropdownContent model ]
             ]
         , div [ tabLayout.bonusesArea ]
             bonuses
         , div [ class "w-full flex justify-center px-8 pb-4" ]
-            [ div [ class "flex flex-wrap gap-8 w-[750px] max-w-full justify-center" ]
+            [ div [ class "flex flex-wrap gap-8 justify-center" ]
                 (List.map (renderMissionCard model) unlockedMissions)
             ]
         , div [ tabLayout.contentWrapper, class "hidden" ]
