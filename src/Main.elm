@@ -950,6 +950,40 @@ doubleMorkiteImg =
         ]
 
 
+hazardIcons : String -> Mission -> Html Msg
+hazardIcons sizeClass mission =
+    let
+        icon iconSrc =
+            img [ src iconSrc, class (sizeClass ++ " inline") ] []
+
+        iconFiles =
+            case mission of
+                Haz1 ->
+                    [ "haz1.png" ]
+
+                Haz2 ->
+                    [ "haz1.png", "haz2.png" ]
+
+                Haz3 ->
+                    [ "haz1.png", "haz2.png", "haz3.png" ]
+
+                Haz4 ->
+                    [ "haz1.png", "haz2.png", "haz3.png", "haz4.png" ]
+
+                Haz5 ->
+                    [ "haz1.png", "haz2.png", "haz3.png", "haz4.png", "haz5.png" ]
+
+        overlapClass =
+            if List.length iconFiles > 1 then
+                "space-x-[-8px]"
+
+            else
+                ""
+    in
+    div [ class ("flex items-center " ++ overlapClass) ]
+        (List.map icon iconFiles)
+
+
 renderMissionCard : Model -> Mission -> Html Msg
 renderMissionCard model mission =
     let
@@ -965,7 +999,7 @@ renderMissionCard model mission =
         buttonText =
             case missionStatus of
                 ButtonReady ->
-                    "Ready"
+                    "Collect"
 
                 ButtonOnCooldown _ ->
                     "On cooldown"
@@ -987,8 +1021,8 @@ renderMissionCard model mission =
                 _ ->
                     largDoubleMorkiteImg
     in
-    div [ class "card bg-base-300 shadow-sm w-88", classList [ ( "border border-primary", missionStatus == ButtonReady ) ] ]
-        [ div [ class "card-body p-4 items-center text-center" ]
+    div [ class "card bg-base-300 shadow-sm w-88 h-54", classList [ ( "border border-primary", missionStatus == ButtonReady ) ] ]
+        [ div [ class "card-body p-4 items-center text-center justify-center h-54 max-h-54" ]
             [ h2 [ class "card-title text-3xl" ] [ text stats.title ]
             , div [ class "flex items-center gap-2 text-4xl" ]
                 [ span [] [ text (floatToFixedDecimalString stats.morkite 1 ++ " Morkite") ]
@@ -1010,52 +1044,11 @@ renderMissionRow model mission =
         missionStatus =
             Utils.Record.getByMission mission model.missionStatuses
 
-        icon : String -> Html Msg
-        icon iconSrc =
-            img [ src iconSrc, class "w-4 inline" ] []
-
-        icons : Html Msg
-        icons =
-            case mission of
-                Haz1 ->
-                    div [ class "flex items-center" ]
-                        [ icon "haz1.png" ]
-
-                Haz2 ->
-                    div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "haz1.png"
-                        , icon "haz2.png"
-                        ]
-
-                Haz3 ->
-                    div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "haz1.png"
-                        , icon "haz2.png"
-                        , icon "haz3.png"
-                        ]
-
-                Haz4 ->
-                    div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "haz1.png"
-                        , icon "haz2.png"
-                        , icon "haz3.png"
-                        , icon "haz4.png"
-                        ]
-
-                Haz5 ->
-                    div [ class "flex items-center space-x-[-8px]" ]
-                        [ icon "haz1.png"
-                        , icon "haz2.png"
-                        , icon "haz3.png"
-                        , icon "haz4.png"
-                        , icon "haz5.png"
-                        ]
-
         buttonText : String
         buttonText =
             case missionStatus of
                 ButtonReady ->
-                    "Ready"
+                    "Collect"
 
                 ButtonOnCooldown _ ->
                     "On cooldown"
@@ -1137,11 +1130,9 @@ renderMissionRow model mission =
     tr []
         [ td [ class "h-[70px]" ]
             [ div [ class "flex h-full items-center gap-2" ]
-                (List.concat
-                    [ [ span [] [ text stats.title ] ]
-                    , [ icons ]
-                    ]
-                )
+                [ span [] [ text stats.title ]
+                , hazardIcons "w-4" mission
+                ]
             ]
         , td []
             [ div [ class "flex items-center gap-1" ]
@@ -1213,7 +1204,7 @@ renderButton model buttonStatus buttonDuration dragTarget variant children =
                         ButtonSecondary ->
                             class "btn-secondary"
             in
-            div [ class "flex items-center justify-end gap-8" ]
+            div [ class "flex items-center justify-end gap-8 h-16" ]
                 [ div [ class "relative inline-block" ]
                     [ button
                         [ class "btn"
@@ -1237,7 +1228,7 @@ renderButton model buttonStatus buttonDuration dragTarget variant children =
                 hasTickedAVeryShortTime =
                     Utils.Timer.hasTickedAVeryShortTime buttonDuration timer
             in
-            div [ class "flex items-end gap-8 h-full" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
+            div [ class "flex items-end gap-8 h-16" ] [ renderDuration durationLeft hasTickedAVeryShortTime ]
 
 
 renderGameSpeedButton : Model -> Float -> Html Msg
@@ -1644,7 +1635,7 @@ renderMissionsTab model =
             [ div [ class "flex flex-wrap gap-8 w-[750px] max-w-full justify-center" ]
                 (List.map (renderMissionCard model) unlockedMissions)
             ]
-        , div [ tabLayout.contentWrapper ]
+        , div [ tabLayout.contentWrapper, class "hidden" ]
             [ table [ class "table table-sm w-[750px] max-w-full" ]
                 [ thead []
                     [ tr []
