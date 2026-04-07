@@ -195,7 +195,7 @@ type
     Tab
     -- Don't forget to update allTabs too!
     = MissionsTab
-    | CommendationsTab
+    | DwarfLevelingTab
     | ProjectsTab
     | AbyssBarTab
     | SettingsTab
@@ -209,7 +209,7 @@ type alias TabStats =
 
 type alias TabRecord a =
     { missionsTab : a
-    , commendationsTab : a
+    , dwarfLevelingTab : a
     , projectsTab : a
     , abyssBarTab : a
     , settingsTab : a

@@ -1673,8 +1673,8 @@ renderMissionsTab model =
         ]
 
 
-renderCommendationsTab : Model -> Html Msg
-renderCommendationsTab model =
+renderDwarfLevelingTab : Model -> Html Msg
+renderDwarfLevelingTab model =
     let
         unlockedXpButtons : List DwarfXpButton
         unlockedXpButtons =
@@ -1829,7 +1829,7 @@ numActiveItemsInTab model tab =
                 |> List.filter (\mission -> Utils.Record.getByMission mission model.missionStatuses == ButtonReady)
                 |> List.length
 
-        CommendationsTab ->
+        DwarfLevelingTab ->
             allDwarfXpButtons
                 |> List.filter (Utils.Unlocks.dwarfXpButtonIsUnlocked model.level)
                 |> List.filter (\dwarfXpButton -> getByDwarfXpButton model.dwarfXpButtonStatuses dwarfXpButton == ButtonReady)
@@ -1952,7 +1952,7 @@ isTabUnlocked model tab =
         MissionsTab ->
             True
 
-        CommendationsTab ->
+        DwarfLevelingTab ->
             Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level
 
         ProjectsTab ->
@@ -1968,7 +1968,7 @@ isTabUnlocked model tab =
 tabShowsCrew : Tab -> Bool
 tabShowsCrew tab =
     case tab of
-        CommendationsTab ->
+        DwarfLevelingTab ->
             False
 
         SettingsTab ->
@@ -2286,7 +2286,7 @@ view model =
                                 -- , classList [ ( "hidden", not (Utils.Unlocks.dwarfXpButtonsFeatureUnlocked model.level) ) ]
                                 ]
                                 [ renderDrawerTabRow model MissionsTab
-                                , renderDrawerTabRow model CommendationsTab
+                                , renderDrawerTabRow model DwarfLevelingTab
                                 , renderDrawerTabRow model AbyssBarTab
                                 , renderDrawerTabRow model ProjectsTab
                                 , li [] [] -- This renders as a divider in the drawer
@@ -2300,8 +2300,8 @@ view model =
                                 MissionsTab ->
                                     renderMissionsTab model
 
-                                CommendationsTab ->
-                                    renderCommendationsTab model
+                                DwarfLevelingTab ->
+                                    renderDwarfLevelingTab model
 
                                 ProjectsTab ->
                                     renderProjectsTab model

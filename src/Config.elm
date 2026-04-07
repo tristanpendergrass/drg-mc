@@ -162,7 +162,7 @@ tabStats =
         { title = "Missions"
         , maybeIcon = Nothing
         }
-    , commendationsTab =
+    , dwarfLevelingTab =
         { title = "Dwarf Leveling"
         , maybeIcon = Nothing
         }

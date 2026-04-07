@@ -117,7 +117,7 @@ updateByDwarf dwarf f record =
 allTabs : List Tab
 allTabs =
     [ MissionsTab
-    , CommendationsTab
+    , DwarfLevelingTab
     , ProjectsTab
     , AbyssBarTab
     , SettingsTab
@@ -127,7 +127,7 @@ allTabs =
 tabRecord : a -> TabRecord a
 tabRecord a =
     { missionsTab = a
-    , commendationsTab = a
+    , dwarfLevelingTab = a
     , projectsTab = a
     , abyssBarTab = a
     , settingsTab = a
@@ -140,8 +140,8 @@ getByTab tab record =
         MissionsTab ->
             record.missionsTab
 
-        CommendationsTab ->
-            record.commendationsTab
+        DwarfLevelingTab ->
+            record.dwarfLevelingTab
 
         ProjectsTab ->
             record.projectsTab
@@ -159,8 +159,8 @@ setByTab tab value record =
         MissionsTab ->
             { record | missionsTab = value }
 
-        CommendationsTab ->
-            { record | commendationsTab = value }
+        DwarfLevelingTab ->
+            { record | dwarfLevelingTab = value }
 
         ProjectsTab ->
             { record | projectsTab = value }
