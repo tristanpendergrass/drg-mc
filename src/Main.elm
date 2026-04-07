@@ -1401,7 +1401,12 @@ renderHeader model =
         ]
 
 
-renderDwarf : { showXp : Bool } -> Model -> Dwarf -> Html Msg
+type DwarfSize
+    = DwarfNormal
+    | DwarfLarge
+
+
+renderDwarf : { showXp : Bool, size : DwarfSize } -> Model -> Dwarf -> Html Msg
 renderDwarf config model dwarf =
     let
         stats : DwarfStats
@@ -1439,11 +1444,27 @@ renderDwarf config model dwarf =
         percentComplete =
             percentInLevel xp
     in
-    div [ class "bg-base-300 text-base-content flex flex-col items-center overflow-hidden themed-rounded-borders shadow-sm" ]
+    div
+        [ class "bg-base-300 text-base-content flex flex-col items-center overflow-hidden themed-rounded-borders shadow-sm"
+        , classList
+            [ ( "w-40", config.size == DwarfLarge )
+            ]
+        ]
         ([ span [ class "w-full flex items-center justify-center gap-2" ]
             [ span [ class "text-lg" ] [ text stats.name ]
             ]
-         , img [ src dwarfImgSrc, class "h-12 rounded-sm " ] []
+         , img
+            [ src dwarfImgSrc
+            , class
+                (case config.size of
+                    DwarfNormal ->
+                        "h-12 rounded-sm"
+
+                    DwarfLarge ->
+                        "h-24 rounded-sm"
+                )
+            ]
+            []
          ]
             ++ (if config.showXp then
                     [ span []
@@ -1679,8 +1700,8 @@ renderCommendationsTab model =
                 [ h1 [] [ text "Dwarf Leveling" ]
                 ]
             ]
-        , div [ class "flex flex-wrap justify-center gap-4 px-8 py-4" ]
-            (List.map (renderDwarf { showXp = True } model) Utils.Record.allDwarfs)
+        , div [ class "flex flex-wrap justify-center gap-8 px-8 py-4" ]
+            (List.map (renderDwarf { showXp = True, size = DwarfLarge } model) Utils.Record.allDwarfs)
         , div [ tabLayout.bonusesArea ]
             (List.map renderBuff xpGainBonuses)
         , div [ tabLayout.contentWrapper ]
@@ -2310,7 +2331,7 @@ view model =
                                             ]
                                         ]
                                         (List.map
-                                            (renderDwarf { showXp = False } model)
+                                            (renderDwarf { showXp = False, size = DwarfNormal } model)
                                             Utils.Record.allDwarfs
                                         )
                                     ]
