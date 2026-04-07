@@ -197,3 +197,10 @@ dailySpecialCooldown =
 dailySpecialBuffDuration : Duration
 dailySpecialBuffDuration =
     Duration.day
+
+
+levelScripts : Dict Int String
+levelScripts =
+    Dict.fromList
+        [ ( 1, "Welcome to your first day" )
+        ]

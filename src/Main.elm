@@ -1023,8 +1023,8 @@ renderMissionCard model mission =
     in
     div [ class "card bg-base-300 shadow-sm w-88 h-54", classList [ ( "border border-primary", missionStatus == ButtonReady ) ] ]
         [ div [ class "card-body p-4 items-center text-center justify-center h-54 max-h-54" ]
-            [ h2 [ class "card-title text-3xl" ] [ text stats.title ]
-            , div [ class "flex items-center gap-2 text-4xl" ]
+            [ h2 [ class "card-title text-3xl transition-opacity duration-150", classList [ ( "opacity-50", missionStatus /= ButtonReady ) ] ] [ text stats.title ]
+            , div [ class "flex items-center gap-2 text-4xl transition-opacity duration-150", classList [ ( "opacity-50", missionStatus /= ButtonReady ) ] ]
                 [ span [] [ text (floatToFixedDecimalString stats.morkite 0 ++ " Morkite") ]
                 , morkiteIcon
                 ]
@@ -1401,8 +1401,8 @@ renderHeader model =
         ]
 
 
-renderDwarf : Model -> Dwarf -> Html Msg
-renderDwarf model dwarf =
+renderDwarf : { showXp : Bool } -> Model -> Dwarf -> Html Msg
+renderDwarf config model dwarf =
     let
         stats : DwarfStats
         stats =
@@ -1439,28 +1439,32 @@ renderDwarf model dwarf =
         percentComplete =
             percentInLevel xp
     in
-    div [ class "bg-base-300 text-base-content flex flex-col items-center relative overflow-hidden themed-rounded-borders shadow-sm" ]
-        [ span [ class "w-full flex items-center justify-center gap-2" ]
+    div [ class "bg-base-300 text-base-content flex flex-col items-center overflow-hidden themed-rounded-borders shadow-sm" ]
+        ([ span [ class "w-full flex items-center justify-center gap-2" ]
             [ span [ class "text-lg" ] [ text stats.name ]
             ]
-        , img [ src dwarfImgSrc, class "h-12 rounded-sm " ] []
-        , span []
-            [ progressInLevelSpan
-            ]
-        , div [ class "tooltip tooltip-left absolute top-0 right-0", attribute "data-tip" ("Level " ++ String.fromInt level) ]
-            [ span
-                [ class "inline-block bg-secondary text-secondary-content px-3 py-1 text-2xl border border-secondary-content themed-rounded-borders"
-                ]
-                [ text (String.fromInt level) ]
-            ]
-        , div [ class "w-full h-2 relative bg-secondary/15" ]
-            [ div
-                [ class "absolute left-0 top-0 h-full bg-secondary xp-bar themed-rounded-borders"
-                , style "width" (String.fromFloat (Basics.min 100 (Utils.Percent.toPercentage percentComplete)) ++ "%")
-                ]
-                []
-            ]
-        ]
+         , img [ src dwarfImgSrc, class "h-12 rounded-sm " ] []
+         ]
+            ++ (if config.showXp then
+                    [ span []
+                        [ progressInLevelSpan
+                        ]
+                    , div [ class "w-full h-2 relative bg-secondary/15" ]
+                        [ div
+                            [ class "absolute left-0 top-0 h-full bg-secondary xp-bar rounded-none"
+                            , style "width" (String.fromFloat (Basics.min 100 (Utils.Percent.toPercentage percentComplete)) ++ "%")
+                            ]
+                            []
+                        ]
+                    ]
+
+                else
+                    []
+               )
+            ++ [ div [ class "w-full bg-secondary text-secondary-content text-center text-xs py-0.5 font-black" ]
+                    [ text ("Level " ++ String.fromInt level) ]
+               ]
+        )
 
 
 unlockedBiomes : Int -> List Biome
@@ -2290,7 +2294,7 @@ view model =
                                         ]
                                     ]
                                     (List.map
-                                        (renderDwarf model)
+                                        (renderDwarf { showXp = False } model)
                                         Utils.Record.allDwarfs
                                     )
                                 ]
