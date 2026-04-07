@@ -1703,7 +1703,7 @@ renderDwarfLevelingTab model =
         , div [ class "flex justify-center px-8" ]
             [ div [ class "border border-secondary px-6 py-3 flex flex-col items-center" ]
                 [ div [ class "text-3xl font-bold" ]
-                    [ text ("Squad Bonus: " ++ Utils.Percent.toString (squadBonus model) ++ "%") ]
+                    [ text ("+" ++ Utils.Percent.toString (squadBonus model) ++ "% mission yield") ]
                 , div [ class "text-xs opacity-70" ]
                     [ text "Scout level + Gunner level + Engineer level + Driller level" ]
                 ]
