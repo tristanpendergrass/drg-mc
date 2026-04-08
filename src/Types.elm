@@ -70,6 +70,7 @@ type Msg
     | DebugSetGameSpeed Float
     | DebugAdvanceTime Duration
     | DebugSetButtonCooldownInstant Bool
+    | DebugSpeedUpDailySpecialCooldown
     | DebugGainLevel
     | DebugLevelToMax
     | DebugGiveMinerals

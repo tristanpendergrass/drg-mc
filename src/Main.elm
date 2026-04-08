@@ -585,6 +585,14 @@ update msg model =
             in
             ( { model | debugSettings = { debugSettings | buttonCooldownInstant = newVal } }, Cmd.none )
 
+        DebugSpeedUpDailySpecialCooldown ->
+            let
+                threeSecondsLeft : Float
+                threeSecondsLeft =
+                    1.0 - (3.0 / Duration.inSeconds Config.dailySpecialCooldown)
+            in
+            ( { model | dailySpecialCooldown = ButtonOnCooldown (Utils.Timer.createAtPercent (Utils.Percent.float threeSecondsLeft)) }, Cmd.none )
+
         DebugGainLevel ->
             ( { model | level = model.level + 1 }, Cmd.none )
 
@@ -2025,16 +2033,20 @@ renderAbyssBarTab model =
                     ( Nothing, ButtonReady ) ->
                         div [ class "flex flex-col items-center gap-4" ]
                             [ div [ class "text-3xl" ] [ text "Daily Special" ]
-                            , div [ class "flex items-center gap-4" ]
+                            , div [ class "flex items-start gap-4" ]
                                 (List.intersperse
-                                    (div [ class "flex items-center gap-2" ]
-                                        [ FeatherIcons.arrowRight
-                                            |> FeatherIcons.withSize 48
-                                            |> FeatherIcons.toHtml []
+                                    (div [ class "flex items-start gap-2" ]
+                                        [ div [ class "self-stretch flex items-center" ]
+                                            [ FeatherIcons.arrowRight
+                                                |> FeatherIcons.withSize 48
+                                                |> FeatherIcons.toHtml []
+                                            ]
                                         , div [ class "card card-sm w-72 h-[268px] border-4 border-dashed border-base-content flex items-center justify-center text-xl" ] [ text "None" ]
-                                        , FeatherIcons.arrowLeft
-                                            |> FeatherIcons.withSize 48
-                                            |> FeatherIcons.toHtml []
+                                        , div [ class "self-stretch flex items-center" ]
+                                            [ FeatherIcons.arrowLeft
+                                                |> FeatherIcons.withSize 48
+                                                |> FeatherIcons.toHtml []
+                                            ]
                                         ]
                                     )
                                     (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
@@ -2044,16 +2056,20 @@ renderAbyssBarTab model =
                     ( Just ( dailySpecial, timer ), ButtonReady ) ->
                         div [ class "flex flex-col items-center gap-4" ]
                             [ div [ class "text-3xl" ] [ text "Daily Special" ]
-                            , div [ class "flex items-center gap-4" ]
+                            , div [ class "flex items-start gap-4" ]
                                 (List.intersperse
-                                    (div [ class "flex items-center gap-2" ]
-                                        [ FeatherIcons.arrowRight
-                                            |> FeatherIcons.withSize 48
-                                            |> FeatherIcons.toHtml []
+                                    (div [ class "flex items-start gap-2" ]
+                                        [ div [ class "self-stretch flex items-center" ]
+                                            [ FeatherIcons.arrowRight
+                                                |> FeatherIcons.withSize 48
+                                                |> FeatherIcons.toHtml []
+                                            ]
                                         , renderActiveSpecialCard model dailySpecial timer
-                                        , FeatherIcons.arrowLeft
-                                            |> FeatherIcons.withSize 48
-                                            |> FeatherIcons.toHtml []
+                                        , div [ class "self-stretch flex items-center" ]
+                                            [ FeatherIcons.arrowLeft
+                                                |> FeatherIcons.withSize 48
+                                                |> FeatherIcons.toHtml []
+                                            ]
                                         ]
                                     )
                                     (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
@@ -2070,7 +2086,14 @@ renderAbyssBarTab model =
                             [ div [ class "text-3xl" ] [ text "Daily Special" ]
                             , renderActiveSpecialCard model dailySpecial timer
                             , div [ class "flex flex-col items-center gap-2" ]
-                                [ p [] [ text "Change daily special in:" ]
+                                [ div [ class "flex items-center gap-2" ]
+                                    [ p [] [ text "Change daily special in:" ]
+                                    , button [ class "btn btn-xs btn-square btn-ghost opacity-25", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugSpeedUpDailySpecialCooldown ]
+                                        [ FeatherIcons.fastForward
+                                            |> FeatherIcons.withSize 16
+                                            |> FeatherIcons.toHtml []
+                                        ]
+                                    ]
                                 , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) cooldownHasTickedAVeryShortTime
                                 ]
                             ]
@@ -2085,7 +2108,14 @@ renderAbyssBarTab model =
                             [ div [ class "text-3xl" ] [ text "Daily Special" ]
                             , div [ class "card card-sm w-72 h-[268px] border-4 border-dashed border-base-content flex items-center justify-center text-xl" ] [ text "None" ]
                             , div [ class "flex flex-col items-center gap-2" ]
-                                [ p [] [ text "Change daily special in:" ]
+                                [ div [ class "flex items-center gap-2" ]
+                                    [ p [] [ text "Change daily special in:" ]
+                                    , button [ class "btn btn-xs btn-square btn-ghost opacity-25", classList [ ( "hidden", Config.env /= Config.Dev ) ], onClick DebugSpeedUpDailySpecialCooldown ]
+                                        [ FeatherIcons.fastForward
+                                            |> FeatherIcons.withSize 16
+                                            |> FeatherIcons.toHtml []
+                                        ]
+                                    ]
                                 , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) cooldownHasTickedAVeryShortTime
                                 ]
                             ]
