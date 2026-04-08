@@ -2213,7 +2213,7 @@ renderDailySpecialOption model optionNumber option =
     in
     div [ class "flex flex-col items-center gap-2 cursor-pointer", onClick (HandleDailySpecialClick option) ]
         [ div [ class "text-xl" ] [ text ("Option " ++ String.fromInt optionNumber) ]
-        , div [ class ("card card-sm bg-base-300 shadow-lg " ++ sizeClasses.card) ]
+        , div [ class ("card card-sm bg-base-300 shadow-lg transition-transform duration-200 hover:scale-105 " ++ sizeClasses.card) ]
             [ figure [ class "pt-2 bg-warning" ]
                 [ img [ src stats.icon, alt stats.title, class sizeClasses.icon ] []
                 , img [ src "beer/beer2.png", class sizeClasses.beerImg ] []
@@ -2223,7 +2223,6 @@ renderDailySpecialOption model optionNumber option =
                 , p [] [ text (modToString enhancedBuff.mod) ]
                 ]
             ]
-        , button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Choose" ]
         ]
 
 
