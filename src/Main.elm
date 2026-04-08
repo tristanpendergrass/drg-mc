@@ -2077,9 +2077,21 @@ renderAbyssBarTab model =
                 , case model.dailySpecialCooldown of
                     ButtonReady ->
                         div [ class "flex flex-col gap-4" ]
-                            [ p [] [ text "Select a ", strong [] [ text "daily special" ], text " to give your crew an ", strong [ class "underline" ] [ text "awesome buff" ] ]
-                            , div [ class "flex items-center gap-4" ]
-                                (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
+                            [ div [ class "flex items-center gap-4" ]
+                                (List.intersperse
+                                    (div [ class "flex items-center gap-2" ]
+                                        [ FeatherIcons.arrowRight
+                                            |> FeatherIcons.withSize 48
+                                            |> FeatherIcons.toHtml []
+                                        , div [ class "card card-sm w-72 h-[268px] border-4 border-dashed border-base-content flex items-center justify-center" ]
+                                            [ div [ class "card-body items-center justify-center text-center text-3xl" ] [ text "Daily Special" ] ]
+                                        , FeatherIcons.arrowLeft
+                                            |> FeatherIcons.withSize 48
+                                            |> FeatherIcons.toHtml []
+                                        ]
+                                    )
+                                    (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
+                                )
                             ]
 
                     ButtonOnCooldown cooldown ->
@@ -2108,18 +2120,18 @@ renderDailySpecialOption model option =
         enhancedBuff =
             getEnhancedDailySpecialBuff model option
     in
-    div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
-        [ figure [ class "pt-2 bg-warning" ]
-            [ img [ src stats.icon, alt stats.title ] []
-            , img [ src "beer/beer2.png", class "w-24 -ml-6" ] []
-            ]
-        , div [ class "card-body" ]
-            [ h2 [ class "card-title" ] [ text "Daily Special: ", span [ class "underline" ] [ text stats.title ] ]
-            , p [] [ text (modToString enhancedBuff.mod) ]
-            , div [ class "card-actions justify-end" ]
-                [ button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Select" ]
+    div [ class "flex flex-col items-center gap-2 cursor-pointer", onClick (HandleDailySpecialClick option) ]
+        [ div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
+            [ figure [ class "pt-2 bg-warning" ]
+                [ img [ src stats.icon, alt stats.title ] []
+                , img [ src "beer/beer2.png", class "w-24 -ml-6" ] []
+                ]
+            , div [ class "card-body items-center text-center" ]
+                [ h2 [ class "card-title" ] [ span [ class "underline" ] [ text stats.title ] ]
+                , p [] [ text (modToString enhancedBuff.mod) ]
                 ]
             ]
+        , button [ class "btn btn-warning", onClick (HandleDailySpecialClick option) ] [ text "Choose" ]
         ]
 
 
