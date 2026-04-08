@@ -19,7 +19,9 @@
       "Bash(git -C /Users/tristanp/dev/drg-mc show:*)",
       "Bash(elm make:*)",
       "Bash(xargs:*)",
-      "Bash(npx elm make:*)"
+      "Bash(npx elm make:*)",
+      "Bash(find:*)",
+      "Bash(npx elm-test:*)"
     ]
   }
 }

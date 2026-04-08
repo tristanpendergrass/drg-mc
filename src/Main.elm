@@ -72,7 +72,7 @@ defaultModel seed1 now =
         }
     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
-    , activeDailySpecials = []
+    , activeDailySpecial = Nothing
     , dailySpecialCooldown = ButtonReady
     , dailySpecialOptions = dailySpecialOptions
     , maybeInitDecodeErr = Nothing
@@ -346,7 +346,12 @@ getAllBuffs model =
 
         dailySpecialMods : List Buff
         dailySpecialMods =
-            List.map (\( dailySpecial, _ ) -> getEnhancedDailySpecialBuff model dailySpecial) model.activeDailySpecials
+            case model.activeDailySpecial of
+                Just ( dailySpecial, _ ) ->
+                    [ getEnhancedDailySpecialBuff model dailySpecial ]
+
+                Nothing ->
+                    []
 
         projectMods : List Buff
         projectMods =
@@ -463,11 +468,10 @@ update msg model =
                 newDailySpecialCooldown =
                     updateButton delta Config.dailySpecialCooldown model.dailySpecialCooldown
 
-                newDailySpecials : List ( DailySpecial, Timer )
-                newDailySpecials =
-                    -- Iterate over all daily specials, calculate the updated timer, and if it has completed remove the daily special from the list
-                    List.filterMap
-                        (\( dailySpecial, timer ) ->
+                newDailySpecial : Maybe ( DailySpecial, Timer )
+                newDailySpecial =
+                    case model.activeDailySpecial of
+                        Just ( dailySpecial, timer ) ->
                             let
                                 ( newTimer, completions ) =
                                     Utils.Timer.increment Config.dailySpecialBuffDuration delta timer
@@ -477,8 +481,9 @@ update msg model =
 
                             else
                                 Just ( dailySpecial, newTimer )
-                        )
-                        model.activeDailySpecials
+
+                        Nothing ->
+                            Nothing
 
                 timeBetweenSaves : Duration
                 timeBetweenSaves =
@@ -500,7 +505,7 @@ update msg model =
                 , missionStatuses = List.foldl updateMissionStatuses model.missionStatuses Utils.Record.allMissions
                 , dwarfXpButtonStatuses = List.foldl updateDwarfXpButtonStatuses model.dwarfXpButtonStatuses allDwarfXpButtons
                 , saveTimer = newSaveTimer
-                , activeDailySpecials = newDailySpecials
+                , activeDailySpecial = newDailySpecial
                 , dailySpecialCooldown = newDailySpecialCooldown
               }
             , Cmd.batch
@@ -604,7 +609,7 @@ update msg model =
                     Random.step dailySpecialOptionsGenerator model.seed
             in
             ( { model
-                | activeDailySpecials = ( dailySpecial, Utils.Timer.create ) :: model.activeDailySpecials
+                | activeDailySpecial = Just ( dailySpecial, Utils.Timer.create )
                 , dailySpecialCooldown = ButtonOnCooldown Utils.Timer.create
                 , seed = seed2
                 , dailySpecialOptions = newDailySpecialOptions
@@ -2016,66 +2021,8 @@ renderAbyssBarTab model =
             )
         , div [ tabLayout.contentWrapper ]
             [ div [ class "flex flex-col items-center gap-4 max-w-[750px]" ]
-                [ if not (List.isEmpty model.activeDailySpecials) then
-                    div [ class "card bg-base-300 shadow-lg w-full" ]
-                        [ div [ class "card-body" ]
-                            [ h2 [ class "card-title" ] [ text "Current Daily Special" ]
-                            , div [ class "flex flex-wrap gap-4" ]
-                                (List.map
-                                    (\( dailySpecial, timer ) ->
-                                        let
-                                            stats =
-                                                dailySpecialStats dailySpecial
-
-                                            enhancedBuff =
-                                                getEnhancedDailySpecialBuff model dailySpecial
-
-                                            hasTickedAVeryShortTime =
-                                                Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialBuffDuration timer
-
-                                            durationLeft =
-                                                Utils.Timer.durationLeft Config.dailySpecialBuffDuration timer
-
-                                            hours =
-                                                floor (Duration.inHours durationLeft)
-
-                                            minutes =
-                                                floor (Duration.inMinutes durationLeft)
-                                                    |> modBy 60
-
-                                            seconds =
-                                                if not (Quantity.greaterThan Duration.minute durationLeft) && hasTickedAVeryShortTime then
-                                                    60
-
-                                                else
-                                                    floor (Duration.inSeconds durationLeft)
-                                                        |> modBy 60
-
-                                            timeString =
-                                                String.padLeft 2 '0' (String.fromInt hours)
-                                                    ++ ":"
-                                                    ++ String.padLeft 2 '0' (String.fromInt minutes)
-                                                    ++ ":"
-                                                    ++ String.padLeft 2 '0' (String.fromInt seconds)
-                                        in
-                                        div [ class "flex items-center gap-2" ]
-                                            [ img [ src stats.icon, class "w-8 h-8" ] []
-                                            , div [ class "flex flex-col" ]
-                                                [ span [ class "font-medium" ] [ text stats.title ]
-                                                , span [ class "text-sm opacity-70" ] [ text (modToString enhancedBuff.mod) ]
-                                                , span [ class "text-xs opacity-50" ] [ text timeString ]
-                                                ]
-                                            ]
-                                    )
-                                    model.activeDailySpecials
-                                )
-                            ]
-                        ]
-
-                  else
-                    text ""
-                , case model.dailySpecialCooldown of
-                    ButtonReady ->
+                [ case ( model.activeDailySpecial, model.dailySpecialCooldown ) of
+                    ( Nothing, ButtonReady ) ->
                         div [ class "flex flex-col items-center gap-4" ]
                             [ div [ class "text-3xl" ] [ text "Daily Special" ]
                             , div [ class "flex items-center gap-4" ]
@@ -2094,17 +2041,110 @@ renderAbyssBarTab model =
                                 )
                             ]
 
-                    ButtonOnCooldown cooldown ->
+                    ( Just ( dailySpecial, timer ), ButtonReady ) ->
+                        div [ class "flex flex-col items-center gap-4" ]
+                            [ div [ class "text-3xl" ] [ text "Daily Special" ]
+                            , div [ class "flex items-center gap-4" ]
+                                (List.intersperse
+                                    (div [ class "flex items-center gap-2" ]
+                                        [ FeatherIcons.arrowRight
+                                            |> FeatherIcons.withSize 48
+                                            |> FeatherIcons.toHtml []
+                                        , renderActiveSpecialCard model dailySpecial timer
+                                        , FeatherIcons.arrowLeft
+                                            |> FeatherIcons.withSize 48
+                                            |> FeatherIcons.toHtml []
+                                        ]
+                                    )
+                                    (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
+                                )
+                            ]
+
+                    ( Just ( dailySpecial, timer ), ButtonOnCooldown cooldown ) ->
                         let
-                            hasTickedAVeryShortTime : Bool
-                            hasTickedAVeryShortTime =
+                            cooldownHasTickedAVeryShortTime : Bool
+                            cooldownHasTickedAVeryShortTime =
                                 Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialCooldown cooldown
                         in
-                        div [ class "flex flex-col items-center gap-2" ]
-                            [ p [] [ text "Select a new daily special in" ]
-                            , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) hasTickedAVeryShortTime
+                        div [ class "flex flex-col items-center gap-4" ]
+                            [ div [ class "text-3xl" ] [ text "Daily Special" ]
+                            , renderActiveSpecialCard model dailySpecial timer
+                            , div [ class "flex flex-col items-center gap-2" ]
+                                [ p [] [ text "Change daily special in:" ]
+                                , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) cooldownHasTickedAVeryShortTime
+                                ]
+                            ]
+
+                    ( Nothing, ButtonOnCooldown cooldown ) ->
+                        let
+                            cooldownHasTickedAVeryShortTime : Bool
+                            cooldownHasTickedAVeryShortTime =
+                                Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialCooldown cooldown
+                        in
+                        div [ class "flex flex-col items-center gap-4" ]
+                            [ div [ class "text-3xl" ] [ text "Daily Special" ]
+                            , div [ class "card card-sm w-72 h-[268px] border-4 border-dashed border-base-content flex items-center justify-center text-xl" ] [ text "None" ]
+                            , div [ class "flex flex-col items-center gap-2" ]
+                                [ p [] [ text "Change daily special in:" ]
+                                , renderDuration (Utils.Timer.durationLeft Config.dailySpecialCooldown cooldown) cooldownHasTickedAVeryShortTime
+                                ]
                             ]
                 ]
+            ]
+        ]
+
+
+dailySpecialTimeString : Timer -> String
+dailySpecialTimeString timer =
+    let
+        hasTickedAVeryShortTime =
+            Utils.Timer.hasTickedAVeryShortTime Config.dailySpecialBuffDuration timer
+
+        durationLeft =
+            Utils.Timer.durationLeft Config.dailySpecialBuffDuration timer
+
+        hours =
+            floor (Duration.inHours durationLeft)
+
+        minutes =
+            floor (Duration.inMinutes durationLeft)
+                |> modBy 60
+
+        seconds =
+            if not (Quantity.greaterThan Duration.minute durationLeft) && hasTickedAVeryShortTime then
+                60
+
+            else
+                floor (Duration.inSeconds durationLeft)
+                    |> modBy 60
+    in
+    String.padLeft 2 '0' (String.fromInt hours)
+        ++ ":"
+        ++ String.padLeft 2 '0' (String.fromInt minutes)
+        ++ ":"
+        ++ String.padLeft 2 '0' (String.fromInt seconds)
+
+
+renderActiveSpecialCard : Model -> DailySpecial -> Timer -> Html Msg
+renderActiveSpecialCard model dailySpecial timer =
+    let
+        stats : DailySpecialStats
+        stats =
+            dailySpecialStats dailySpecial
+
+        enhancedBuff : Buff
+        enhancedBuff =
+            getEnhancedDailySpecialBuff model dailySpecial
+    in
+    div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
+        [ figure [ class "pt-2 bg-warning" ]
+            [ img [ src stats.icon, alt stats.title ] []
+            , img [ src "beer/beer2.png", class "w-24 -ml-6" ] []
+            ]
+        , div [ class "card-body items-center text-center" ]
+            [ h2 [ class "card-title" ] [ text stats.title ]
+            , p [] [ text (modToString enhancedBuff.mod) ]
+            , span [ class "text-xs opacity-50" ] [ text (dailySpecialTimeString timer) ]
             ]
         ]
 

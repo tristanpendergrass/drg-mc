@@ -27,6 +27,7 @@ decodeAnyVersion : Random.Seed -> Decoder Model
 decodeAnyVersion seed =
     D.oneOf
         [ decoder seed
+        , v0_3Decoder seed
         , v0_2Decoder seed
         , v0_1Decoder
         ]
@@ -110,7 +111,7 @@ v0_1Decoder =
                     , saveTimer = Utils.Timer.create
                     , dwarfXp = Utils.Record.dwarfRecord (DwarfXp.float 0)
                     , dwarfXpButtonStatuses = dwarfXpButtonRecord ButtonReady
-                    , activeDailySpecials = []
+                    , activeDailySpecial = Nothing
                     , dailySpecialCooldown = ButtonReady
                     , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                     , maybeInitDecodeErr = Nothing
@@ -164,7 +165,7 @@ v0_2Decoder initialSeed =
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
-                        , activeDailySpecials = []
+                        , activeDailySpecial = Nothing
                         , dailySpecialCooldown = ButtonReady
                         , dailySpecialOptions = [ DarkMorkite, RockyMountain ]
                         , maybeInitDecodeErr = Nothing
@@ -237,9 +238,9 @@ v0_2DwarfRecordDecoder valueDecoder =
 
 decoder : Random.Seed -> Decoder Model
 decoder initialSeed =
-    D.field "v0.3" <|
+    D.field "v0.4" <|
         (D.succeed
-            (\currentTime currentTab theme level morkite missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecials dailySpecialOptions dailySpecialCooldown minerals missionBiome projectLevels ->
+            (\currentTime currentTab theme level morkite missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecial dailySpecialOptions dailySpecialCooldown minerals missionBiome projectLevels ->
                 let
                     model : Model
                     model =
@@ -254,7 +255,7 @@ decoder initialSeed =
                         , saveTimer = Utils.Timer.create
                         , dwarfXp = dwarfXp
                         , dwarfXpButtonStatuses = dwarfXpButtonStatuses
-                        , activeDailySpecials = activeDailySpecials
+                        , activeDailySpecial = activeDailySpecial
                         , dailySpecialCooldown = dailySpecialCooldown
                         , dailySpecialOptions = dailySpecialOptions
                         , maybeInitDecodeErr = Nothing
@@ -274,7 +275,55 @@ decoder initialSeed =
             |> required "missionStatuses" v0_1MissionStatusesDecoder
             |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
             |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
-            |> required "activeDailySpecials" (D.list activeDailySpecialDecoder)
+            |> optional "activeDailySpecial" (D.oneOf [ D.map Just activeDailySpecialDecoder, D.null Nothing ]) Nothing
+            |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
+            |> required "dailySpecialCooldown" buttonStatusDecoder
+            |> required "minerals" mineralRecordDecoder
+            |> optional "missionBiome" (D.map Just biomeDecoder) Nothing
+            |> optional "projectLevels" (v0_3ProjectRecordDecoder D.int) (projectRecord 0)
+        )
+
+
+v0_3Decoder : Random.Seed -> Decoder Model
+v0_3Decoder initialSeed =
+    D.field "v0.3" <|
+        (D.succeed
+            (\currentTime currentTab theme level morkite missionStatuses dwarfXp dwarfXpButtonStatuses activeDailySpecial dailySpecialOptions dailySpecialCooldown minerals missionBiome projectLevels ->
+                let
+                    model : Model
+                    model =
+                        { seed = initialSeed
+                        , debugSettings = Config.defaultDebugSettings
+                        , currentTime = currentTime
+                        , currentTab = currentTab
+                        , theme = theme
+                        , level = level
+                        , morkite = morkite
+                        , missionStatuses = missionStatuses
+                        , saveTimer = Utils.Timer.create
+                        , dwarfXp = dwarfXp
+                        , dwarfXpButtonStatuses = dwarfXpButtonStatuses
+                        , activeDailySpecial = activeDailySpecial
+                        , dailySpecialCooldown = dailySpecialCooldown
+                        , dailySpecialOptions = dailySpecialOptions
+                        , maybeInitDecodeErr = Nothing
+                        , minerals = minerals
+                        , missionBiome = missionBiome
+                        , projectLevels = projectLevels
+                        , dragState = Nothing
+                        }
+                in
+                model
+            )
+            |> required "currentTime" posixDecoder
+            |> required "currentTab" v0_2TabDecoder
+            |> optional "theme" (D.map Just themeDecoder) Nothing
+            |> required "level" D.int
+            |> required "morkite" D.float
+            |> required "missionStatuses" v0_1MissionStatusesDecoder
+            |> required "dwarfXp" (v0_2DwarfRecordDecoder (D.map DwarfXp.float D.float))
+            |> required "dwarfXpButtonStatuses" (v0_2DwarfXpButtonRecordDecoder buttonStatusDecoder)
+            |> required "activeDailySpecials" (D.map List.head (D.list activeDailySpecialDecoder))
             |> required "dailySpecialOptions" (D.list dailySpecialDecoder)
             |> required "dailySpecialCooldown" buttonStatusDecoder
             |> required "minerals" mineralRecordDecoder
@@ -388,7 +437,7 @@ dailySpecialEncoder dailySpecial =
 encoder : Model -> E.Value
 encoder model =
     E.object
-        [ ( "v0.3"
+        [ ( "v0.4"
           , E.object
                 [ ( "currentTime", posixEncoder model.currentTime )
                 , ( "currentTab", v0_2TabEncoder model.currentTab )
@@ -415,15 +464,16 @@ encoder model =
                         , ( "driller", E.float (DwarfXp.toFloat model.dwarfXp.driller) )
                         ]
                   )
-                , ( "activeDailySpecials"
-                  , E.list
-                        (\( dailySpecial, timer ) ->
+                , ( "activeDailySpecial"
+                  , case model.activeDailySpecial of
+                        Just ( dailySpecial, timer ) ->
                             E.object
                                 [ ( "dailySpecial", E.string (dailySpecialStats dailySpecial).id_ )
                                 , ( "timer", Utils.Timer.timerEncoder timer )
                                 ]
-                        )
-                        model.activeDailySpecials
+
+                        Nothing ->
+                            E.null
                   )
                 , ( "dailySpecialCooldown", v0_2EncodeButtonStatus model.dailySpecialCooldown )
                 , ( "dailySpecialOptions", E.list dailySpecialEncoder model.dailySpecialOptions )

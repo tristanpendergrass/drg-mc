@@ -43,7 +43,7 @@ type alias Model =
     , missionStatuses : MissionRecord ButtonStatus
     , dwarfXpButtonStatuses : DwarfXpButtonRecord ButtonStatus
     , dwarfXp : DwarfRecord DwarfXp
-    , activeDailySpecials : List ( DailySpecial, Timer )
+    , activeDailySpecial : Maybe ( DailySpecial, Timer )
     , dailySpecialCooldown : ButtonStatus
     , dailySpecialOptions : List DailySpecial
     , maybeInitDecodeErr : Maybe D.Error

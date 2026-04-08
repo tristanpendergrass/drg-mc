@@ -132,8 +132,8 @@ currentVersionTest =
             (\m -> { m | currentTab = ProjectsTab })
         , testEncodeDecode "encodes and decodes to the same model after changing morkite amount"
             (\m -> { m | morkite = 1000.0 })
-        , testEncodeDecode "encodes and decodes to the same model after changing active daily specials"
-            (\m -> { m | activeDailySpecials = [ ( DarkMorkite, Utils.Timer.create ) ] })
+        , testEncodeDecode "encodes and decodes to the same model after changing active daily special"
+            (\m -> { m | activeDailySpecial = Just ( DarkMorkite, Utils.Timer.create ) })
         , testEncodeDecode "encodes and decodes to the same model after changing mission biome"
             (\m -> { m | missionBiome = Just FungusBogs })
         , testEncodeDecode "encodes and decodes to the same model after changing mission statuses"
