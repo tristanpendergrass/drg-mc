@@ -1013,6 +1013,12 @@ renderMissionCard model mission =
                 , img [ src "minerals/morkite.webp", class "w-14 absolute top-0 right-0 rotate-12" ] []
                 ]
 
+        baseYield =
+            { morkite = stats.morkite, minerals = Dict.empty }
+
+        modifiedYield =
+            modifyYield model baseYield
+
         morkiteIcon =
             case mission of
                 Haz1 ->
@@ -1025,7 +1031,7 @@ renderMissionCard model mission =
         [ div [ class "card-body p-4 items-center text-center justify-center h-54 max-h-54" ]
             [ h2 [ class "card-title text-3xl transition-opacity duration-150", classList [ ( "opacity-50", missionStatus /= ButtonReady ) ] ] [ text stats.title ]
             , div [ class "flex items-center gap-2 text-4xl transition-opacity duration-150", classList [ ( "opacity-50", missionStatus /= ButtonReady ) ] ]
-                [ span [] [ text (floatToFixedDecimalString stats.morkite 0 ++ " Morkite") ]
+                [ span [] [ text (floatToFixedDecimalString modifiedYield.morkite 0 ++ " Morkite") ]
                 , morkiteIcon
                 ]
             , renderButton model missionStatus adjustedDuration (DragMission mission) ButtonPrimary [ text buttonText ]
