@@ -2111,7 +2111,7 @@ renderDailySpecialOption model option =
     div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
         [ figure [ class "pt-2 bg-warning" ]
             [ img [ src stats.icon, alt stats.title ] []
-            , img [ src "beer/beer.png", class "w-24 -ml-6" ] []
+            , img [ src "beer/beer2.png", class "w-24 -ml-6" ] []
             ]
         , div [ class "card-body" ]
             [ h2 [ class "card-title" ] [ text "Daily Special: ", span [ class "underline" ] [ text stats.title ] ]
