@@ -2049,7 +2049,7 @@ renderAbyssBarTab model =
                                             ]
                                         ]
                                     )
-                                    (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
+                                    (List.indexedMap (\i -> renderDailySpecialOption model (i + 1)) model.dailySpecialOptions)
                                 )
                             ]
 
@@ -2072,7 +2072,7 @@ renderAbyssBarTab model =
                                             ]
                                         ]
                                     )
-                                    (List.map (renderDailySpecialOption model) model.dailySpecialOptions)
+                                    (List.indexedMap (\i -> renderDailySpecialOption model (i + 1)) model.dailySpecialOptions)
                                 )
                             ]
 
@@ -2155,6 +2155,21 @@ dailySpecialTimeString timer =
         ++ String.padLeft 2 '0' (String.fromInt seconds)
 
 
+type DailySpecialSize
+    = DailySpecialNormal
+    | DailySpecialSmall
+
+
+dailySpecialSizeClasses : DailySpecialSize -> { card : String, icon : String, beerImg : String }
+dailySpecialSizeClasses size =
+    case size of
+        DailySpecialNormal ->
+            { card = "w-72", icon = "", beerImg = "w-24 -ml-6" }
+
+        DailySpecialSmall ->
+            { card = "w-60", icon = "w-28", beerImg = "w-20 -ml-5" }
+
+
 renderActiveSpecialCard : Model -> DailySpecial -> Timer -> Html Msg
 renderActiveSpecialCard model dailySpecial timer =
     let
@@ -2165,11 +2180,14 @@ renderActiveSpecialCard model dailySpecial timer =
         enhancedBuff : Buff
         enhancedBuff =
             getEnhancedDailySpecialBuff model dailySpecial
+
+        sizeClasses =
+            dailySpecialSizeClasses DailySpecialNormal
     in
-    div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
+    div [ class ("card card-sm bg-base-300 shadow-lg " ++ sizeClasses.card) ]
         [ figure [ class "pt-2 bg-warning" ]
-            [ img [ src stats.icon, alt stats.title ] []
-            , img [ src "beer/beer2.png", class "w-24 -ml-6" ] []
+            [ img [ src stats.icon, alt stats.title, class sizeClasses.icon ] []
+            , img [ src "beer/beer2.png", class sizeClasses.beerImg ] []
             ]
         , div [ class "card-body items-center text-center" ]
             [ h2 [ class "card-title" ] [ text stats.title ]
@@ -2179,8 +2197,8 @@ renderActiveSpecialCard model dailySpecial timer =
         ]
 
 
-renderDailySpecialOption : Model -> DailySpecial -> Html Msg
-renderDailySpecialOption model option =
+renderDailySpecialOption : Model -> Int -> DailySpecial -> Html Msg
+renderDailySpecialOption model optionNumber option =
     let
         stats : DailySpecialStats
         stats =
@@ -2189,12 +2207,16 @@ renderDailySpecialOption model option =
         enhancedBuff : Buff
         enhancedBuff =
             getEnhancedDailySpecialBuff model option
+
+        sizeClasses =
+            dailySpecialSizeClasses DailySpecialSmall
     in
     div [ class "flex flex-col items-center gap-2 cursor-pointer", onClick (HandleDailySpecialClick option) ]
-        [ div [ class "card card-sm bg-base-300 w-72 shadow-lg" ]
+        [ div [ class "text-xl" ] [ text ("Option " ++ String.fromInt optionNumber) ]
+        , div [ class ("card card-sm bg-base-300 shadow-lg " ++ sizeClasses.card) ]
             [ figure [ class "pt-2 bg-warning" ]
-                [ img [ src stats.icon, alt stats.title ] []
-                , img [ src "beer/beer2.png", class "w-24 -ml-6" ] []
+                [ img [ src stats.icon, alt stats.title, class sizeClasses.icon ] []
+                , img [ src "beer/beer2.png", class sizeClasses.beerImg ] []
                 ]
             , div [ class "card-body items-center text-center" ]
                 [ h2 [ class "card-title" ] [ span [ class "underline" ] [ text stats.title ] ]
