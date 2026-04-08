@@ -2076,15 +2076,15 @@ renderAbyssBarTab model =
                     text ""
                 , case model.dailySpecialCooldown of
                     ButtonReady ->
-                        div [ class "flex flex-col gap-4" ]
-                            [ div [ class "flex items-center gap-4" ]
+                        div [ class "flex flex-col items-center gap-4" ]
+                            [ div [ class "text-3xl" ] [ text "Daily Special" ]
+                            , div [ class "flex items-center gap-4" ]
                                 (List.intersperse
                                     (div [ class "flex items-center gap-2" ]
                                         [ FeatherIcons.arrowRight
                                             |> FeatherIcons.withSize 48
                                             |> FeatherIcons.toHtml []
-                                        , div [ class "card card-sm w-72 h-[268px] border-4 border-dashed border-base-content flex items-center justify-center" ]
-                                            [ div [ class "card-body items-center justify-center text-center text-3xl" ] [ text "Daily Special" ] ]
+                                        , div [ class "card card-sm w-72 h-[268px] border-4 border-dashed border-base-content flex items-center justify-center text-xl" ] [ text "None" ]
                                         , FeatherIcons.arrowLeft
                                             |> FeatherIcons.withSize 48
                                             |> FeatherIcons.toHtml []
